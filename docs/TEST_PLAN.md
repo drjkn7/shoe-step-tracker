@@ -30,7 +30,7 @@ Status: ☐ not run · ✅ passed · ❌ failed. Phase = when it first becomes t
 | T24 | Backup exclusion | Database not in backups | 1 | ☐ |
 | T25 | TalkBack, 200% font, RTL | Labelled, unclipped, mirrored | 8 | ☐ |
 | T26 | 40 shoes, 2,000 sessions | Smooth scrolling | 8 | ☐ |
-| T27 | Merged manifest audit | No INTERNET; only READ_STEPS and NFC | 1 | ☐ |
+| T27 | Merged manifest audit | No INTERNET; only READ_STEPS and NFC | 1 | ✅ (automated; re-run in Phase 8) |
 | T28 | Archive / unarchive / delete | History kept on archive, removed on delete | 3 | ☐ |
 | T29 | Same UUID on two shoes | Blocked | 6 | ☐ |
 | T30 | Android 9-13 without Health Connect | Onboarding explains and links to install | 5 | ☐ |

@@ -4,7 +4,7 @@ Tracks steps per pair of shoes via NFC tags + Health Connect. Milestone 1 only. 
 ## Commands
 - Build: ./gradlew assembleDebug | Install: ./gradlew installDebug
 - Tests: ./gradlew testDebugUnitTest | On-device: ./gradlew connectedDebugAndroidTest
-- All checks: ./gradlew check (includes verifyNoInternetPermission from Phase 1)
+- All checks: ./gradlew check (includes verifyNoInternetPermission = merged-manifest audit)
 - Windows: use gradlew.bat. java is not on PATH; set JAVA_HOME to
   "C:\Program Files\Android\Android Studio\jbr" for command-line builds.
 
@@ -20,4 +20,6 @@ Package io.github.drjkn7.shoestep. Licence Apache-2.0. Repo drjkn7/shoe-step-tra
 - Ask before adding any dependency or permission. Never commit secrets or keystores.
 - One phase at a time, plain-English explanations, branch per phase, Conventional Commits.
 - GitHub Actions are pinned to full commit SHAs.
+- New permission or exported component? Update the allowlists in app/build.gradle.kts (needs approval).
+- Debug-only code goes in src/debug with a no-op in src/release.
 - Out of scope for M1: location, widget, notification, inactivity, photos, 3D, cloud.
