@@ -34,7 +34,12 @@ fun AppNavHost(container: AppContainer) {
         NavHost(navController = navController, startDestination = Routes.HOME) {
             composable(Routes.HOME) {
                 HomeScreen(
-                    viewModel = viewModel { HomeViewModel(container.shoeRepository, container.sessionManager) },
+                    viewModel = viewModel { HomeViewModel(
+                            container.shoeRepository,
+                            container.sessionManager,
+                            container.stepsSource,
+                            container.stepReconciler,
+                        ) },
                     onAddShoe = { navController.navigate(Routes.ADD_SHOE) },
                     onOpenShoe = { id -> navController.navigate(Routes.shoeDetail(id)) },
                     onOpenSettings = { navController.navigate(Routes.SETTINGS) },

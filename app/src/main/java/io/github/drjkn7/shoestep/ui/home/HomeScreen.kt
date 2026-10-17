@@ -1,5 +1,7 @@
 package io.github.drjkn7.shoestep.ui.home
 
+import android.content.ActivityNotFoundException
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -34,20 +36,24 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.drjkn7.shoestep.R
 import io.github.drjkn7.shoestep.data.db.ShoeWithStats
 import io.github.drjkn7.shoestep.data.model.SessionState
+import io.github.drjkn7.shoestep.steps.HealthConnectStepsSource
 import io.github.drjkn7.shoestep.ui.common.ColourDot
-import io.github.drjkn7.shoestep.ui.common.Formatters
+import io.github.drjkn7.shoestep.ui.common.StepsLabel
+import io.github.drjkn7.shoestep.ui.common.labelledSteps
+import io.github.drjkn7.shoestep.ui.common.stepsCountText
 import io.github.drjkn7.shoestep.ui.session.ActiveSessionCard
 import io.github.drjkn7.shoestep.ui.session.EndSessionDialog
 
@@ -62,7 +68,15 @@ fun HomeScreen(
     val shoes by viewModel.shoes.collectAsStateWithLifecycle()
     val showArchived by viewModel.showArchived.collectAsStateWithLifecycle()
     val active by viewModel.activeSession.collectAsStateWithLifecycle()
+    val stepsAccess by viewModel.stepsAccess.collectAsStateWithLifecycle()
+    val stepsSoFar by viewModel.stepsSoFar.collectAsStateWithLifecycle()
     var confirmEndId by rememberSaveable { mutableStateOf<String?>(null) }
+    val context = LocalContext.current
+    val permissionLauncher = rememberLauncherForActivityResult(HealthConnectStepsSource.permissionContract()) {
+        viewModel.onStepsPermissionResult()
+    }
+    // Access can change while the app is away (e.g. in Health Connect settings), so re-check on return.
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { viewModel.refreshSteps() }
 
     Scaffold(
         topBar = {
@@ -86,10 +100,25 @@ fun HomeScreen(
                 val id = current.session.id
                 ActiveSessionCard(
                     active = current,
+                    stepsSoFar = stepsSoFar,
                     onOpen = { onOpenShoe(current.session.shoeId) },
                     onPause = { viewModel.pause(id) },
                     onResume = { viewModel.resume(id) },
                     onEnd = { confirmEndId = id },
+                    modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 8.dp),
+                )
+            }
+            stepsAccess?.let { access ->
+                StepsAccessCard(
+                    access = access,
+                    onAllow = { permissionLauncher.launch(HealthConnectStepsSource.PERMISSIONS) },
+                    onInstall = {
+                        try {
+                            context.startActivity(HealthConnectStepsSource.installIntent())
+                        } catch (_: ActivityNotFoundException) {
+                            // No Play Store on this phone: the card's text already explains what is needed.
+                        }
+                    },
                     modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 8.dp),
                 )
             }
@@ -138,13 +167,12 @@ fun HomeScreen(
 
 @Composable
 private fun ShoeRow(item: ShoeWithStats, paused: Boolean, onClick: () -> Unit) {
-    val locale = LocalConfiguration.current.locales[0]
     val shoe = item.shoe
     val subtitle = listOf(shoe.brand, shoe.model).filter { it.isNotEmpty() }.joinToString(" ")
-    val stepsText = pluralStringResource(
-        R.plurals.steps_count,
-        item.totalSteps.coerceAtMost(Int.MAX_VALUE.toLong()).toInt(),
-        Formatters.count(item.totalSteps, locale),
+    // "(counted later)" while any segment has no count yet, "About" while counts may still change.
+    val stepsText = labelledSteps(
+        stepsCountText(item.totalSteps),
+        StepsLabel.of(item.hasPendingSteps, item.hasUnfinalSteps),
     )
     Card(onClick = onClick, modifier = Modifier.fillMaxWidth()) {
         Row(

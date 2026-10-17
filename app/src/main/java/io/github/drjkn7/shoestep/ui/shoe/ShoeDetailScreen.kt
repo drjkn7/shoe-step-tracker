@@ -30,7 +30,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
@@ -46,7 +45,10 @@ import io.github.drjkn7.shoestep.data.model.SessionState
 import io.github.drjkn7.shoestep.ui.common.ColourDot
 import io.github.drjkn7.shoestep.ui.common.ConfirmDialog
 import io.github.drjkn7.shoestep.ui.common.Formatters
+import io.github.drjkn7.shoestep.ui.common.StepsLabel
 import io.github.drjkn7.shoestep.ui.common.labelRes
+import io.github.drjkn7.shoestep.ui.common.labelledSteps
+import io.github.drjkn7.shoestep.ui.common.stepsCountText
 import io.github.drjkn7.shoestep.ui.session.EndSessionDialog
 import io.github.drjkn7.shoestep.ui.session.SessionButtons
 import io.github.drjkn7.shoestep.ui.session.SwitchSessionDialog
@@ -244,7 +246,13 @@ private fun DetailContent(
         Card(Modifier.fillMaxWidth()) {
             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(stringResource(R.string.detail_stats_title), style = MaterialTheme.typography.titleMedium)
-                StatRow(stringResource(R.string.detail_total_steps), Formatters.count(item.totalSteps, locale))
+                StatRow(
+                    stringResource(R.string.detail_total_steps),
+                    labelledSteps(
+                        Formatters.count(item.totalSteps, locale),
+                        StepsLabel.of(item.hasPendingSteps, item.hasUnfinalSteps),
+                    ),
+                )
                 StatRow(stringResource(R.string.detail_sessions), Formatters.count(item.sessionCount.toLong(), locale))
                 val cost = CostCalculator.cost(shoe.priceMinor, shoe.currencyCode, item.totalSteps)
                 StatRow(
@@ -291,10 +299,9 @@ private fun HistoryCard(history: List<SessionWithSteps>) {
             }
             history.forEach { row ->
                 val session = row.session
-                val steps = pluralStringResource(
-                    R.plurals.steps_count,
-                    row.totalSteps.coerceAtMost(Int.MAX_VALUE.toLong()).toInt(),
-                    Formatters.count(row.totalSteps, locale),
+                val steps = labelledSteps(
+                    stepsCountText(row.totalSteps),
+                    StepsLabel.of(row.hasPendingSteps, row.hasUnfinalSteps),
                 )
                 val (hours, minutes) = Formatters.hoursAndMinutes(row.activeMillis)
                 val detail = when {
@@ -311,7 +318,7 @@ private fun HistoryCard(history: List<SessionWithSteps>) {
                         stringResource(
                             R.string.history_row,
                             detail,
-                            if (row.hasUnfinalSteps) stringResource(R.string.history_steps_pending, steps) else steps,
+                            steps,
                         ),
                         style = MaterialTheme.typography.bodyMedium,
                     )

@@ -99,7 +99,10 @@ class FakeSessionStore : SessionStore {
                 totalSteps = own.sumOf { it.steps ?: 0 },
                 activeMillis = own.sumOf { g -> g.endUtc?.let { maxOf(0, it - g.startUtc) } ?: 0 },
                 segmentCount = own.size,
-                hasUnfinalSteps = own.any { it.endUtc != null && it.stepsStatus != StepsStatus.FINAL },
+                hasUnfinalSteps = own.any {
+                    it.endUtc != null && it.stepsStatus in setOf(StepsStatus.PENDING, StepsStatus.PROVISIONAL)
+                },
+                hasPendingSteps = own.any { it.endUtc != null && it.stepsStatus == StepsStatus.PENDING },
             )
         }
     }

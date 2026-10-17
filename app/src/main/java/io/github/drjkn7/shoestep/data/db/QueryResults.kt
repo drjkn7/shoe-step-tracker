@@ -14,8 +14,10 @@ data class ShoeWithStats(
     @ColumnInfo(name = "active_millis") val activeMillis: Long,
     @ColumnInfo(name = "last_used_utc") val lastUsedUtc: Long?,
     @ColumnInfo(name = "is_active") val isActive: Boolean,
-    /** True while any closed segment's steps are not FINAL yet (UI shows "provisional"). */
+    /** True while any closed segment is PENDING or PROVISIONAL (UI shows "about"). UNAVAILABLE is settled. */
     @ColumnInfo(name = "has_unfinal_steps") val hasUnfinalSteps: Boolean,
+    /** True while any closed segment has no count yet (UI shows "counted later"). */
+    @ColumnInfo(name = "has_pending_steps") val hasPendingSteps: Boolean,
 ) {
     /** Average over ended sessions; null when there are none. */
     val averageStepsPerSession: Long?
@@ -35,5 +37,8 @@ data class SessionWithSteps(
     @ColumnInfo(name = "total_steps") val totalSteps: Long,
     @ColumnInfo(name = "active_millis") val activeMillis: Long,
     @ColumnInfo(name = "segment_count") val segmentCount: Int,
+    /** True while any closed segment is PENDING or PROVISIONAL (UI shows "about"). */
     @ColumnInfo(name = "has_unfinal_steps") val hasUnfinalSteps: Boolean,
+    /** True while any closed segment has no count yet (UI shows "counted later"). */
+    @ColumnInfo(name = "has_pending_steps") val hasPendingSteps: Boolean,
 )

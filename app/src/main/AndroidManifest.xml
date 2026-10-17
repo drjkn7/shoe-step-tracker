@@ -3,6 +3,12 @@
 
     <!-- SEC-01/SEC-04: no INTERNET or other permissions. NFC (Phase 6) and Health Connect
          READ_STEPS (Phase 5) are the only ones allowed; verifyNoInternetPermission enforces it. -->
+    <uses-permission android:name="android.permission.health.READ_STEPS" />
+
+    <!-- Lets the app see the Health Connect app on Android 13 and lower (not a permission). -->
+    <queries>
+        <package android:name="com.google.android.apps.healthdata" />
+    </queries>
 
     <application
         android:name=".ShoeStepApp"
@@ -14,7 +20,8 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.ShoeStep">
-        <!-- SEC-03: the only exported component. -->
+        <!-- SEC-03: exported components are MainActivity and the Health Connect privacy rationale
+             (static text, no data). Each is on the release export allowlist in app/build.gradle.kts. -->
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -26,6 +33,27 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- Health Connect privacy rationale, Android 13 and lower. -->
+        <activity
+            android:name=".steps.PermissionsRationaleActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE" />
+            </intent-filter>
+        </activity>
+
+        <!-- Health Connect privacy rationale, Android 14+; only the system may open it. -->
+        <activity-alias
+            android:name=".ViewPermissionUsageActivity"
+            android:exported="true"
+            android:permission="android.permission.START_VIEW_PERMISSION_USAGE"
+            android:targetActivity=".steps.PermissionsRationaleActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW_PERMISSION_USAGE" />
+                <category android:name="android.intent.category.HEALTH_PERMISSIONS" />
+            </intent-filter>
+        </activity-alias>
     </application>
 
 </manifest>

@@ -22,7 +22,10 @@ private const val SHOE_STATS_COLUMNS = """
     EXISTS(SELECT 1 FROM active_session a JOIN sessions x ON a.session_id = x.id
            WHERE x.shoe_id = s.id) AS is_active,
     EXISTS(SELECT 1 FROM segments g JOIN sessions x ON g.session_id = x.id
-           WHERE x.shoe_id = s.id AND g.end_utc IS NOT NULL AND g.steps_status != 'FINAL') AS has_unfinal_steps
+           WHERE x.shoe_id = s.id AND g.end_utc IS NOT NULL
+           AND g.steps_status IN ('PENDING', 'PROVISIONAL')) AS has_unfinal_steps,
+    EXISTS(SELECT 1 FROM segments g JOIN sessions x ON g.session_id = x.id
+           WHERE x.shoe_id = s.id AND g.end_utc IS NOT NULL AND g.steps_status = 'PENDING') AS has_pending_steps
 """
 
 @Dao
@@ -87,10 +90,6 @@ interface SessionDao {
     @Query("SELECT * FROM sessions WHERE state != 'ENDED' ORDER BY start_utc, id")
     suspend fun getUnendedSessions(): List<SessionEntity>
 
-    /** Closed segments whose step count may still change (reconciled on app foreground). */
-    @Query("SELECT * FROM segments WHERE end_utc IS NOT NULL AND steps_status IN (:statuses) ORDER BY end_utc")
-    suspend fun getClosedSegmentsWithStatus(statuses: List<StepsStatus>): List<SegmentEntity>
-
     @Query(
         """
         SELECT x.*,
@@ -99,11 +98,47 @@ interface SessionDao {
                       WHERE g.session_id = x.id AND g.end_utc IS NOT NULL), 0) AS active_millis,
             (SELECT COUNT(*) FROM segments g WHERE g.session_id = x.id) AS segment_count,
             EXISTS(SELECT 1 FROM segments g WHERE g.session_id = x.id
-                   AND g.end_utc IS NOT NULL AND g.steps_status != 'FINAL') AS has_unfinal_steps
+                   AND g.end_utc IS NOT NULL AND g.steps_status IN ('PENDING', 'PROVISIONAL')) AS has_unfinal_steps,
+            EXISTS(SELECT 1 FROM segments g WHERE g.session_id = x.id
+                   AND g.end_utc IS NOT NULL AND g.steps_status = 'PENDING') AS has_pending_steps
         FROM sessions x WHERE x.shoe_id = :shoeId ORDER BY x.start_utc DESC, x.id
         """,
     )
     fun observeHistory(shoeId: String): Flow<List<SessionWithSteps>>
+}
+
+/**
+ * Step counts of segments. Only StepReconciler (via RoomStepStore) writes here; SessionManager
+ * creates segments as PENDING and never touches steps afterwards.
+ */
+@Dao
+interface StepsDao {
+    /**
+     * Closed segments whose step count is missing or may still change: PENDING first (so re-checks
+     * of provisional counts can never crowd them out), then oldest first.
+     */
+    @Query(
+        """
+        SELECT * FROM segments WHERE end_utc IS NOT NULL AND steps_status IN ('PENDING', 'PROVISIONAL')
+        ORDER BY CASE steps_status WHEN 'PENDING' THEN 0 ELSE 1 END, end_utc, id LIMIT :limit
+        """,
+    )
+    suspend fun getUnresolvedClosedSegments(limit: Int): List<SegmentEntity>
+
+    @Query("SELECT * FROM segments WHERE session_id = :sessionId ORDER BY start_utc, id")
+    suspend fun getSegments(sessionId: String): List<SegmentEntity>
+
+    /**
+     * Saves a step result only if the segment still ends at [expectedEndUtc] and is not FINAL or
+     * UNAVAILABLE yet, so a stale read can never overwrite newer data. Returns rows changed (0 or 1).
+     */
+    @Query(
+        """
+        UPDATE segments SET steps = :steps, steps_status = :status, last_read_utc = :readAtUtc
+        WHERE id = :segmentId AND end_utc = :expectedEndUtc AND steps_status IN ('PENDING', 'PROVISIONAL')
+        """,
+    )
+    suspend fun saveSteps(segmentId: String, expectedEndUtc: Long, steps: Long?, status: StepsStatus, readAtUtc: Long): Int
 }
 
 @Dao
