@@ -116,6 +116,14 @@ fun ShoeFormScreen(
         }
     }
 
+    if (viewModel.showProblemsDialog && viewModel.errors.isNotEmpty()) {
+        ProblemsDialog(
+            errors = viewModel.errors,
+            currencyCode = viewModel.form.currencyCode,
+            onOk = viewModel::dismissProblemsDialog,
+        )
+    }
+
     if (status == FormStatus.SaveFailed) {
         AlertDialog(
             onDismissRequest = viewModel::dismissSaveError,
@@ -271,6 +279,41 @@ private fun FormContent(
             onDismiss = { showDatePicker = false },
         )
     }
+}
+
+/** Shown when Save finds problems, so the message is visible wherever the form is scrolled. */
+@Composable
+private fun ProblemsDialog(errors: Map<ShoeField, FieldError>, currencyCode: String, onOk: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onOk,
+        title = { Text(stringResource(R.string.save_problems_title)) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(stringResource(R.string.save_problems_intro))
+                // Same order as the fields appear on screen.
+                ShoeField.entries.filter { it in errors }.forEach { field ->
+                    Text(
+                        stringResource(
+                            R.string.save_problems_item,
+                            stringResource(field.labelRes()),
+                            errorText(field, errors.getValue(field), currencyCode),
+                        ),
+                    )
+                }
+            }
+        },
+        confirmButton = { TextButton(onClick = onOk) { Text(stringResource(R.string.action_ok)) } },
+    )
+}
+
+private fun ShoeField.labelRes(): Int = when (this) {
+    ShoeField.NAME -> R.string.field_label_name
+    ShoeField.BRAND -> R.string.field_label_brand
+    ShoeField.MODEL -> R.string.field_label_model
+    ShoeField.PRICE -> R.string.field_label_price
+    ShoeField.CURRENCY -> R.string.field_label_currency
+    ShoeField.PURCHASE_DATE -> R.string.field_label_purchase_date
+    ShoeField.ACCENT_COLOR -> R.string.field_label_colour
 }
 
 @Composable

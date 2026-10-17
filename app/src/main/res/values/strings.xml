@@ -64,6 +64,16 @@
     <string name="error_date_future">Date can\'t be in the future</string>
     <string name="error_date_too_old">Date is too far in the past</string>
     <string name="error_colour_invalid">Choose a colour</string>
+    <string name="save_problems_title">Can\'t save yet</string>
+    <string name="save_problems_intro">Please fix the following:</string>
+    <string name="save_problems_item">• %1$s: %2$s</string>
+    <string name="field_label_name">Name</string>
+    <string name="field_label_brand">Brand</string>
+    <string name="field_label_model">Model</string>
+    <string name="field_label_price">Price</string>
+    <string name="field_label_currency">Currency</string>
+    <string name="field_label_purchase_date">Purchase date</string>
+    <string name="field_label_colour">Colour</string>
     <string name="error_save_failed">Couldn\'t save. Please try again.</string>
 
     <!-- Shoe types -->
