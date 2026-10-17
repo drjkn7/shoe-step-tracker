@@ -9,6 +9,7 @@ import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
@@ -138,10 +139,38 @@ class TagScreensTest {
         tap(TagContent.Ours(uuidA), key = uuidA)
         tap(TagContent.Ours(uuidB), key = uuidB)
         waitForText(str(R.string.session_switch_title))
+        // The question is asked on the tapped pair's page (only that page says the other pair is busy).
+        waitForText(str(R.string.detail_other_active, "Daily trainers"))
         dialogButton(str(R.string.session_switch_confirm)).performClick()
         assertGone(str(R.string.session_switch_title))
         rule.waitUntil(5_000) { active()?.shoeName == "Trail shoes" }
         assertEquals(1, runBlocking { container.database.sessionDao().getUnendedSessions() }.size)
+    }
+
+    @Test fun linkedTagTappedOnHomeWhileRunningOpensThePairWithTheQuestion() {
+        addShoe("Daily trainers", uuidA)
+        launch()
+        tap(TagContent.Ours(uuidA), key = uuidA)
+        waitForText(str(R.string.detail_stats_title))
+        rule.onNodeWithContentDescription(str(R.string.nav_back)).performClick() // back to Home
+        waitForText(str(R.string.home_show_archived))
+
+        tap(TagContent.Ours(uuidA), key = uuidA)
+        waitForText(str(R.string.tag_running_title, "Daily trainers"))
+        waitForText(str(R.string.detail_stats_title)) // on the pair's page, not Home
+        assertTrue(rule.onAllNodesWithText(str(R.string.home_show_archived)).fetchSemanticsNodes().isEmpty())
+    }
+
+    @Test fun unlinkedTagTappedOnAPairsPageGoesHomeWithThePopUp() {
+        addShoe("Daily trainers")
+        launch()
+        rule.onNodeWithText("Daily trainers").performClick()
+        waitForText(str(R.string.detail_stats_title))
+
+        tap(TagContent.Blank)
+        waitForText(str(R.string.tag_new_title))
+        waitForText(str(R.string.home_show_archived)) // Home
+        assertTrue(rule.onAllNodesWithText(str(R.string.detail_stats_title)).fetchSemanticsNodes().isEmpty())
     }
 
     @Test fun newTagShowsBothOptionsAndBackCancels() {

@@ -51,6 +51,11 @@ class TagCoordinatorTest {
 
     private suspend fun TestScope.nextEvent(): TagEvent? = withTimeoutOrNull(100) { tags.events.first() }
 
+    /** Every navigation event sent so far, in order. */
+    private suspend fun TestScope.allEvents(): List<TagEvent> = buildList {
+        while (true) add(nextEvent() ?: break)
+    }
+
     // --- taps -----------------------------------------------------------------------------------
 
     @Test fun tapOnIdlePairStartsItAndOpensItWithABuzz() = runTest {
@@ -130,11 +135,47 @@ class TagCoordinatorTest {
         assertNull(active())
     }
 
+    // --- where a tap lands (product owner: always the same place) ---------------------------------
+
+    @Test fun unlinkedTagsAlwaysGoHome() = runTest {
+        tap(TagContent.Blank)
+        tap(TagContent.Foreign)
+        tap(TagContent.Ours("dddddddd-dddd-4ddd-8ddd-dddddddddddd"))
+        assertEquals(List(3) { TagEvent.OpenHome }, allEvents())
+        assertEquals(TagPrompt.NewTag, tags.prompt.value)
+    }
+
+    @Test fun linkedTagsAlwaysOpenTheirPairEvenWhenAsking() = runTest {
+        tap(TagContent.Ours(uuidA)) // starts A
+        tap(TagContent.Ours(uuidA)) // asks Pause / End / Cancel
+        tags.dismissPrompt()
+        tap(TagContent.Ours(uuidB)) // asks to switch
+        tags.dismissPrompt()
+        tap(TagContent.Ours(uuidZ)) // archived
+        assertEquals(
+            listOf(
+                TagEvent.OpenShoe("A", confirm = true),
+                TagEvent.OpenShoe("A", confirm = false),
+                TagEvent.OpenShoe("B", confirm = false),
+                TagEvent.OpenShoe("Z", confirm = false),
+            ),
+            allEvents(),
+        )
+    }
+
+    @Test fun aTapThatLeavesTheAddFormForgetsThePendingLink() = runTest {
+        tap(TagContent.Blank)
+        tags.addNewPair()
+        tap(TagContent.Ours(uuidA))
+        assertFalse(tags.consumeLinkAfterAdd())
+    }
+
     // --- new tag: link to existing pair or add a new one ------------------------------------------
 
     @Test fun newTagLinkedToAnExistingPair() = runTest {
         tagStore.setTag("A", null)
         tap(TagContent.Blank)
+        assertEquals(TagEvent.OpenHome, nextEvent())
         tags.linkToExistingPair()
         assertEquals(TagPrompt.PickPair, tags.prompt.value)
 
@@ -156,7 +197,7 @@ class TagCoordinatorTest {
     @Test fun newTagForANewPairLinksAfterTheFormIsSaved() = runTest {
         tap(TagContent.Blank)
         tags.addNewPair()
-        assertEquals(TagEvent.AddShoe, nextEvent())
+        assertEquals(listOf(TagEvent.OpenHome, TagEvent.AddShoe), allEvents())
         assertTrue(tags.consumeLinkAfterAdd())
         assertFalse("only once", tags.consumeLinkAfterAdd())
 

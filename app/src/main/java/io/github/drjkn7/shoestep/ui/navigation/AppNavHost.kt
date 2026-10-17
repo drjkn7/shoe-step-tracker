@@ -47,14 +47,19 @@ fun AppNavHost(container: AppContainer) {
         val view = LocalView.current
         val hasNfc = remember { container.nfcState() != NfcState.UNSUPPORTED }
 
-        // Tag taps: open the pair (fresh copy on top of Home) and buzz when a session changed (T06).
+        // Tag taps land in the same place every time: a linked tag on its pair's page (opened fresh on
+        // top of Home unless it is already showing), an unlinked tag on Home. Buzz when a session changed (T06).
         LaunchedEffect(tags) {
             tags.events.collect { event ->
                 when (event) {
                     is TagEvent.OpenShoe -> {
                         if (event.confirm) view.performHapticFeedback(confirmHaptic())
-                        navController.navigate(Routes.shoeDetail(event.shoeId)) { popUpTo(Routes.HOME) }
+                        val current = navController.currentBackStackEntry
+                        val alreadyOpen = current?.destination?.route == Routes.SHOE_DETAIL &&
+                            current.arguments?.getString(Routes.ARG_SHOE_ID) == event.shoeId
+                        if (!alreadyOpen) navController.navigate(Routes.shoeDetail(event.shoeId)) { popUpTo(Routes.HOME) }
                     }
+                    TagEvent.OpenHome -> navController.popBackStack(Routes.HOME, inclusive = false)
                     TagEvent.AddShoe -> navController.navigate(Routes.ADD_SHOE) { popUpTo(Routes.HOME) }
                 }
             }
