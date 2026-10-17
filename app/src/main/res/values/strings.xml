@@ -13,7 +13,6 @@
     <string name="action_unarchive">Unarchive</string>
     <string name="action_more">More options</string>
     <string name="action_ok">OK</string>
-    <string name="action_clear">Clear</string>
     <string name="dash">–</string>
 
     <!-- Home -->
@@ -47,12 +46,16 @@
     <string name="char_counter">%1$d/%2$d</string>
     <string name="currency_search">Search currency</string>
     <string name="currency_choose">Choose currency</string>
+    <string name="currency_button_description">%1$s: %2$s, %3$s</string>
     <string name="currency_item">%1$s – %2$s</string>
     <string name="form_not_found">This shoe no longer exists.</string>
 
     <!-- Validation messages -->
     <string name="error_name_required">Enter a name</string>
-    <string name="error_too_long">Too long: maximum %1$d characters</string>
+    <plurals name="error_too_long">
+        <item quantity="one">Too long: maximum %1$d character</item>
+        <item quantity="other">Too long: maximum %1$d characters</item>
+    </plurals>
     <string name="error_price_invalid">Enter a number such as 129.99</string>
     <string name="error_price_negative">Price can\'t be negative</string>
     <string name="error_price_decimals">Too many decimal places for %1$s</string>
