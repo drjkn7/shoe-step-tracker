@@ -111,6 +111,10 @@ val manifestPermissionAllowlist = setOf(
 /** Components allowed to be exported in release, mapped to the permission that must guard them (null = none). */
 val manifestReleaseExportAllowlist = mapOf(
     "io.github.drjkn7.shoestep.MainActivity" to null,
+    // NFC tag entry points (Phase 6). Android 17+: only the NFC service may open it.
+    "io.github.drjkn7.shoestep.NfcTagEntry" to "android.permission.DISPATCH_NFC_MESSAGE",
+    // Android 9-16 only (disabled on 17+): those versions don't define DISPATCH_NFC_MESSAGE.
+    "io.github.drjkn7.shoestep.NfcTagEntryLegacy" to null,
     // Health Connect privacy rationale (Phase 5, product owner approved). Shows static text only.
     // Android 13 and lower: the Health Connect app opens it via ACTION_SHOW_PERMISSIONS_RATIONALE.
     "io.github.drjkn7.shoestep.steps.PermissionsRationaleActivity" to null,

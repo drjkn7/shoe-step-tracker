@@ -75,11 +75,12 @@ What Phase 6 added (package `nfc/`, UI in `ui/nfc/`):
 | 2026-10-18 | NFC permission (already allowlisted) and an NDEF_DISCOVERED filter on the exported MainActivity (product owner approved). Accepted risk: another app could send a fake tag intent; it can only start/pause/switch the user's own sessions, never read or delete data. Foreground dispatch (not reader mode) so tap-to-pay keeps working while the app is open. |
 | 2026-10-18 | Tag write is read back to verify (T04); a never-formatted tag can only be checked by format() succeeding (Android can't re-read it until the next tap). |
 | 2026-10-18 | Product owner (after testing a real tag): a tap always lands in the same place. Linked tag → its pair's page (session starts there; Pause/End or Switch questions are asked there). Unlinked tag → Home with the "New tag" pop-up. |
+| 2026-10-18 | Android 17 (API 37, the Pixel's version): NFC intents only reach activities guarded by DISPATCH_NFC_MESSAGE, and never stopped apps (official NFC guide). Tag intents now enter via activity-alias `.NfcTagEntry` (guarded; enabled on 37+ via values-v37) or `.NfcTagEntryLegacy` (unguarded; Android 9–16, which don't define the permission). MainActivity ignores tag intents not addressed to the enabled alias, so on 17+ fake tag intents are refused; foreground dispatch targets the same alias. |
 
 ## Open items carried to later phases
 - SessionDao/ActiveSessionDao write methods must be called only via SessionManager/RoomSessionStore (convention; not enforced by visibility).
 - Open segments are excluded from totals (the Home card's "so far" is display-only).
-- Phase 5 manual check on an Android 9–13 phone (Health Connect app path, `HealthDataSdkService`, rationale via ACTION_SHOW_PERMISSIONS_RATIONALE) was not possible on the Android 16 Pixel; do it in Phase 8 if a device is available.
+- Phase 5 manual check on an Android 9–13 phone (Health Connect app path, `HealthDataSdkService`, rationale via ACTION_SHOW_PERMISSIONS_RATIONALE) was not possible on the Android 17 Pixel; do it in Phase 8 if a device is available.
 - Shoe detail's "Session running" line has no "so far" count (Home card only); add in Phase 7 if wanted.
 - Re-verify `HealthDataSdkService`'s caller check (bytecode) whenever connect-client is upgraded.
 - Phase 7/8: Shoe detail history shows every session (no paging); revisit if lists get long. A visible live timer on the session card was left out.
