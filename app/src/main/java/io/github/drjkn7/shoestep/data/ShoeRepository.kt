@@ -25,6 +25,8 @@ class ShoeRepository(
 
     fun observeShoe(id: String): Flow<ShoeWithStats?> = shoeDao.observeWithStatsById(id)
 
+    suspend fun findShoe(id: String): ShoeEntity? = shoeDao.getById(id)
+
     suspend fun add(input: ShoeInput): SaveResult {
         val valid = when (val v = ShoeValidator.validate(input, today())) {
             is ShoeValidation.Invalid -> return SaveResult.Invalid(v.errors)

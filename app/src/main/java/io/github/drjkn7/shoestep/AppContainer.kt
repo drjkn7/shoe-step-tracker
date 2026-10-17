@@ -11,13 +11,16 @@ import io.github.drjkn7.shoestep.data.db.ShoeStepDatabase
  * Everything is lazy so nothing heavy runs at app start. Later phases add SessionManager
  * and the Health Connect StepsSource here.
  */
-class AppContainer(context: Context) {
+class AppContainer(
+    context: Context,
+    /** Tests pass [ShoeStepDatabase.buildInMemory] so they never touch the real database. */
+    databaseFactory: (Context) -> ShoeStepDatabase = ShoeStepDatabase::build,
+    val clock: Clock = SystemWallClock,
+) {
     private val appContext = context.applicationContext
 
-    val clock: Clock by lazy { SystemWallClock }
-
     /** Opened on first use; Room does the actual disk work off the main thread. */
-    val database: ShoeStepDatabase by lazy { ShoeStepDatabase.build(appContext) }
+    val database: ShoeStepDatabase by lazy { databaseFactory(appContext) }
 
     val shoeRepository: ShoeRepository by lazy { ShoeRepository(database.shoeDao(), clock) }
 }
