@@ -6,21 +6,32 @@
 - [x] Phase 2: Data layer (PR #6, merged)
 - [x] Phase 3: Shoes UI (PR #7, merged)
 - [x] Phase 4: Sessions (PR #8, merged)
-- [ ] Phase 5: Health Connect and offline step resolution ← **branch `feature/phase-5-health-connect`, plan awaiting "approved"**
+- [ ] Phase 5: Health Connect and offline step resolution ← **built on branch `feature/phase-5-health-connect`, awaiting product-owner "go" and PR**
 - [ ] Phase 6: NFC
 - [ ] Phase 7: Stats, export, settings
 - [ ] Phase 8: Hardening and release
 
 ## Next up: Phase 5 hand-off (read this first after /clear)
-Status: branch `feature/phase-5-health-connect` created from main after PR #8; plan presented, waiting for
-the product owner's "approved". Nothing built yet.
+Status: Phase 5 plan approved (2026-10-17) and built on `feature/phase-5-health-connect`. Waiting for the
+product owner's "go", then: push → PR → CI (confirm the emulator job ran StepsDbTest + StepsScreensTest)
+→ rebase-merge.
 
-Scope: Health Connect READ_STEPS (permission request + rationale screen) and deferred step reconciliation:
-segments are saved with steps = null / `StepsStatus.PENDING` (Phase 4); Phase 5 fills them from Health
-Connect when it is available, and resolves them offline (PROVISIONAL / FINAL / UNAVAILABLE) when it isn't.
-Needs approval: exported rationale `activity-alias` → release export allowlist in `app/build.gradle.kts`;
-applying the pre-approved `connect-client` (version to re-verify); any other new dependency.
-Phase 4 summary (SessionManager, SessionStore, Debouncer, session UI) is in the decisions log and git history.
+What Phase 5 added (package `steps/`):
+- `StepsSource` (access + read) with `HealthConnectStepsSource` (READ_STEPS only, aggregate COUNT_TOTAL;
+  errors → UNAVAILABLE / Failed, never thrown or logged). Tests use fakes via `AppContainer(stepsSourceFactory)`.
+- `StepReconciler`: the only writer of step counts. `reconcile()` fills closed PENDING/PROVISIONAL segments
+  (PENDING first, max 100 per run) through `RoomStepStore` → `StepsDao.saveSteps`, a guarded UPDATE (segment
+  must still end at the read's end time and not be FINAL/UNAVAILABLE). `stepsSoFar(sessionId)` is display-only.
+  Rules live in `StepReconciler.decide()` (one-day settle, 30-day history limit).
+- Runs only while the app is visible: MainActivity on each foreground and each session state change; Home
+  after the permission screen closes. "So far" re-reads every minute while Home is shown.
+- UI: Home banner (Allow / Get Health Connect / not available), "About N steps so far" or "Steps counted
+  later" on the session card, "About" on provisional totals, "(counted later)" in history while pending.
+  `PermissionsRationaleActivity` + `.ViewPermissionUsageActivity` alias show the privacy text.
+- Queries: `has_unfinal_steps` now means PENDING/PROVISIONAL only (UNAVAILABLE is settled); history adds
+  `has_pending_steps`. New DAO only, no schema change: DB stays at version 1.
+- Tests: StepReconcilerTest (decision table, reconcile, so-far), StepsLabel in FormattersTest; on-device
+  StepsDbTest (SQL guard, ordering, flags, end-to-end with SessionManager) and StepsScreensTest.
 
 ## Decisions log
 | Date | Decision |
@@ -53,14 +64,22 @@ Phase 4 summary (SessionManager, SessionStore, Debouncer, session UI) is in the 
 | 2026-10-17 | Clock going backwards: times are moved forward, never saved negative — a segment ends at its own start (0 min), resume/switch never start before the last recorded time. Launch repair never invents walking time (orphan sessions end at their last known time). |
 | 2026-10-17 | Debouncer (for NFC, Phase 6): per tag, 2 s; every read restarts the timer, so a phone resting on a tag acts once; a backwards clock jump lets the read through rather than blocking the tag. |
 | 2026-10-17 | Session times are shown in the time zone they were recorded in (stored `zone_id`). |
+| 2026-10-17 | Phase 5 plan approved. Steps come from Health Connect (not the phone's own step sensor), so wearables count too (product owner: will use a watch, as will other users). |
+| 2026-10-17 | Counts are read only while the app is open (no background-read permission, no WorkManager); steps walked while it is closed appear on the next open. |
+| 2026-10-17 | A count is PROVISIONAL ("About") for one day after its segment ends, then FINAL (product owner changed 2 days → 1 day). No data after a day → UNAVAILABLE, left out of totals (a provisional count already shown is kept as FINAL instead). Read errors retry, except segments older than Health Connect's 30-day history limit, which settle. |
+| 2026-10-17 | The running session card shows "About N steps so far" (live read, display only; shoe totals change only when a segment closes). |
+| 2026-10-17 | connect-client 1.1.0 applied (latest stable on 2026-10-17; 1.2.0 is alpha only). Release export allowlist adds PermissionsRationaleActivity (static text), ViewPermissionUsageActivity (START_VIEW_PERMISSION_USAGE) and the library's HealthDataSdkService (code rejects callers other than the Health Connect package; product owner approved keeping it). |
+| 2026-10-17 | Step counts are written only by StepReconciler; SessionManager creates segments PENDING and never touches steps. Not session state, so the "only SessionManager changes session state" rule is unchanged. |
 
 ## Open items carried to later phases
 - SessionDao/ActiveSessionDao write methods must be called only via SessionManager/RoomSessionStore (convention; not enforced by visibility).
-- Phase 5: new segments are saved with steps = null and status PENDING; reconciliation fills them. Open segments are excluded from totals.
+- Open segments are excluded from totals (the Home card's "so far" is display-only).
+- Phase 5 manual check on an Android 9–13 phone (Health Connect app path, `HealthDataSdkService`, rationale via ACTION_SHOW_PERMISSIONS_RATIONALE) was not possible on the Android 16 Pixel; do it in Phase 8 if a device is available.
+- Shoe detail's "Session running" line has no "so far" count (Home card only); add in Phase 7 if wanted.
+- Re-verify `HealthDataSdkService`'s caller check (bytecode) whenever connect-client is upgraded.
 - Phase 6: route tag taps through `Debouncer` then SessionManager (decide what a tap does on a paused pair — probably Resume).
 - Phase 7/8: Shoe detail history shows every session (no paging); revisit if lists get long. A visible live timer on the session card was left out.
-- Phase 5: Health Connect rationale `activity-alias` must be exported → add it to the release export allowlist in `app/build.gradle.kts`.
-- Phase 5/6: when NFC / READ_STEPS are declared, no audit change needed (already allowlisted).
+- Phase 6: when NFC is declared, no audit change needed (already allowlisted).
 - Phase 8: manual TalkBack and right-to-left check (T25); automated checks cover labels, 48dp targets and 200% font.
 - Phase 8: R8 `packageScope` currently limits optimisation to androidx/kotlin/kotlinx; decide whether app code should be shrunk too. Room ships its own keep rule for generated `_Impl` classes.
 - Phase 8: `cross-platform-transfer` (iOS) section of data-extraction rules not yet handled.
