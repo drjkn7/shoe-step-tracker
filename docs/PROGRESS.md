@@ -12,8 +12,9 @@
 - [ ] Phase 8: Hardening and release
 
 ## Next up: Phase 6 hand-off (read this first after /clear)
-Status: Phase 6 plan approved (2026-10-18) and built on `feature/phase-6-nfc`; all local checks and on-device
-tests pass. Waiting for the product owner's "go" (after trying a real tag), then: push → PR → CI (confirm
+Status: Phase 6 plan approved (2026-10-18), built on `feature/phase-6-nfc` and confirmed with a real tag by the product
+owner (who also approved the two NFC entry aliases); all local checks and on-device
+tests pass. "go" given: push → PR → CI (confirm
 the emulator job ran TagDbTest + TagScreensTest) → rebase-merge.
 
 What Phase 6 added (package `nfc/`, UI in `ui/nfc/`):

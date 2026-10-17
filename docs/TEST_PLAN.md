@@ -7,10 +7,10 @@ Status: ☐ not run · ✅ passed · ❌ failed. Phase = when it first becomes t
 | T01 | First run and permission | Rationale shown, permission granted, Home appears | 5 | ◐ banner + rationale automated (StepsScreensTest); grant on phone manual |
 | T02 | Permission denied or revoked | App usable; "Steps counted later" with an Allow action | 5 | ◐ automated (StepsScreensTest); revoke on phone manual |
 | T03 | Add shoe validation (empty, 200 chars, negative price) | Clear messages; valid saves | 3 | ✅ (ShoeScreensTest) |
-| T04 | Register a blank tag | Records written and read back; shoe linked | 6 | ◐ flow automated (TagCoordinatorTest, TagScreensTest, fake tag); real sticker manual |
+| T04 | Register a blank tag | Records written and read back; shoe linked | 6 | ✅ automated + real tag on Pixel 9 Pro (Android 17), product owner 2026-10-18 |
 | T05 | Lock a tag | Warning first; overwrite fails afterwards | 6 | ◐ warning + lock request automated; real lock manual (use a spare tag) |
-| T06 | Tap with app closed | Opens the right shoe; session running; haptic | 6 | ◐ routing automated (TagScreensTest); real tap with app closed manual |
-| T07 | Tap with app open | Session starts; no duplicate screens | 6 | ◐ automated (TagScreensTest); real tap manual |
+| T06 | Tap with app closed | Opens the right shoe; session running; haptic | 6 | ✅ automated routing + real tag on Pixel 9 Pro (Android 17), product owner 2026-10-18 |
+| T07 | Tap with app open | Session starts; no duplicate screens | 6 | ✅ automated + real tag on Pixel 9 Pro (Android 17), product owner 2026-10-18 |
 | T08 | Manual Start | Same state as a tag start | 4 | ☐ |
 | T09 | End after ~200 steps | Steps close to Health Connect; totals update | 5 | ☐ |
 | T10 | Pause and resume | Paused steps excluded; two segments | 5 | ☐ |
