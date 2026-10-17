@@ -39,6 +39,8 @@ class StepReconcilerTest {
             Row(null, StepsRead.Count(500), SETTLE_MILLIS - 1, Outcome(500, PROVISIONAL)),
             Row(null, StepsRead.Count(500), SETTLE_MILLIS, Outcome(500, FINAL)),
             Row(400, StepsRead.Count(650), hour, Outcome(650, PROVISIONAL)), // watch synced late
+            Row(1_200, StepsRead.Count(1_000), hour, Outcome(1_000, PROVISIONAL)), // may go down (product owner)
+            Row(1_200, StepsRead.Count(1_000), SETTLE_MILLIS, Outcome(1_000, FINAL)),
             Row(400, StepsRead.Count(650), SETTLE_MILLIS, Outcome(650, FINAL)),
             // No data: keep waiting for a day, then unavailable (or keep the number already shown).
             Row(null, StepsRead.NoData, hour, null),
