@@ -45,6 +45,20 @@ android {
     buildFeatures {
         compose = true
     }
+    testOptions {
+        managedDevices {
+            localDevices {
+                // Emulator for on-device tests in CI: ./gradlew pixel2api30DebugAndroidTest
+                // https://developer.android.com/studio/test/managed-devices
+                create("pixel2api30") {
+                    device = "Pixel 2"
+                    apiLevel = 30
+                    // Automated Test Device image: headless and faster; no Google services needed.
+                    systemImageSource = "aosp-atd"
+                }
+            }
+        }
+    }
 }
 
 dependencies {
