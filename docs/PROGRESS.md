@@ -4,7 +4,7 @@
 - [x] Phase 0: Preflight and repository
 - [x] Phase 1: Foundations
 - [x] Phase 2: Data layer
-- [ ] Phase 3: Shoes UI
+- [x] Phase 3: Shoes UI
 - [ ] Phase 4: Sessions
 - [ ] Phase 5: Health Connect and offline step resolution
 - [ ] Phase 6: NFC
@@ -31,11 +31,14 @@
 | 2026-10-17 | Schema v1: shoes (unique tag_uuid), sessions, segments (cascade deletes), active_session (PK fixed at 1 plus triggers rejecting other ids, created in onOpen). Stats computed in SQL, never stored; negative segment durations count as 0; average = total steps / ended sessions. |
 | 2026-10-17 | ShoeValidator strips control and bidi-override characters, collapses whitespace, counts length in code points. CostCalculator returns major units with currency digits + 2 (per 1,000 steps) / + 5 (per step), HALF_UP. |
 | 2026-10-17 | DB tests are instrumented (Room needs Android). CI runs them on Gradle Managed Device `pixel2api30` (ATD image). Local on-device runs need the phone unlocked. |
+| 2026-10-17 | After adding a shoe the app opens its detail screen; Back returns to the list (product owner decision, `popUpTo(HOME)`). Edit returns to detail. || 2026-10-17 | Palette: Red, Orange, Amber, Green, Teal, Blue, Indigo, Pink (index = stored accentColor; never reorder). Selected swatch shows a tick so colour is not the only cue. || 2026-10-17 | ViewModels created via `viewModel { }` with AppContainer (no DI library). `AppNavHost(container)` lets UI tests use an in-memory database. Form state survives process death via SavedStateHandle. || 2026-10-17 | `android.injected.androidTest.leaveApksInstalledAfterRun=true` in gradle.properties: on-device tests no longer uninstall the app (which would delete real data). |
 
 ## Open items carried to next phase
 - Phase 5: Health Connect rationale `activity-alias` must be exported → add it to the release export allowlist in `app/build.gradle.kts`.
 - Phase 6/5: when NFC / READ_STEPS are declared, no audit change needed (already allowlisted).
 - Phase 4: SessionDao/ActiveSessionDao write methods must be called only from SessionManager (convention; not enforced by visibility).
+- Phase 4: enable the Start button on Shoe detail (currently disabled with a note).
+- Phase 8: manual TalkBack and right-to-left check (T25); automated checks cover labels, 48dp targets and 200% font.
 - Phase 8: R8 `packageScope` currently limits optimisation to androidx/kotlin/kotlinx; decide whether app code should be shrunk too. Room ships its own keep rule for generated `_Impl` classes.
 - Not yet handled: `cross-platform-transfer` (iOS) section of data-extraction rules — review in Phase 8 audit.
 - Gradle 10 deprecation warning (`Configuration.setVisible`) comes from AGP/KGP plugins, not our scripts; recheck on plugin updates.
