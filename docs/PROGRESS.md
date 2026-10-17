@@ -6,32 +6,21 @@
 - [x] Phase 2: Data layer (PR #6, merged)
 - [x] Phase 3: Shoes UI (PR #7, merged)
 - [x] Phase 4: Sessions (PR #8, merged)
-- [ ] Phase 5: Health Connect and offline step resolution ← **built on branch `feature/phase-5-health-connect`, awaiting product-owner "go" and PR**
-- [ ] Phase 6: NFC
+- [x] Phase 5: Health Connect and offline step resolution (PR #9, merged)
+- [ ] Phase 6: NFC ← **branch `feature/phase-6-nfc`, plan awaiting "approved"**
 - [ ] Phase 7: Stats, export, settings
 - [ ] Phase 8: Hardening and release
 
-## Next up: Phase 5 hand-off (read this first after /clear)
-Status: Phase 5 plan approved (2026-10-17) and built on `feature/phase-5-health-connect`. Waiting for the
-product owner's "go", then: push → PR → CI (confirm the emulator job ran StepsDbTest + StepsScreensTest)
-→ rebase-merge.
+## Next up: Phase 6 hand-off (read this first after /clear)
+Status: branch `feature/phase-6-nfc` created from main after PR #9; plan presented, waiting for the product
+owner's "approved". Nothing built yet.
 
-What Phase 5 added (package `steps/`):
-- `StepsSource` (access + read) with `HealthConnectStepsSource` (READ_STEPS only, aggregate COUNT_TOTAL;
-  errors → UNAVAILABLE / Failed, never thrown or logged). Tests use fakes via `AppContainer(stepsSourceFactory)`.
-- `StepReconciler`: the only writer of step counts. `reconcile()` fills closed PENDING/PROVISIONAL segments
-  (PENDING first, max 100 per run) through `RoomStepStore` → `StepsDao.saveSteps`, a guarded UPDATE (segment
-  must still end at the read's end time and not be FINAL/UNAVAILABLE). `stepsSoFar(sessionId)` is display-only.
-  Rules live in `StepReconciler.decide()` (one-day settle, 30-day history limit).
-- Runs only while the app is visible: MainActivity on each foreground and each session state change; Home
-  after the permission screen closes. "So far" re-reads every minute while Home is shown.
-- UI: Home banner (Allow / Get Health Connect / not available), "About N steps so far" or "Steps counted
-  later" on the session card, "About" on provisional totals, "(counted later)" in history while pending.
-  `PermissionsRationaleActivity` + `.ViewPermissionUsageActivity` alias show the privacy text.
-- Queries: `has_unfinal_steps` now means PENDING/PROVISIONAL only (UNAVAILABLE is settled); history adds
-  `has_pending_steps`. New DAO only, no schema change: DB stays at version 1.
-- Tests: StepReconcilerTest (decision table, reconcile, so-far), StepsLabel in FormattersTest; on-device
-  StepsDbTest (SQL guard, ordering, flags, end-to-end with SessionManager) and StepsScreensTest.
+Scope (TEST_PLAN T04–T07, T11–T15, T29): register a tag to a pair (write a random-UUID NDEF record plus an
+Android Application Record, read it back, save `tag_uuid`), optional lock, tap to start / second tap / switch,
+unknown or blank tag → "Register this tag?", strict payload parser (tags are untrusted input), taps routed
+through `core/Debouncer` then SessionManager. Needs approval: NFC permission (already allowlisted) and an
+NDEF_DISCOVERED intent filter on the already-exported MainActivity; no new dependency expected.
+Phase 5 summary (StepsSource, StepReconciler, Health Connect UI) is in the decisions log and git history.
 
 ## Decisions log
 | Date | Decision |

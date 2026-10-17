@@ -4,8 +4,8 @@ Status: ☐ not run · ✅ passed · ❌ failed. Phase = when it first becomes t
 
 | ID | Scenario | Expected | Phase | Status |
 |---|---|---|---|---|
-| T01 | First run and permission | Rationale shown, permission granted, Home appears | 5 | ☐ |
-| T02 | Permission denied or revoked | App usable; "Waiting for step data" with a fix action | 5 | ☐ |
+| T01 | First run and permission | Rationale shown, permission granted, Home appears | 5 | ◐ banner + rationale automated (StepsScreensTest); grant on phone manual |
+| T02 | Permission denied or revoked | App usable; "Steps counted later" with an Allow action | 5 | ◐ automated (StepsScreensTest); revoke on phone manual |
 | T03 | Add shoe validation (empty, 200 chars, negative price) | Clear messages; valid saves | 3 | ✅ (ShoeScreensTest) |
 | T04 | Register a blank tag | Records written and read back; shoe linked | 6 | ☐ |
 | T05 | Lock a tag | Warning first; overwrite fails afterwards | 6 | ☐ |
@@ -22,7 +22,7 @@ Status: ☐ not run · ✅ passed · ❌ failed. Phase = when it first becomes t
 | T16 | Kill app mid-session | Session still running | 4 | ☐ |
 | T17 | Reboot mid-session | Session still running | 4 | ☐ |
 | T18 | Airplane mode full flow | Everything works | 5 | ☐ |
-| T19 | Provisional becomes final | After 30+ min and app reopen; never decreases | 5 | ☐ |
+| T19 | Provisional becomes final | After 1 day and app reopen (product owner decision); never decreases | 5 | ◐ rules automated (StepReconcilerTest); "never decreases" not enforced: a late Health Connect correction can lower a provisional count |
 | T20 | Time zone / DST change | Durations and timestamps correct | 4 | ☐ |
 | T21 | Phone + watch both write steps | Not double counted | 5 | ☐ |
 | T22 | Cost per step edge cases | Dash if no price or zero steps; 0 for free shoes | 2 | ✅ (CostCalculatorTest; UI check in Phase 7) |
@@ -33,4 +33,4 @@ Status: ☐ not run · ✅ passed · ❌ failed. Phase = when it first becomes t
 | T27 | Merged manifest audit | No INTERNET; only READ_STEPS and NFC | 1 | ✅ (automated; re-run in Phase 8) |
 | T28 | Archive / unarchive / delete | History kept on archive, removed on delete | 3 | ✅ (ShoeScreensTest + DatabaseTest) |
 | T29 | Same UUID on two shoes | Blocked | 6 | ◐ DB level ✅ (DatabaseTest); UI in Phase 6 |
-| T30 | Android 9-13 without Health Connect | Onboarding explains and links to install | 5 | ☐ |
+| T30 | Android 9-13 without Health Connect | Onboarding explains and links to install | 5 | ◐ banner automated (StepsScreensTest); needs an Android 9–13 phone |
