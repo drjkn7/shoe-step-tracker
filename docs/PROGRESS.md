@@ -7,30 +7,19 @@
 - [x] Phase 3: Shoes UI (PR #7, merged)
 - [x] Phase 4: Sessions (PR #8, merged)
 - [x] Phase 5: Health Connect and offline step resolution (PR #9, merged)
-- [ ] Phase 6: NFC ← **built on branch `feature/phase-6-nfc`, awaiting product-owner "go" and PR**
-- [ ] Phase 7: Stats, export, settings
+- [x] Phase 6: NFC (PR #10, merged; step-count decision PR #11)
+- [ ] Phase 7: Stats, export, settings ← **branch `feature/phase-7-stats-export-settings`, plan awaiting "approved"**
 - [ ] Phase 8: Hardening and release
 
-## Next up: Phase 6 hand-off (read this first after /clear)
-Status: Phase 6 plan approved (2026-10-18), built on `feature/phase-6-nfc` and confirmed with a real tag by the product
-owner (who also approved the two NFC entry aliases); all local checks and on-device
-tests pass. "go" given: push → PR → CI (confirm
-the emulator job ran TagDbTest + TagScreensTest) → rebase-merge.
+## Next up: Phase 7 hand-off (read this first after /clear)
+Status: branch `feature/phase-7-stats-export-settings` created from main after PR #11; plan presented,
+waiting for the product owner's "approved". Nothing built yet.
 
-What Phase 6 added (package `nfc/`, UI in `ui/nfc/`):
-- `TagFormat`: on-tag format (one MIME record `application/vnd.io.github.drjkn7.shoestep` holding a random
-  v4 UUID in lowercase ASCII, plus an Android Application Record) and the strict parser (size and record
-  limits first; Ours / Blank / Foreign / Malformed / Unsupported). Pure Kotlin, JVM-tested.
-- `AndroidTags` / `AndroidTagHandle`: Tag/Intent → `TappedTag`; write → read back → optional lock.
-  Debounce key = tag hardware id, so a just-linked tag can't start a session while the phone rests on it.
-- `TagCoordinator` (one per app, in AppContainer): Debouncer → route tap → SessionManager. Prompts
-  (NewTag, PickPair, RunningTap, Switch, Archived), linking state, "Tag linked" notice, navigation events.
-- `RoomTagStore` + `ShoeDao.setTagUuid` (check-then-update in one write transaction; unique index is the backstop).
-- MainActivity: NDEF_DISCOVERED intent (app closed, T06) and foreground dispatch while visible (T07; keeps
-  tap-to-pay working, unlike reader mode). Haptic CONFIRM via View (no VIBRATE permission).
-- Shoe detail "NFC tag" card: Link / Replace / Unlink; NFC off → Settings; no NFC → explained, no buttons.
-- Tests: TagFormatTest, TagCoordinatorTest (JVM); TagDbTest, TagScreensTest (on-device, simulated taps).
-  UI tests must not call SessionManager from inside waits (see TagScreensTest.active()): it deadlocked once.
+Scope: Settings (default currency, step-counting status, privacy statement, open-source licences, version),
+CSV export through the system file picker (T23 CSV injection), fuller pair stats (T22 UI check).
+Needs approval: applying the pre-approved DataStore 1.2.1 (re-checked: latest stable on 2026-10-18).
+No new permission (the file picker needs none) and no new exported component expected.
+Phase 6 summary (TagFormat, TagCoordinator, NFC entry aliases) is in the decisions log and git history.
 
 ## Decisions log
 | Date | Decision |
