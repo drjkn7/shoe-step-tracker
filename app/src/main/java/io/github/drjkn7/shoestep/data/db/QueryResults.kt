@@ -22,6 +22,13 @@ data class ShoeWithStats(
         get() = if (endedSessionCount == 0) null else totalSteps / endedSessionCount
 }
 
+/** The running or paused session plus the shoe details the Home card shows. */
+data class ActiveSessionWithShoe(
+    @Embedded val session: SessionEntity,
+    @ColumnInfo(name = "shoe_name") val shoeName: String,
+    @ColumnInfo(name = "shoe_accent_color") val shoeAccentColor: Int,
+)
+
 /** One row of a shoe's session history. */
 data class SessionWithSteps(
     @Embedded val session: SessionEntity,

@@ -5,11 +5,13 @@ import io.github.drjkn7.shoestep.core.Clock
 import io.github.drjkn7.shoestep.core.SystemWallClock
 import io.github.drjkn7.shoestep.data.ShoeRepository
 import io.github.drjkn7.shoestep.data.db.ShoeStepDatabase
+import io.github.drjkn7.shoestep.session.RoomSessionStore
+import io.github.drjkn7.shoestep.session.SessionManager
 
 /**
  * Manual dependency injection: the single place where app-wide objects are created.
- * Everything is lazy so nothing heavy runs at app start. Later phases add SessionManager
- * and the Health Connect StepsSource here.
+ * Everything is lazy so nothing heavy runs at app start. Phase 5 adds
+ * the Health Connect StepsSource here.
  */
 class AppContainer(
     context: Context,
@@ -23,4 +25,7 @@ class AppContainer(
     val database: ShoeStepDatabase by lazy { databaseFactory(appContext) }
 
     val shoeRepository: ShoeRepository by lazy { ShoeRepository(database.shoeDao(), clock) }
+
+    /** The only object allowed to change session state; one per app so commands never overlap. */
+    val sessionManager: SessionManager by lazy { SessionManager(RoomSessionStore(database), clock) }
 }
