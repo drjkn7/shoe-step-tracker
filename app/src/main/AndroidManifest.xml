@@ -35,8 +35,18 @@
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-            <!-- Tapping one of our tags opens the app even when it is closed (T06). Tag data is
-                 untrusted: it only reaches TagFormat.parse (product owner approved this filter). -->
+        </activity>
+
+        <!-- Tapping one of our tags opens the app even when it is closed (T06). Tag data is untrusted:
+             it only reaches TagFormat.parse. MainActivity accepts tag intents only via these aliases.
+             Android 17+ (values-v37): the alias is guarded by DISPATCH_NFC_MESSAGE, so only the NFC
+             system service can open it (required for NFC dispatch when targeting SDK 37). -->
+        <activity-alias
+            android:name=".NfcTagEntry"
+            android:enabled="@bool/nfc_entry_protected"
+            android:exported="true"
+            android:permission="android.permission.DISPATCH_NFC_MESSAGE"
+            android:targetActivity=".MainActivity">
             <intent-filter>
                 <action android:name="android.nfc.action.NDEF_DISCOVERED" />
 
@@ -44,7 +54,23 @@
 
                 <data android:mimeType="application/vnd.io.github.drjkn7.shoestep" />
             </intent-filter>
-        </activity>
+        </activity-alias>
+
+        <!-- Android 9–16 don't define DISPATCH_NFC_MESSAGE, so their NFC service could not open a guarded
+             alias; this unguarded one is enabled there instead (accepted risk: fake tag intents). -->
+        <activity-alias
+            android:name=".NfcTagEntryLegacy"
+            android:enabled="@bool/nfc_entry_legacy"
+            android:exported="true"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.nfc.action.NDEF_DISCOVERED" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+
+                <data android:mimeType="application/vnd.io.github.drjkn7.shoestep" />
+            </intent-filter>
+        </activity-alias>
 
         <!-- Health Connect privacy rationale, Android 13 and lower. -->
         <activity

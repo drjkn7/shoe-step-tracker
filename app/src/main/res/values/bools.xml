@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Which NFC entry point is enabled (see AndroidManifest.xml). Android 17+ uses values-v37. -->
+    <bool name="nfc_entry_protected">false</bool>
+    <bool name="nfc_entry_legacy">true</bool>
+</resources>

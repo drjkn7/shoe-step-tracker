@@ -2,7 +2,10 @@ package io.github.drjkn7.shoestep
 
 import android.app.PendingIntent
 import android.content.Intent
+import android.content.IntentFilter
 import android.nfc.NfcAdapter
+import android.nfc.tech.Ndef
+import android.nfc.tech.NdefFormatable
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -54,14 +57,21 @@ class MainActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
-        // While visible, every tag comes here (no duplicate screens, T07). Foreground dispatch,
-        // unlike reader mode, leaves tap-to-pay working while the app is open.
-        val tagIntent = Intent(this, javaClass).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
+        // While visible, every NDEF tag comes here (no duplicate screens, T07). Foreground dispatch,
+        // unlike reader mode, leaves tap-to-pay working while the app is open. It targets the same
+        // entry alias as a tap with the app closed, so both paths are handled the same way.
+        val tagIntent = Intent().setClassName(this, tagEntry()).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
         // The system adds the tag to this intent, so it must be mutable (the flag exists from Android 12;
         // before that every PendingIntent was mutable).
         val mutable = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) PendingIntent.FLAG_MUTABLE else 0
         val pending = PendingIntent.getActivity(this, 0, tagIntent, mutable)
-        nfcAdapter?.enableForegroundDispatch(this, pending, null, null)
+        // Only NDEF-capable tags (ours, blank or other NDEF content); bank cards and the like are skipped.
+        val filters = arrayOf(
+            IntentFilter(NfcAdapter.ACTION_NDEF_DISCOVERED).apply { addDataType("*/*") },
+            IntentFilter(NfcAdapter.ACTION_TECH_DISCOVERED),
+        )
+        val techLists = arrayOf(arrayOf(Ndef::class.java.name), arrayOf(NdefFormatable::class.java.name))
+        nfcAdapter?.enableForegroundDispatch(this, pending, filters, techLists)
     }
 
     override fun onPause() {
@@ -69,8 +79,18 @@ class MainActivity : ComponentActivity() {
         nfcAdapter?.disableForegroundDispatch(this)
     }
 
+    /**
+     * Acts only on tag intents that came through our NFC entry alias. On Android 17+ that alias is
+     * guarded by DISPATCH_NFC_MESSAGE, so another app can't fake a tap by sending MainActivity an
+     * NFC intent (it would arrive without the alias as its component and be ignored).
+     */
     private fun handleTagIntent(intent: Intent?) {
+        if (intent?.component?.className != tagEntry()) return
         val tapped = AndroidTags.fromIntent(intent) ?: return
         lifecycleScope.launch { container.tagCoordinator.onTag(tapped) }
     }
+
+    /** The NFC entry alias enabled on this Android version (see AndroidManifest.xml and values-v37). */
+    private fun tagEntry(): String =
+        if (resources.getBoolean(R.bool.nfc_entry_protected)) "$packageName.NfcTagEntry" else "$packageName.NfcTagEntryLegacy"
 }

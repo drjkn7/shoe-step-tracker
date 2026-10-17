@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Android 17+: NFC intents only reach activities guarded by DISPATCH_NFC_MESSAGE. -->
+    <bool name="nfc_entry_protected">true</bool>
+    <bool name="nfc_entry_legacy">false</bool>
+</resources>
