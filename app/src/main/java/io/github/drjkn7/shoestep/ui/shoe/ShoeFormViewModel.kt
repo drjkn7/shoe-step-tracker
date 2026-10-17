@@ -63,6 +63,10 @@ class ShoeFormViewModel(
     var errors by mutableStateOf<Map<ShoeField, FieldError>>(emptyMap())
         private set
 
+    /** True after Save finds problems; the screen shows a popup listing them until OK is tapped. */
+    var showProblemsDialog by mutableStateOf(false)
+        private set
+
     private var showErrors = savedState[KEY_SHOW_ERRORS] ?: false
 
     init {
@@ -102,7 +106,10 @@ class ShoeFormViewModel(
         if (status == FormStatus.Saving || status is FormStatus.Saved) return // ignore double taps
         showErrors = true
         savedState[KEY_SHOW_ERRORS] = true
-        if (!revalidate()) return
+        if (!revalidate()) {
+            showProblemsDialog = true
+            return
+        }
 
         status = FormStatus.Saving
         viewModelScope.launch {
@@ -111,11 +118,19 @@ class ShoeFormViewModel(
             }.getOrNull()
             status = when (result) {
                 is SaveResult.Saved -> FormStatus.Saved(result.shoeId)
-                is SaveResult.Invalid -> { errors = result.errors; FormStatus.Editing }
+                is SaveResult.Invalid -> {
+                    errors = result.errors
+                    showProblemsDialog = true
+                    FormStatus.Editing
+                }
                 SaveResult.NotFound -> FormStatus.NotFound
                 null -> FormStatus.SaveFailed
             }
         }
+    }
+
+    fun dismissProblemsDialog() {
+        showProblemsDialog = false
     }
 
     fun dismissSaveError() {
