@@ -83,6 +83,10 @@ interface SessionDao {
     @Query("SELECT * FROM segments WHERE session_id = :sessionId AND end_utc IS NULL")
     suspend fun getOpenSegment(sessionId: String): SegmentEntity?
 
+    /** Running or paused sessions; normally at most one (the active one). Used by launch repair. */
+    @Query("SELECT * FROM sessions WHERE state != 'ENDED' ORDER BY start_utc, id")
+    suspend fun getUnendedSessions(): List<SessionEntity>
+
     /** Closed segments whose step count may still change (reconciled on app foreground). */
     @Query("SELECT * FROM segments WHERE end_utc IS NOT NULL AND steps_status IN (:statuses) ORDER BY end_utc")
     suspend fun getClosedSegmentsWithStatus(statuses: List<StepsStatus>): List<SegmentEntity>
@@ -116,4 +120,13 @@ interface ActiveSessionDao {
 
     @Query("SELECT x.* FROM active_session a JOIN sessions x ON a.session_id = x.id WHERE a.id = 1")
     fun observeActiveSession(): Flow<SessionEntity?>
+
+    @Query(
+        """
+        SELECT x.*, s.name AS shoe_name, s.accent_color AS shoe_accent_color
+        FROM active_session a JOIN sessions x ON a.session_id = x.id JOIN shoes s ON x.shoe_id = s.id
+        WHERE a.id = 1
+        """,
+    )
+    fun observeActiveSessionWithShoe(): Flow<ActiveSessionWithShoe?>
 }

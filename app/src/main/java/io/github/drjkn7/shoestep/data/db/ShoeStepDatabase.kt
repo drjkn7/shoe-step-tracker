@@ -21,8 +21,9 @@ abstract class ShoeStepDatabase : RoomDatabase() {
     companion object {
         const val FILE_NAME = "shoestep.db"
 
-        fun build(context: Context): ShoeStepDatabase =
-            Room.databaseBuilder(context.applicationContext, ShoeStepDatabase::class.java, FILE_NAME)
+        /** [fileName] is only changed by tests that need a real file without touching the app's data. */
+        fun build(context: Context, fileName: String = FILE_NAME): ShoeStepDatabase =
+            Room.databaseBuilder(context.applicationContext, ShoeStepDatabase::class.java, fileName)
                 .configure()
                 .build()
 
