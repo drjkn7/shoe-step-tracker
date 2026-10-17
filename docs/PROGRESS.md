@@ -5,40 +5,32 @@
 - [x] Phase 1: Foundations (PR #5, merged)
 - [x] Phase 2: Data layer (PR #6, merged)
 - [x] Phase 3: Shoes UI (PR #7, merged)
-- [ ] Phase 4: Sessions ← **next** (branch `feature/phase-4-sessions` created; plan not yet approved)
+- [ ] Phase 4: Sessions ← **built on branch `feature/phase-4-sessions`, awaiting product-owner "go" and PR**
 - [ ] Phase 5: Health Connect and offline step resolution
 - [ ] Phase 6: NFC
 - [ ] Phase 7: Stats, export, settings
 - [ ] Phase 8: Hardening and release
 
 ## Next up: Phase 4 hand-off (read this first after /clear)
-Status: Phase 4 has **not** been planned in detail or approved yet. First action: present the Phase 4
-plan (Plan Mode style: plain English, then wait for "approved").
+Status: Phase 4 plan approved (2026-10-17) and built on `feature/phase-4-sessions`; all local checks and
+on-device tests pass. Waiting for the product owner's "go", then: push → PR → CI (confirm the emulator job
+ran SessionManagerDbTest + SessionScreensTest) → rebase-merge.
 
-Product owner direction (2026-10-17): manual buttons are the primary way to run sessions; NFC
-(Phase 6) is only a shortcut to the same actions. Order stays 4 (buttons) → 5 (Health Connect step
-reads) → 6 (NFC), so step reading can be tested without tags. Proposed (to confirm in the plan):
-- Shoe detail: Start when idle; Pause + End while running; Resume + End while paused.
-- Home: an "active session" card at the top with the same Pause/Resume/End buttons.
-- Starting a different shoe while one is active: "Switch to this pair?" confirmation (ends current with reason SWITCH).
-- End asks for a quick confirmation.
-- Session history list on Shoe detail. Steps show 0 until Phase 5.
-
-Brief's Phase 4 scope: SessionManager (the ONLY code that changes session state; each action one DB
-transaction, idempotent, injected Clock), state machine Idle→Running→Paused→Ended plus Switch,
-restore active session on launch (survives process death/reboot), debounce helper (2 s, used by NFC in
-Phase 6), reject negative durations. Table-driven unit tests: every state × event, idempotency,
-debounce, process-death restore, negative-duration guard. Acceptance: run a manual session, kill the
-app mid-session, reopen, session still running (T08, T16, T17, T20).
-
-Already built that Phase 4 reuses:
-- `data/db/Daos.kt`: `SessionDao` (insert/update session and segment, open segment, history) and
-  `ActiveSessionDao` (single-row upsert/clear/observe). DB triggers forbid a second active row.
-- `core/Clock.kt` (+ `FakeClock` in `src/test`), `data/model/Enums.kt` (SessionState, EndReason, StepsStatus).
-- `ui/shoe/ShoeDetailScreen.kt`: disabled "Start session" button waiting for Phase 4.
-- `ui/home/HomeScreen.kt`: RUNNING badge already driven by `ShoeWithStats.isActive`.
-- `AppContainer` (add SessionManager there), `ui/TestApp.kt` `testContainer()` for UI tests.
-- Room transactions: `db.withWriteTransaction { }` (androidx.room3).
+What Phase 4 added:
+- `session/SessionManager.kt`: the ONLY code that changes session state. Commands: start, switchTo,
+  pause(sessionId), resume(sessionId), end(sessionId), endForShoe(shoeId); each is one transaction under a
+  Mutex, idempotent (pause/resume/end name their session, so stale or repeated presses do nothing).
+  `restore()` repairs inconsistent data once per launch (runs automatically before the first command or
+  observation). Results: Done / NoChange / NeedsSwitch / ShoeUnavailable.
+- `session/SessionStore.kt`: small storage interface; `RoomSessionStore` is the real one, `FakeSessionStore`
+  (src/test) lets the state machine be unit-tested on the JVM.
+- `core/Debouncer.kt`: 2 s per-key repeat guard for Phase 6 NFC (not used yet).
+- UI: Start / Pause+End / Resume+End on Shoe detail, "Current session" card on Home, history list on Shoe
+  detail, "End this session?", "Switch to this pair?", and an archive confirmation when the pair has a
+  session. Steps show 0 "(counted later)" until Phase 5.
+- Tests: SessionManagerTest (36-row state × event table + timing, clock-backwards, restore, rollback,
+  concurrency), DebouncerTest, FormattersTest additions; on-device SessionManagerDbTest (real DB file,
+  close/reopen = process death, T16/T17) and SessionScreensTest (T08, T20, 200% font, 48dp).
 
 ## Decisions log
 | Date | Decision |
@@ -66,10 +58,17 @@ Already built that Phase 4 reuses:
 | 2026-10-17 | `android.injected.androidTest.leaveApksInstalledAfterRun=true` in gradle.properties: on-device tests no longer uninstall the app (which would delete real data). Verified with a marker file. |
 | 2026-10-17 | Save with invalid input shows a "Can't save yet" popup listing each problem with an OK button (product owner request: inline error was off-screen on a tall phone). Fields stay marked. |
 | 2026-10-17 | Product owner: manual Start/Pause/Resume/End buttons are the primary session controls; NFC is a later shortcut. Phase order 4 → 5 → 6 unchanged. |
+| 2026-10-17 | Phase 4 plan approved: Start / Pause+End / Resume+End; Home "Current session" card; Switch asks "Switch to this pair?" (old session ends with reason SWITCH, new one starts at the same instant); End asks to confirm, Pause/Resume don't. Archived pairs have no Start; archiving a pair with a session asks first and ends it; deleting ends it first. Long-running sessions allowed (reminders out of scope for M1). |
+| 2026-10-17 | SessionManager is unit-tested through a `SessionStore` interface with an in-memory fake (Room needs Android); `RoomSessionStore` is covered by on-device tests. No schema change (new DAO queries only), so DB stays at version 1. |
+| 2026-10-17 | Clock going backwards: times are moved forward, never saved negative — a segment ends at its own start (0 min), resume/switch never start before the last recorded time. Launch repair never invents walking time (orphan sessions end at their last known time). |
+| 2026-10-17 | Debouncer (for NFC, Phase 6): per tag, 2 s; every read restarts the timer, so a phone resting on a tag acts once; a backwards clock jump lets the read through rather than blocking the tag. |
+| 2026-10-17 | Session times are shown in the time zone they were recorded in (stored `zone_id`). |
 
 ## Open items carried to later phases
-- Phase 4: SessionDao/ActiveSessionDao write methods must be called only from SessionManager (convention; not enforced by visibility).
-- Phase 4: enable the Start button on Shoe detail (currently disabled with a note).
+- SessionDao/ActiveSessionDao write methods must be called only via SessionManager/RoomSessionStore (convention; not enforced by visibility).
+- Phase 5: new segments are saved with steps = null and status PENDING; reconciliation fills them. Open segments are excluded from totals.
+- Phase 6: route tag taps through `Debouncer` then SessionManager (decide what a tap does on a paused pair — probably Resume).
+- Phase 7/8: Shoe detail history shows every session (no paging); revisit if lists get long. A visible live timer on the session card was left out.
 - Phase 5: Health Connect rationale `activity-alias` must be exported → add it to the release export allowlist in `app/build.gradle.kts`.
 - Phase 5/6: when NFC / READ_STEPS are declared, no audit change needed (already allowlisted).
 - Phase 8: manual TalkBack and right-to-left check (T25); automated checks cover labels, 48dp targets and 200% font.
