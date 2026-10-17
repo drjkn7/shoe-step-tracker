@@ -1,23 +1,105 @@
 <resources>
     <string name="app_name">Shoe Step Tracker</string>
 
-    <!-- Navigation -->
+    <!-- Navigation and common actions -->
     <string name="nav_back">Back</string>
     <string name="nav_settings">Settings</string>
     <string name="nav_add_shoe">Add shoe</string>
+    <string name="action_save">Save</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="action_delete">Delete</string>
+    <string name="action_edit">Edit</string>
+    <string name="action_archive">Archive</string>
+    <string name="action_unarchive">Unarchive</string>
+    <string name="action_more">More options</string>
+    <string name="action_ok">OK</string>
+    <string name="action_clear">Clear</string>
+    <string name="dash">–</string>
 
-    <!-- Screen titles -->
+    <!-- Home -->
     <string name="title_home">My shoes</string>
+    <string name="home_show_archived">Show archived</string>
+    <string name="home_empty_title">No shoes yet</string>
+    <string name="home_empty_body">Tap + to add your first pair. Later you can stick an NFC tag on each pair and tap your phone against it to start counting steps.</string>
+    <string name="home_empty_archived">No archived shoes.</string>
+    <string name="home_running_badge">Running</string>
+    <string name="home_archived_badge">Archived</string>
+    <plurals name="steps_count">
+        <item quantity="one">%1$s step</item>
+        <item quantity="other">%1$s steps</item>
+    </plurals>
+
+    <!-- Add / edit form -->
     <string name="title_add_shoe">Add shoe</string>
     <string name="title_edit_shoe">Edit shoe</string>
-    <string name="title_shoe_detail">Shoe</string>
-    <string name="title_settings">Settings</string>
+    <string name="field_name">Name</string>
+    <string name="field_name_hint">For example, Daily trainers</string>
+    <string name="field_brand">Brand (optional)</string>
+    <string name="field_model">Model (optional)</string>
+    <string name="field_type">Type</string>
+    <string name="field_price">Price (optional)</string>
+    <string name="field_currency">Currency</string>
+    <string name="field_purchase_date">Purchase date (optional)</string>
+    <string name="field_purchase_date_none">Not set</string>
+    <string name="field_purchase_date_pick">Choose purchase date</string>
+    <string name="field_purchase_date_clear">Clear purchase date</string>
+    <string name="field_colour">Colour</string>
+    <string name="char_counter">%1$d/%2$d</string>
+    <string name="currency_search">Search currency</string>
+    <string name="currency_choose">Choose currency</string>
+    <string name="currency_item">%1$s – %2$s</string>
+    <string name="form_not_found">This shoe no longer exists.</string>
 
-    <!-- Placeholders (Phase 1 only; replaced in later phases) -->
-    <string name="placeholder_home">Your shoes will appear here.</string>
-    <string name="placeholder_open_example">Open example shoe</string>
-    <string name="placeholder_add_edit">The shoe form will appear here.</string>
-    <string name="placeholder_detail">Stats and sessions for this shoe will appear here.</string>
-    <string name="placeholder_edit">Edit this shoe</string>
+    <!-- Validation messages -->
+    <string name="error_name_required">Enter a name</string>
+    <string name="error_too_long">Too long: maximum %1$d characters</string>
+    <string name="error_price_invalid">Enter a number such as 129.99</string>
+    <string name="error_price_negative">Price can\'t be negative</string>
+    <string name="error_price_decimals">Too many decimal places for %1$s</string>
+    <string name="error_price_too_large">Price is too high</string>
+    <string name="error_currency_invalid">Choose a currency</string>
+    <string name="error_date_future">Date can\'t be in the future</string>
+    <string name="error_date_too_old">Date is too far in the past</string>
+    <string name="error_colour_invalid">Choose a colour</string>
+    <string name="error_save_failed">Couldn\'t save. Please try again.</string>
+
+    <!-- Shoe types -->
+    <string name="type_road_running">Road running</string>
+    <string name="type_trail_running">Trail running</string>
+    <string name="type_hiking">Hiking</string>
+    <string name="type_walking">Walking</string>
+    <string name="type_gym_training">Gym / training</string>
+    <string name="type_casual">Casual</string>
+    <string name="type_formal_work">Formal / work</string>
+    <string name="type_other">Other</string>
+
+    <!-- Palette (names are read by TalkBack) -->
+    <string name="colour_red">Red</string>
+    <string name="colour_orange">Orange</string>
+    <string name="colour_amber">Amber</string>
+    <string name="colour_green">Green</string>
+    <string name="colour_teal">Teal</string>
+    <string name="colour_blue">Blue</string>
+    <string name="colour_indigo">Indigo</string>
+    <string name="colour_pink">Pink</string>
+
+    <!-- Shoe detail -->
+    <string name="title_shoe_detail">Shoe</string>
+    <string name="detail_no_price">No price</string>
+    <string name="detail_purchased">Purchased %1$s</string>
+    <string name="detail_stats_title">Stats</string>
+    <string name="detail_total_steps">Total steps</string>
+    <string name="detail_sessions">Sessions</string>
+    <string name="detail_cost_per_1000">Cost per 1,000 steps</string>
+    <string name="detail_start">Start session</string>
+    <string name="detail_start_coming">Sessions arrive in the next update.</string>
+    <string name="detail_archived_note">This shoe is archived. Its history is kept.</string>
+
+    <!-- Delete confirmation (SEC-11) -->
+    <string name="delete_title">Delete %1$s?</string>
+    <string name="delete_body">This permanently removes the shoe and all its sessions. This can\'t be undone.</string>
+
+    <!-- Settings (Phase 7) -->
+    <string name="title_settings">Settings</string>
     <string name="placeholder_settings">Settings will appear here.</string>
 </resources>
