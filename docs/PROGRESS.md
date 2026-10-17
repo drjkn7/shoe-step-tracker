@@ -2,7 +2,7 @@
 
 ## Phases
 - [x] Phase 0: Preflight and repository
-- [ ] Phase 1: Foundations
+- [x] Phase 1: Foundations
 - [ ] Phase 2: Data layer
 - [ ] Phase 3: Shoes UI
 - [ ] Phase 4: Sessions
@@ -20,10 +20,16 @@
 | 2026-10-17 | CI runs `./gradlew check assembleDebug`. Phase 1 wires `verifyNoInternetPermission` into `check`, so CI enforces it without a workflow change. |
 | 2026-10-17 | CI uses JDK 25 (Temurin), matching `gradle/gradle-daemon-jvm.properties`. |
 | 2026-10-17 | GitHub Actions pinned to full commit SHAs; Dependabot updates them weekly. CodeQL uses `build-mode: manual` because Kotlin analysis requires a build. |
+| 2026-10-17 | Phase 1 libraries approved (see `gradle/libs.versions.toml`). Kotlin 2.4.21 via the AGP 9 `buildscript` classpath (AGP bundles 2.2.10). compileSdk/targetSdk 37 confirmed final (installed SDK has no preview codename). |
+| 2026-10-17 | Navigation uses string routes built only in `Routes` (ids validated), avoiding a serialization dependency. |
+| 2026-10-17 | Icons are Material Symbols vector files (Apache-2.0) copied from google/material-design-icons, not an icon library. |
+| 2026-10-17 | Manifest audit = `verify<Variant>Manifest` tasks behind `verifyNoInternetPermission`, wired into `check`. Permission allowlist: NFC, health.READ_STEPS, AndroidX internal DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION. Release export allowlist: MainActivity, ProfileInstallReceiver (guarded by DUMP). Exports not audited for debug (Compose tooling activities). |
+| 2026-10-17 | Backups: allowBackup=false plus explicit exclude-all rules for cloud backup and device transfer (some devices ignore allowBackup for transfers). |
+| 2026-10-17 | StrictMode lives in `src/debug`; `src/release` has a no-op. Release R8 strips Log.v/d/i. |
 
 ## Open items carried to next phase
-- Phase 1: update outdated library versions in `gradle/libs.versions.toml` (needs approval list).
-- Phase 1: `allowBackup="true"` in the manifest → fix (SEC-02).
-- Phase 1: confirm compileSdk/targetSdk 37 is the latest stable on developer.android.com.
-- Phase 1: clear template lint warnings (GradleDependency ×6, NewerVersionAvailable ×1,
-  UnusedResources ×7, RedundantLabel ×1). No lint errors at end of Phase 0.
+- Phase 5: Health Connect rationale `activity-alias` must be exported → add it to the release export allowlist in `app/build.gradle.kts`.
+- Phase 6/5: when NFC / READ_STEPS are declared, no audit change needed (already allowlisted).
+- Template leftovers awaiting product-owner OK to delete: `res/values/colors.xml` (7 UnusedResources lint warnings), `ExampleUnitTest.kt`, `ExampleInstrumentedTest.kt`.
+- Not yet handled: `cross-platform-transfer` (iOS) section of data-extraction rules — review in Phase 8 audit.
+- Gradle 10 deprecation warning (`Configuration.setVisible`) comes from AGP/KGP plugins, not our scripts; recheck on plugin updates.
