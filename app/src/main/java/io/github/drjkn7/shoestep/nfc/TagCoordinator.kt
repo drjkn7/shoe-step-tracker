@@ -58,6 +58,9 @@ sealed interface TagEvent {
     /** Show this pair; [confirm] = a session just started, resumed or switched (buzz). */
     data class OpenShoe(val shoeId: String, val confirm: Boolean) : TagEvent
 
+    /** Go back to Home (an unlinked tag's pop-up is always shown there). */
+    data object OpenHome : TagEvent
+
     /** Open the "Add shoe" form; the tag is linked to the new pair once it is saved. */
     data object AddShoe : TagEvent
 }
@@ -66,9 +69,11 @@ sealed interface TagEvent {
  * Decides what a tag tap does. Every tap goes through the [Debouncer] (T13) and then, for session
  * changes, through SessionManager, the only code that changes session state.
  *
+ * Where a tap lands is always the same (product owner): a linked tag opens its pair's page, an
+ * unlinked tag opens Home; any question is then shown on that screen.
  * - Our tag, idle → start (T06/T07). Same pair running → Pause / End / Cancel (T11).
  *   Same pair paused → resume straight away (product owner). Another pair → switch prompt (T12).
- * - Blank, unknown or orphaned tag → "Link this tag?" (T14). Broken or unsupported → ignored (T15).
+ * - Blank, unknown or orphaned tag → "New tag" pop-up (T14). Broken or unsupported → ignored (T15).
  * - While [linking] is set, the next tap writes the tag and links it to that pair (T04/T05/T29).
  */
 class TagCoordinator(
@@ -106,41 +111,51 @@ class TagCoordinator(
             is TagContent.Ours -> {
                 val shoe = store.shoeForTag(content.uuid)
                 // A tag left over from a deleted pair is treated like a new one.
-                if (shoe == null) _prompt.value = TagPrompt.NewTag else tapShoe(shoe)
+                if (shoe == null) newTag() else tapShoe(shoe)
             }
-            TagContent.Blank, TagContent.Foreign -> _prompt.value = TagPrompt.NewTag
+            TagContent.Blank, TagContent.Foreign -> newTag()
             TagContent.Malformed, TagContent.Unsupported -> Unit // ignored safely (T15)
         }
     }
 
+    private suspend fun newTag() {
+        linkAfterAdd = false // any open "Add shoe" form is left
+        _events.send(TagEvent.OpenHome)
+        _prompt.value = TagPrompt.NewTag
+    }
+
     private suspend fun tapShoe(shoe: ShoeEntity) {
-        if (shoe.archived) {
-            _prompt.value = TagPrompt.Archived(shoe.name)
-            return
-        }
+        linkAfterAdd = false // any open "Add shoe" form is left
+        if (shoe.archived) return ask(shoe.id, TagPrompt.Archived(shoe.name))
         val active = sessions.activeSession.first()
         when {
             active == null -> when (sessions.start(shoe.id)) {
                 SessionResult.Done -> open(shoe.id, confirm = true)
-                SessionResult.ShoeUnavailable -> _prompt.value = TagPrompt.Archived(shoe.name)
-                is SessionResult.NeedsSwitch -> sessions.activeSession.first()?.let {
-                    _prompt.value = TagPrompt.Switch(it.shoeName, shoe.id, shoe.name)
-                }
+                SessionResult.ShoeUnavailable -> ask(shoe.id, TagPrompt.Archived(shoe.name))
+                is SessionResult.NeedsSwitch -> sessions.activeSession.first()
+                    ?.let { ask(shoe.id, TagPrompt.Switch(it.shoeName, shoe.id, shoe.name)) }
+                    ?: open(shoe.id, confirm = false)
                 SessionResult.NoChange -> open(shoe.id, confirm = false)
             }
             active.session.shoeId != shoe.id ->
-                _prompt.value = TagPrompt.Switch(active.shoeName, shoe.id, shoe.name)
+                ask(shoe.id, TagPrompt.Switch(active.shoeName, shoe.id, shoe.name))
             active.session.state == SessionState.PAUSED -> {
                 val result = sessions.resume(active.session.id)
                 open(shoe.id, confirm = result == SessionResult.Done)
             }
-            else -> _prompt.value = TagPrompt.RunningTap(active.session.id, shoe.name)
+            else -> ask(shoe.id, TagPrompt.RunningTap(active.session.id, shoe.name))
         }
     }
 
     private suspend fun open(shoeId: String, confirm: Boolean) {
         _prompt.value = null
         _events.send(TagEvent.OpenShoe(shoeId, confirm))
+    }
+
+    /** Opens the tapped pair's page, then asks [prompt] there. */
+    private suspend fun ask(shoeId: String, prompt: TagPrompt) {
+        _events.send(TagEvent.OpenShoe(shoeId, confirm = false))
+        _prompt.value = prompt
     }
 
     // --- answers to prompts ---------------------------------------------------------------------

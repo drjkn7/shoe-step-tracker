@@ -74,6 +74,7 @@ What Phase 6 added (package `nfc/`, UI in `ui/nfc/`):
 | 2026-10-18 | Tags carry a random v4 UUID (MIME record) plus an Android Application Record. Strict parser: 1 KB / 8-record limits, exactly one of our records, exact lowercase v4 UUID; anything else is ignored. Debounce key = tag hardware id. |
 | 2026-10-18 | NFC permission (already allowlisted) and an NDEF_DISCOVERED filter on the exported MainActivity (product owner approved). Accepted risk: another app could send a fake tag intent; it can only start/pause/switch the user's own sessions, never read or delete data. Foreground dispatch (not reader mode) so tap-to-pay keeps working while the app is open. |
 | 2026-10-18 | Tag write is read back to verify (T04); a never-formatted tag can only be checked by format() succeeding (Android can't re-read it until the next tap). |
+| 2026-10-18 | Product owner (after testing a real tag): a tap always lands in the same place. Linked tag → its pair's page (session starts there; Pause/End or Switch questions are asked there). Unlinked tag → Home with the "New tag" pop-up. |
 
 ## Open items carried to later phases
 - SessionDao/ActiveSessionDao write methods must be called only via SessionManager/RoomSessionStore (convention; not enforced by visibility).
