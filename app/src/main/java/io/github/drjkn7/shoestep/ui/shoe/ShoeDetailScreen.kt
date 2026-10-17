@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
@@ -31,6 +30,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
@@ -38,11 +38,18 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.drjkn7.shoestep.R
 import io.github.drjkn7.shoestep.core.CostCalculator
+import io.github.drjkn7.shoestep.data.db.ActiveSessionWithShoe
+import io.github.drjkn7.shoestep.data.db.SessionWithSteps
 import io.github.drjkn7.shoestep.data.db.ShoeWithStats
+import io.github.drjkn7.shoestep.data.model.EndReason
+import io.github.drjkn7.shoestep.data.model.SessionState
 import io.github.drjkn7.shoestep.ui.common.ColourDot
 import io.github.drjkn7.shoestep.ui.common.ConfirmDialog
 import io.github.drjkn7.shoestep.ui.common.Formatters
 import io.github.drjkn7.shoestep.ui.common.labelRes
+import io.github.drjkn7.shoestep.ui.session.EndSessionDialog
+import io.github.drjkn7.shoestep.ui.session.SessionButtons
+import io.github.drjkn7.shoestep.ui.session.SwitchSessionDialog
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -53,8 +60,13 @@ fun ShoeDetailScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val deleted by viewModel.deleted.collectAsStateWithLifecycle()
+    val active by viewModel.activeSession.collectAsStateWithLifecycle()
+    val history by viewModel.history.collectAsStateWithLifecycle()
+    val askSwitch by viewModel.askSwitch.collectAsStateWithLifecycle()
     var menuOpen by rememberSaveable { mutableStateOf(false) }
     var confirmDelete by rememberSaveable { mutableStateOf(false) }
+    var confirmArchive by rememberSaveable { mutableStateOf(false) }
+    var confirmEndId by rememberSaveable { mutableStateOf<String?>(null) }
 
     LaunchedEffect(deleted) { if (deleted) onBack() }
 
@@ -92,7 +104,8 @@ fun ShoeDetailScreen(
                                     },
                                     onClick = {
                                         menuOpen = false
-                                        viewModel.setArchived(!archived)
+                                        // Archiving a pair with a session in progress ends it, so ask first.
+                                        if (!archived && loaded.shoe.isActive) confirmArchive = true else viewModel.setArchived(!archived)
                                     },
                                 )
                                 DropdownMenuItem(
@@ -117,8 +130,52 @@ fun ShoeDetailScreen(
             DetailState.NotFound -> Box(Modifier.fillMaxSize().padding(padding).padding(24.dp)) {
                 Text(stringResource(R.string.form_not_found), style = MaterialTheme.typography.bodyLarge)
             }
-            is DetailState.Loaded -> DetailContent(s.shoe, Modifier.padding(padding))
+            is DetailState.Loaded -> DetailContent(
+                item = s.shoe,
+                active = active,
+                history = history,
+                onStart = viewModel::start,
+                onPause = viewModel::pause,
+                onResume = viewModel::resume,
+                onEnd = { confirmEndId = it },
+                modifier = Modifier.padding(padding),
+            )
         }
+    }
+
+    val endId = confirmEndId
+    val current = active
+    if (endId != null && current != null && current.session.id == endId) {
+        EndSessionDialog(
+            shoeName = current.shoeName,
+            onConfirm = {
+                confirmEndId = null
+                viewModel.end(endId)
+            },
+            onDismiss = { confirmEndId = null },
+        )
+    }
+
+    if (askSwitch && loaded != null && current != null) {
+        SwitchSessionDialog(
+            activeShoeName = current.shoeName,
+            newShoeName = loaded.shoe.shoe.name,
+            onConfirm = viewModel::confirmSwitch,
+            onDismiss = viewModel::dismissSwitch,
+        )
+    }
+
+    if (confirmArchive && loaded != null) {
+        ConfirmDialog(
+            title = stringResource(R.string.archive_title, loaded.shoe.shoe.name),
+            text = stringResource(R.string.archive_running_body),
+            confirmLabel = stringResource(R.string.action_archive),
+            onConfirm = {
+                confirmArchive = false
+                viewModel.setArchived(true)
+            },
+            onDismiss = { confirmArchive = false },
+        )
     }
 
     if (confirmDelete && loaded != null) {
@@ -136,7 +193,16 @@ fun ShoeDetailScreen(
 }
 
 @Composable
-private fun DetailContent(item: ShoeWithStats, modifier: Modifier) {
+private fun DetailContent(
+    item: ShoeWithStats,
+    active: ActiveSessionWithShoe?,
+    history: List<SessionWithSteps>,
+    onStart: () -> Unit,
+    onPause: (String) -> Unit,
+    onResume: (String) -> Unit,
+    onEnd: (String) -> Unit,
+    modifier: Modifier,
+) {
     val locale = LocalConfiguration.current.locales[0]
     val shoe = item.shoe
     val dash = stringResource(R.string.dash)
@@ -188,15 +254,77 @@ private fun DetailContent(item: ShoeWithStats, modifier: Modifier) {
             }
         }
 
-        // Disabled until Phase 4 adds SessionManager (planned in docs/PROGRESS.md).
-        Button(onClick = {}, enabled = false, modifier = Modifier.fillMaxWidth()) {
-            Text(stringResource(R.string.detail_start))
+        // Archived pairs can't start a session (archiving ends any running one).
+        if (!shoe.archived) {
+            val mine = active?.session?.takeIf { it.shoeId == shoe.id }
+            val status = when {
+                mine?.state == SessionState.RUNNING ->
+                    stringResource(R.string.detail_session_running, Formatters.time(mine.startUtc, mine.zoneId, locale))
+                mine?.state == SessionState.PAUSED -> stringResource(R.string.detail_session_paused)
+                active != null -> stringResource(R.string.detail_other_active, active.shoeName)
+                else -> null
+            }
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                if (status != null) Text(status, style = MaterialTheme.typography.bodyLarge)
+                SessionButtons(
+                    state = mine?.state,
+                    onStart = onStart,
+                    onPause = { mine?.let { onPause(it.id) } },
+                    onResume = { mine?.let { onResume(it.id) } },
+                    onEnd = { mine?.let { onEnd(it.id) } },
+                )
+            }
         }
-        Text(
-            stringResource(R.string.detail_start_coming),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
+
+        HistoryCard(history)
+    }
+}
+
+@Composable
+private fun HistoryCard(history: List<SessionWithSteps>) {
+    val locale = LocalConfiguration.current.locales[0]
+    Card(Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Text(stringResource(R.string.history_title), style = MaterialTheme.typography.titleMedium)
+            if (history.isEmpty()) {
+                Text(stringResource(R.string.history_empty), style = MaterialTheme.typography.bodyMedium)
+            }
+            history.forEach { row ->
+                val session = row.session
+                val steps = pluralStringResource(
+                    R.plurals.steps_count,
+                    row.totalSteps.coerceAtMost(Int.MAX_VALUE.toLong()).toInt(),
+                    Formatters.count(row.totalSteps, locale),
+                )
+                val (hours, minutes) = Formatters.hoursAndMinutes(row.activeMillis)
+                val detail = when {
+                    session.state != SessionState.ENDED -> stringResource(R.string.history_in_progress)
+                    hours > 0 -> stringResource(R.string.duration_hours_minutes, hours, minutes)
+                    else -> stringResource(R.string.duration_minutes, minutes)
+                }
+                Column(Modifier.fillMaxWidth().semantics(mergeDescendants = true) {}) {
+                    Text(
+                        Formatters.dateTime(session.startUtc, session.zoneId, locale),
+                        style = MaterialTheme.typography.bodyLarge,
+                    )
+                    Text(
+                        stringResource(
+                            R.string.history_row,
+                            detail,
+                            if (row.hasUnfinalSteps) stringResource(R.string.history_steps_pending, steps) else steps,
+                        ),
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                    if (session.endReason == EndReason.SWITCH) {
+                        Text(
+                            stringResource(R.string.history_switched),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
+            }
+        }
     }
 }
 

@@ -3,7 +3,11 @@ package io.github.drjkn7.shoestep.ui.shoe
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import io.github.drjkn7.shoestep.data.ShoeRepository
+import io.github.drjkn7.shoestep.data.db.ActiveSessionWithShoe
+import io.github.drjkn7.shoestep.data.db.SessionWithSteps
 import io.github.drjkn7.shoestep.data.db.ShoeWithStats
+import io.github.drjkn7.shoestep.session.SessionManager
+import io.github.drjkn7.shoestep.session.SessionResult
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -20,6 +24,7 @@ sealed interface DetailState {
 
 class ShoeDetailViewModel(
     private val repository: ShoeRepository,
+    private val sessions: SessionManager,
     private val shoeId: String,
 ) : ViewModel() {
 
@@ -27,16 +32,60 @@ class ShoeDetailViewModel(
         .map { if (it == null) DetailState.NotFound else DetailState.Loaded(it) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), DetailState.Loading)
 
+    /** The app-wide active session (this pair's or another pair's), or null. */
+    val activeSession: StateFlow<ActiveSessionWithShoe?> = sessions.activeSession
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+
+    /** This pair's sessions, newest first. */
+    val history: StateFlow<List<SessionWithSteps>> = sessions.observeHistory(shoeId)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    private val _askSwitch = MutableStateFlow(false)
+    /** True while the "Switch to this pair?" question is showing. */
+    val askSwitch: StateFlow<Boolean> = _askSwitch.asStateFlow()
+
     private val _deleted = MutableStateFlow(false)
     /** Becomes true once the shoe is deleted; the screen then navigates back. */
     val deleted: StateFlow<Boolean> = _deleted.asStateFlow()
 
+    fun start() {
+        viewModelScope.launch {
+            if (sessions.start(shoeId) is SessionResult.NeedsSwitch) _askSwitch.value = true
+        }
+    }
+
+    fun confirmSwitch() {
+        _askSwitch.value = false
+        viewModelScope.launch { sessions.switchTo(shoeId) }
+    }
+
+    fun dismissSwitch() {
+        _askSwitch.value = false
+    }
+
+    fun pause(sessionId: String) {
+        viewModelScope.launch { sessions.pause(sessionId) }
+    }
+
+    fun resume(sessionId: String) {
+        viewModelScope.launch { sessions.resume(sessionId) }
+    }
+
+    fun end(sessionId: String) {
+        viewModelScope.launch { sessions.end(sessionId) }
+    }
+
+    /** Archiving ends this pair's session first: an archived pair can't have one running. */
     fun setArchived(archived: Boolean) {
-        viewModelScope.launch { repository.setArchived(shoeId, archived) }
+        viewModelScope.launch {
+            if (archived) sessions.endForShoe(shoeId)
+            repository.setArchived(shoeId, archived)
+        }
     }
 
     fun delete() {
         viewModelScope.launch {
+            sessions.endForShoe(shoeId)
             repository.delete(shoeId)
             _deleted.value = true
         }
