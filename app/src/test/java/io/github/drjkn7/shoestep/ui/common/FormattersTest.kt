@@ -69,4 +69,10 @@ class FormattersTest {
         assertEquals(8, ShoePalette.size)
         assertEquals(ShoePalette[0], accentColour(99))
     }
+
+    @Test fun stepsLabelPrefersCountedLaterOverAbout() {
+        assertEquals(StepsLabel.EXACT, StepsLabel.of(hasPendingSteps = false, hasUnfinalSteps = false))
+        assertEquals(StepsLabel.ABOUT, StepsLabel.of(hasPendingSteps = false, hasUnfinalSteps = true))
+        assertEquals(StepsLabel.COUNTED_LATER, StepsLabel.of(hasPendingSteps = true, hasUnfinalSteps = true))
+    }
 }
