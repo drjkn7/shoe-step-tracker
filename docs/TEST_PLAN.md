@@ -25,12 +25,12 @@ Status: ☐ not run · ✅ passed · ❌ failed. Phase = when it first becomes t
 | T19 | Provisional becomes final | After 30+ min and app reopen; never decreases | 5 | ☐ |
 | T20 | Time zone / DST change | Durations and timestamps correct | 4 | ☐ |
 | T21 | Phone + watch both write steps | Not double counted | 5 | ☐ |
-| T22 | Cost per step edge cases | Dash if no price or zero steps; 0 for free shoes | 2 | ☐ |
+| T22 | Cost per step edge cases | Dash if no price or zero steps; 0 for free shoes | 2 | ✅ (CostCalculatorTest; UI check in Phase 7) |
 | T23 | CSV injection | Cell neutralised | 7 | ☐ |
 | T24 | Backup exclusion | Database not in backups | 1 | ☐ |
 | T25 | TalkBack, 200% font, RTL | Labelled, unclipped, mirrored | 8 | ☐ |
 | T26 | 40 shoes, 2,000 sessions | Smooth scrolling | 8 | ☐ |
 | T27 | Merged manifest audit | No INTERNET; only READ_STEPS and NFC | 1 | ✅ (automated; re-run in Phase 8) |
 | T28 | Archive / unarchive / delete | History kept on archive, removed on delete | 3 | ☐ |
-| T29 | Same UUID on two shoes | Blocked | 6 | ☐ |
+| T29 | Same UUID on two shoes | Blocked | 6 | ◐ DB level ✅ (DatabaseTest); UI in Phase 6 |
 | T30 | Android 9-13 without Health Connect | Onboarding explains and links to install | 5 | ☐ |
