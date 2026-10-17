@@ -45,9 +45,11 @@ androidx-room3-runtime = { group = "androidx.room3", name = "room3-runtime", ver
 androidx-room3-compiler = { group = "androidx.room3", name = "room3-compiler", version.ref = "room3" }
 androidx-room3-testing = { group = "androidx.room3", name = "room3-testing", version.ref = "room3" }
 
-# Approved for later phases (not yet applied): Health Connect (Phase 5), DataStore (Phase 7)
-androidx-datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "datastore" }
+# Health Connect: 1.1.0 is the latest stable (re-checked 2026-10-17; only 1.2.0 alphas are newer).
 androidx-health-connect-client = { group = "androidx.health.connect", name = "connect-client", version.ref = "healthConnect" }
+
+# Approved for a later phase (not yet applied): DataStore (Phase 7)
+androidx-datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "datastore" }
 
 # Tests
 junit = { group = "junit", name = "junit", version.ref = "junit" }

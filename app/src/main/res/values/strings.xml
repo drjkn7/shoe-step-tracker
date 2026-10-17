@@ -131,6 +131,26 @@
     <string name="history_switched">Ended by switching pairs</string>
     <string name="history_row">%1$s · %2$s</string>
     <string name="history_steps_pending">%1$s (counted later)</string>
+    <!-- Provisional counts: may still change for one day while wearables sync. -->
+    <string name="steps_about">About %1$s</string>
+
+    <!-- Step counting (Health Connect) -->
+    <string name="session_card_steps_so_far">About %1$s so far</string>
+    <string name="session_card_steps_later">Steps counted later</string>
+    <string name="steps_access_title">Count your steps</string>
+    <string name="steps_access_permission_body">Shoe Step Tracker reads your step count from Health Connect. Your steps stay on this phone. If nothing happens when you tap Allow, open Health Connect and allow Shoe Step Tracker there.</string>
+    <string name="steps_access_allow">Allow</string>
+    <string name="steps_access_install_body">Step counting needs the Health Connect app. Sessions are still saved, and their steps are counted once it is installed.</string>
+    <string name="steps_access_install">Get Health Connect</string>
+    <string name="steps_access_unavailable_body">Health Connect isn\'t available on this phone right now, so steps can\'t be counted yet. Sessions are still saved.</string>
+
+    <!-- Health Connect privacy rationale -->
+    <string name="rationale_title">Why we read your steps</string>
+    <string name="rationale_what">Shoe Step Tracker reads only one thing from Health Connect: your step count. It never reads other health data and never writes anything to Health Connect.</string>
+    <string name="rationale_why">It uses the steps taken while a session is running to show how far each pair of shoes has walked and what each pair costs per step.</string>
+    <string name="rationale_stays">Your steps stay on this phone. The app has no internet access, no accounts and no ads, and it doesn\'t share your data with anyone.</string>
+    <string name="rationale_control">You can stop step reading at any time in Health Connect. Sessions are still saved, but their steps won\'t be counted.</string>
+    <string name="rationale_close">Close</string>
     <string name="duration_hours_minutes">%1$d h %2$d min</string>
     <string name="duration_minutes">%1$d min</string>
 

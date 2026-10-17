@@ -17,6 +17,7 @@ abstract class ShoeStepDatabase : RoomDatabase() {
     abstract fun shoeDao(): ShoeDao
     abstract fun sessionDao(): SessionDao
     abstract fun activeSessionDao(): ActiveSessionDao
+    abstract fun stepsDao(): StepsDao
 
     companion object {
         const val FILE_NAME = "shoestep.db"

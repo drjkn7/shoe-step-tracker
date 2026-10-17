@@ -78,6 +78,7 @@ dependencies {
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.kotlinx.serialization.core) // version pin only; see libs.versions.toml
     implementation(libs.androidx.room3.runtime)
+    implementation(libs.androidx.health.connect.client)
     ksp(libs.androidx.room3.compiler)
 
     testImplementation(libs.junit)
@@ -110,6 +111,15 @@ val manifestPermissionAllowlist = setOf(
 /** Components allowed to be exported in release, mapped to the permission that must guard them (null = none). */
 val manifestReleaseExportAllowlist = mapOf(
     "io.github.drjkn7.shoestep.MainActivity" to null,
+    // Health Connect privacy rationale (Phase 5, product owner approved). Shows static text only.
+    // Android 13 and lower: the Health Connect app opens it via ACTION_SHOW_PERMISSIONS_RATIONALE.
+    "io.github.drjkn7.shoestep.steps.PermissionsRationaleActivity" to null,
+    // Android 14+: only the system (holder of START_VIEW_PERMISSION_USAGE) may open the alias.
+    "io.github.drjkn7.shoestep.ViewPermissionUsageActivity" to "android.permission.START_VIEW_PERMISSION_USAGE",
+    // Added by connect-client (Android 9-13 Health Connect app binds to it to check the app is in the
+    // foreground). No manifest guard exists; its code rejects every caller except the Health Connect
+    // package (verified in 1.1.0 bytecode). Product owner approved 2026-10-17. Re-check on upgrades.
+    "androidx.health.platform.client.impl.sdkservice.HealthDataSdkService" to null,
     // AndroidX ProfileInstaller: only callable by the system/shell holding DUMP.
     "androidx.profileinstaller.ProfileInstallReceiver" to "android.permission.DUMP",
 )

@@ -23,6 +23,8 @@ import io.github.drjkn7.shoestep.data.model.SessionState
 import io.github.drjkn7.shoestep.ui.common.ColourDot
 import io.github.drjkn7.shoestep.ui.common.ConfirmDialog
 import io.github.drjkn7.shoestep.ui.common.Formatters
+import io.github.drjkn7.shoestep.ui.common.stepsCountText
+import io.github.drjkn7.shoestep.ui.home.SoFarSteps
 
 /**
  * Start when idle; Pause + End while running; Resume + End while paused.
@@ -56,6 +58,8 @@ fun SessionButtons(
 @Composable
 fun ActiveSessionCard(
     active: ActiveSessionWithShoe,
+    /** Null while the first read is in progress (nothing shown yet). */
+    stepsSoFar: SoFarSteps?,
     onOpen: () -> Unit,
     onPause: () -> Unit,
     onResume: () -> Unit,
@@ -80,6 +84,13 @@ fun ActiveSessionCard(
                 Column(Modifier.padding(start = 16.dp)) {
                     Text(stringResource(R.string.session_card_title), style = MaterialTheme.typography.labelLarge)
                     Text(status, style = MaterialTheme.typography.titleMedium)
+                    val stepsLine = when (stepsSoFar) {
+                        is SoFarSteps.Count ->
+                            stringResource(R.string.session_card_steps_so_far, stepsCountText(stepsSoFar.steps))
+                        SoFarSteps.Later -> stringResource(R.string.session_card_steps_later)
+                        null -> null
+                    }
+                    stepsLine?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
                 }
             }
             SessionButtons(session.state, onStart = {}, onPause = onPause, onResume = onResume, onEnd = onEnd)
