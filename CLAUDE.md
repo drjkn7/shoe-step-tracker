@@ -26,3 +26,15 @@ Package io.github.drjkn7.shoestep. Licence Apache-2.0. Repo drjkn7/shoe-step-tra
 - New permission or exported component? Update the allowlists in app/build.gradle.kts (needs approval).
 - Debug-only code goes in src/debug with a no-op in src/release.
 - Out of scope for M1: location, widget, notification, inactivity, photos, 3D, cloud.
+
+## How we work (product owner has no coding experience)
+- Per phase: plain-English plan (3-6 sentences) → wait for "approved" → build → test → security
+  self-review vs SEC-01..12 → report (done / files / how to test on phone / commits / decisions) → wait for "go".
+- Verify versions and APIs against official sources before use; say so if unverifiable.
+- Tools: gh = "C:\Program Files\GitHub CLI\gh.exe" (signed in as drjkn7); adb =
+  %LOCALAPPDATA%\Android\Sdk\platform-tools\adb.exe (Pixel 9 Pro). Phone must be unlocked for tests.
+  In Git Bash use MSYS_NO_PATHCONV=1 only for `adb shell` paths, never for gradlew.bat.
+- PR flow: push branch → `gh pr create` → bind PR → offer Auto-fix → "check CI": confirm the emulator
+  job really ran all tests (download on-device-reports) → merge with `--rebase` (merge commits are
+  blocked on main) → `git pull --ff-only` on main.
+- Report honestly: re-check before claiming a result (e.g. that a Gradle run actually started).
