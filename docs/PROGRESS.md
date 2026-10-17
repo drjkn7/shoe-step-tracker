@@ -30,6 +30,5 @@
 ## Open items carried to next phase
 - Phase 5: Health Connect rationale `activity-alias` must be exported → add it to the release export allowlist in `app/build.gradle.kts`.
 - Phase 6/5: when NFC / READ_STEPS are declared, no audit change needed (already allowlisted).
-- Template leftovers awaiting product-owner OK to delete: `res/values/colors.xml` (7 UnusedResources lint warnings), `ExampleUnitTest.kt`, `ExampleInstrumentedTest.kt`.
 - Not yet handled: `cross-platform-transfer` (iOS) section of data-extraction rules — review in Phase 8 audit.
 - Gradle 10 deprecation warning (`Configuration.setVisible`) comes from AGP/KGP plugins, not our scripts; recheck on plugin updates.
