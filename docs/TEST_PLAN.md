@@ -22,7 +22,7 @@ Status: ☐ not run · ✅ passed · ❌ failed. Phase = when it first becomes t
 | T16 | Kill app mid-session | Session still running | 4 | ☐ |
 | T17 | Reboot mid-session | Session still running | 4 | ☐ |
 | T18 | Airplane mode full flow | Everything works | 5 | ☐ |
-| T19 | Provisional becomes final | After 1 day and app reopen; until then the count follows Health Connect and may go up or down (product owner, 2026-10-18) | 5 | ◐ rules automated (StepReconcilerTest: a late sync updates the count); final check on phone manual |
+| T19 | Provisional becomes final | After 1 day and app reopen; until then the count follows Health Connect and may go up or down (product owner, 2026-10-18) | 5 | ◐ rules automated (StepReconcilerTest: later counts replace earlier ones, up or down); final check on phone manual |
 | T20 | Time zone / DST change | Durations and timestamps correct | 4 | ☐ |
 | T21 | Phone + watch both write steps | Not double counted | 5 | ☐ |
 | T22 | Cost per step edge cases | Dash if no price or zero steps; 0 for free shoes | 2 | ✅ (CostCalculatorTest; UI check in Phase 7) |
