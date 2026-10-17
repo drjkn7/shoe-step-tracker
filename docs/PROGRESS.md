@@ -7,20 +7,29 @@
 - [x] Phase 3: Shoes UI (PR #7, merged)
 - [x] Phase 4: Sessions (PR #8, merged)
 - [x] Phase 5: Health Connect and offline step resolution (PR #9, merged)
-- [ ] Phase 6: NFC ← **branch `feature/phase-6-nfc`, plan awaiting "approved"**
+- [ ] Phase 6: NFC ← **built on branch `feature/phase-6-nfc`, awaiting product-owner "go" and PR**
 - [ ] Phase 7: Stats, export, settings
 - [ ] Phase 8: Hardening and release
 
 ## Next up: Phase 6 hand-off (read this first after /clear)
-Status: branch `feature/phase-6-nfc` created from main after PR #9; plan presented, waiting for the product
-owner's "approved". Nothing built yet.
+Status: Phase 6 plan approved (2026-10-18) and built on `feature/phase-6-nfc`; all local checks and on-device
+tests pass. Waiting for the product owner's "go" (after trying a real tag), then: push → PR → CI (confirm
+the emulator job ran TagDbTest + TagScreensTest) → rebase-merge.
 
-Scope (TEST_PLAN T04–T07, T11–T15, T29): register a tag to a pair (write a random-UUID NDEF record plus an
-Android Application Record, read it back, save `tag_uuid`), optional lock, tap to start / second tap / switch,
-unknown or blank tag → "Register this tag?", strict payload parser (tags are untrusted input), taps routed
-through `core/Debouncer` then SessionManager. Needs approval: NFC permission (already allowlisted) and an
-NDEF_DISCOVERED intent filter on the already-exported MainActivity; no new dependency expected.
-Phase 5 summary (StepsSource, StepReconciler, Health Connect UI) is in the decisions log and git history.
+What Phase 6 added (package `nfc/`, UI in `ui/nfc/`):
+- `TagFormat`: on-tag format (one MIME record `application/vnd.io.github.drjkn7.shoestep` holding a random
+  v4 UUID in lowercase ASCII, plus an Android Application Record) and the strict parser (size and record
+  limits first; Ours / Blank / Foreign / Malformed / Unsupported). Pure Kotlin, JVM-tested.
+- `AndroidTags` / `AndroidTagHandle`: Tag/Intent → `TappedTag`; write → read back → optional lock.
+  Debounce key = tag hardware id, so a just-linked tag can't start a session while the phone rests on it.
+- `TagCoordinator` (one per app, in AppContainer): Debouncer → route tap → SessionManager. Prompts
+  (NewTag, PickPair, RunningTap, Switch, Archived), linking state, "Tag linked" notice, navigation events.
+- `RoomTagStore` + `ShoeDao.setTagUuid` (check-then-update in one write transaction; unique index is the backstop).
+- MainActivity: NDEF_DISCOVERED intent (app closed, T06) and foreground dispatch while visible (T07; keeps
+  tap-to-pay working, unlike reader mode). Haptic CONFIRM via View (no VIBRATE permission).
+- Shoe detail "NFC tag" card: Link / Replace / Unlink; NFC off → Settings; no NFC → explained, no buttons.
+- Tests: TagFormatTest, TagCoordinatorTest (JVM); TagDbTest, TagScreensTest (on-device, simulated taps).
+  UI tests must not call SessionManager from inside waits (see TagScreensTest.active()): it deadlocked once.
 
 ## Decisions log
 | Date | Decision |
@@ -59,6 +68,12 @@ Phase 5 summary (StepsSource, StepReconciler, Health Connect UI) is in the decis
 | 2026-10-17 | The running session card shows "About N steps so far" (live read, display only; shoe totals change only when a segment closes). |
 | 2026-10-17 | connect-client 1.1.0 applied (latest stable on 2026-10-17; 1.2.0 is alpha only). Release export allowlist adds PermissionsRationaleActivity (static text), ViewPermissionUsageActivity (START_VIEW_PERMISSION_USAGE) and the library's HealthDataSdkService (code rejects callers other than the Health Connect package; product owner approved keeping it). |
 | 2026-10-17 | Step counts are written only by StepReconciler; SessionManager creates segments PENDING and never touches steps. Not session state, so the "only SessionManager changes session state" rule is unchanged. |
+| 2026-10-18 | Phase 6 plan approved. A tap on an idle pair starts it; on its running session asks Pause / End / Cancel; on a paused pair resumes straight away; on another pair asks "Switch to this pair?". Archived pair's tag explains and does nothing. |
+| 2026-10-18 | Blank or unknown tag: one pop-up with "Link to an existing pair" and "Add a new pair" (product owner addition); Back or a tap outside cancels. A new pair gets the tag linked right after it is saved. |
+| 2026-10-18 | Locking a tag is optional, off by default, with the permanent-lock warning always shown before the tap. A locked leftover tag of ours (pair deleted) can be re-linked using the code already on it. |
+| 2026-10-18 | Tags carry a random v4 UUID (MIME record) plus an Android Application Record. Strict parser: 1 KB / 8-record limits, exactly one of our records, exact lowercase v4 UUID; anything else is ignored. Debounce key = tag hardware id. |
+| 2026-10-18 | NFC permission (already allowlisted) and an NDEF_DISCOVERED filter on the exported MainActivity (product owner approved). Accepted risk: another app could send a fake tag intent; it can only start/pause/switch the user's own sessions, never read or delete data. Foreground dispatch (not reader mode) so tap-to-pay keeps working while the app is open. |
+| 2026-10-18 | Tag write is read back to verify (T04); a never-formatted tag can only be checked by format() succeeding (Android can't re-read it until the next tap). |
 
 ## Open items carried to later phases
 - SessionDao/ActiveSessionDao write methods must be called only via SessionManager/RoomSessionStore (convention; not enforced by visibility).
@@ -66,9 +81,8 @@ Phase 5 summary (StepsSource, StepReconciler, Health Connect UI) is in the decis
 - Phase 5 manual check on an Android 9–13 phone (Health Connect app path, `HealthDataSdkService`, rationale via ACTION_SHOW_PERMISSIONS_RATIONALE) was not possible on the Android 16 Pixel; do it in Phase 8 if a device is available.
 - Shoe detail's "Session running" line has no "so far" count (Home card only); add in Phase 7 if wanted.
 - Re-verify `HealthDataSdkService`'s caller check (bytecode) whenever connect-client is upgraded.
-- Phase 6: route tag taps through `Debouncer` then SessionManager (decide what a tap does on a paused pair — probably Resume).
 - Phase 7/8: Shoe detail history shows every session (no paging); revisit if lists get long. A visible live timer on the session card was left out.
-- Phase 6: when NFC is declared, no audit change needed (already allowlisted).
+- Phase 6 manual: try a real NTAG213/215/216 sticker on the Pixel (link, tap closed/open, lock on a spare tag); automated tests simulate taps.
 - Phase 8: manual TalkBack and right-to-left check (T25); automated checks cover labels, 48dp targets and 200% font.
 - Phase 8: R8 `packageScope` currently limits optimisation to androidx/kotlin/kotlinx; decide whether app code should be shrunk too. Room ships its own keep rule for generated `_Impl` classes.
 - Phase 8: `cross-platform-transfer` (iOS) section of data-extraction rules not yet handled.
