@@ -5,32 +5,22 @@
 - [x] Phase 1: Foundations (PR #5, merged)
 - [x] Phase 2: Data layer (PR #6, merged)
 - [x] Phase 3: Shoes UI (PR #7, merged)
-- [ ] Phase 4: Sessions ← **built on branch `feature/phase-4-sessions`, awaiting product-owner "go" and PR**
-- [ ] Phase 5: Health Connect and offline step resolution
+- [x] Phase 4: Sessions (PR #8, merged)
+- [ ] Phase 5: Health Connect and offline step resolution ← **branch `feature/phase-5-health-connect`, plan awaiting "approved"**
 - [ ] Phase 6: NFC
 - [ ] Phase 7: Stats, export, settings
 - [ ] Phase 8: Hardening and release
 
-## Next up: Phase 4 hand-off (read this first after /clear)
-Status: Phase 4 plan approved (2026-10-17) and built on `feature/phase-4-sessions`; all local checks and
-on-device tests pass. Waiting for the product owner's "go", then: push → PR → CI (confirm the emulator job
-ran SessionManagerDbTest + SessionScreensTest) → rebase-merge.
+## Next up: Phase 5 hand-off (read this first after /clear)
+Status: branch `feature/phase-5-health-connect` created from main after PR #8; plan presented, waiting for
+the product owner's "approved". Nothing built yet.
 
-What Phase 4 added:
-- `session/SessionManager.kt`: the ONLY code that changes session state. Commands: start, switchTo,
-  pause(sessionId), resume(sessionId), end(sessionId), endForShoe(shoeId); each is one transaction under a
-  Mutex, idempotent (pause/resume/end name their session, so stale or repeated presses do nothing).
-  `restore()` repairs inconsistent data once per launch (runs automatically before the first command or
-  observation). Results: Done / NoChange / NeedsSwitch / ShoeUnavailable.
-- `session/SessionStore.kt`: small storage interface; `RoomSessionStore` is the real one, `FakeSessionStore`
-  (src/test) lets the state machine be unit-tested on the JVM.
-- `core/Debouncer.kt`: 2 s per-key repeat guard for Phase 6 NFC (not used yet).
-- UI: Start / Pause+End / Resume+End on Shoe detail, "Current session" card on Home, history list on Shoe
-  detail, "End this session?", "Switch to this pair?", and an archive confirmation when the pair has a
-  session. Steps show 0 "(counted later)" until Phase 5.
-- Tests: SessionManagerTest (36-row state × event table + timing, clock-backwards, restore, rollback,
-  concurrency), DebouncerTest, FormattersTest additions; on-device SessionManagerDbTest (real DB file,
-  close/reopen = process death, T16/T17) and SessionScreensTest (T08, T20, 200% font, 48dp).
+Scope: Health Connect READ_STEPS (permission request + rationale screen) and deferred step reconciliation:
+segments are saved with steps = null / `StepsStatus.PENDING` (Phase 4); Phase 5 fills them from Health
+Connect when it is available, and resolves them offline (PROVISIONAL / FINAL / UNAVAILABLE) when it isn't.
+Needs approval: exported rationale `activity-alias` → release export allowlist in `app/build.gradle.kts`;
+applying the pre-approved `connect-client` (version to re-verify); any other new dependency.
+Phase 4 summary (SessionManager, SessionStore, Debouncer, session UI) is in the decisions log and git history.
 
 ## Decisions log
 | Date | Decision |
