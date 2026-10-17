@@ -4,6 +4,7 @@ import androidx.test.core.app.ApplicationProvider
 import io.github.drjkn7.shoestep.AppContainer
 import io.github.drjkn7.shoestep.core.Clock
 import io.github.drjkn7.shoestep.data.db.ShoeStepDatabase
+import io.github.drjkn7.shoestep.nfc.NfcState
 import io.github.drjkn7.shoestep.steps.StepsAccess
 import io.github.drjkn7.shoestep.steps.StepsRead
 import io.github.drjkn7.shoestep.steps.StepsSource
@@ -31,9 +32,14 @@ class FakeStepsSource(
  * A container backed by an in-memory database and a fake step source, so UI tests never touch
  * the real app data or depend on Health Connect being installed.
  */
-fun testContainer(stepsSource: StepsSource = FakeStepsSource(), clock: Clock = TestClock): AppContainer = AppContainer(
+fun testContainer(
+    stepsSource: StepsSource = FakeStepsSource(),
+    clock: Clock = TestClock,
+    nfcState: NfcState = NfcState.ON,
+): AppContainer = AppContainer(
     context = ApplicationProvider.getApplicationContext(),
     databaseFactory = ShoeStepDatabase::buildInMemory,
     clock = clock,
     stepsSourceFactory = { stepsSource },
+    nfcStateProvider = { nfcState },
 )
