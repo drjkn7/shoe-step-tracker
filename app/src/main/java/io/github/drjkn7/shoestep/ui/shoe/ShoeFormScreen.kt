@@ -50,6 +50,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -68,7 +69,6 @@ import io.github.drjkn7.shoestep.ui.common.Formatters
 import io.github.drjkn7.shoestep.ui.common.ShoePalette
 import io.github.drjkn7.shoestep.ui.common.labelRes
 import java.time.LocalDate
-import java.time.ZoneOffset
 import java.util.Currency
 import java.util.Locale
 
@@ -192,11 +192,15 @@ private fun FormContent(
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal, imeAction = ImeAction.Done),
                 modifier = Modifier.weight(1f),
             )
+            val currencyDescription = stringResource(
+                R.string.currency_button_description,
+                stringResource(R.string.field_currency),
+                form.currencyCode,
+                currencyName(form.currencyCode, locale),
+            )
             OutlinedButton(
                 onClick = { showCurrencyPicker = true },
-                modifier = Modifier.padding(top = 8.dp).semantics {
-                    contentDescription = "${form.currencyCode}, ${currencyName(form.currencyCode, locale)}"
-                },
+                modifier = Modifier.padding(top = 8.dp).semantics { contentDescription = currencyDescription },
             ) { Text(form.currencyCode) }
         }
 
@@ -303,10 +307,10 @@ private fun errorText(field: ShoeField, error: FieldError, currencyCode: String)
     ShoeField.NAME -> if (error == FieldError.REQUIRED) {
         stringResource(R.string.error_name_required)
     } else {
-        stringResource(R.string.error_too_long, ShoeValidator.NAME_MAX)
+        pluralStringResource(R.plurals.error_too_long, ShoeValidator.NAME_MAX, ShoeValidator.NAME_MAX)
     }
-    ShoeField.BRAND -> stringResource(R.string.error_too_long, ShoeValidator.BRAND_MAX)
-    ShoeField.MODEL -> stringResource(R.string.error_too_long, ShoeValidator.MODEL_MAX)
+    ShoeField.BRAND -> pluralStringResource(R.plurals.error_too_long, ShoeValidator.BRAND_MAX, ShoeValidator.BRAND_MAX)
+    ShoeField.MODEL -> pluralStringResource(R.plurals.error_too_long, ShoeValidator.MODEL_MAX, ShoeValidator.MODEL_MAX)
     ShoeField.PRICE -> when (error) {
         FieldError.NEGATIVE -> stringResource(R.string.error_price_negative)
         FieldError.TOO_MANY_DECIMALS -> stringResource(R.string.error_price_decimals, currencyCode)
@@ -342,6 +346,11 @@ private fun CurrencyPicker(locale: Locale, onPick: (String) -> Unit, onDismiss: 
     }
     ModalBottomSheet(onDismissRequest = onDismiss) {
         Column(Modifier.padding(horizontal = 16.dp)) {
+            Text(
+                stringResource(R.string.currency_choose),
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.padding(bottom = 8.dp),
+            )
             OutlinedTextField(
                 value = query,
                 onValueChange = { if (it.length <= 40) query = it },
@@ -382,13 +391,22 @@ private fun PurchaseDatePicker(initialEpochDay: Long?, onPick: (Long) -> Unit, o
         confirmButton = {
             TextButton(
                 onClick = {
-                    state.selectedDateMillis?.let { onPick(LocalDate.ofInstant(java.time.Instant.ofEpochMilli(it), ZoneOffset.UTC).toEpochDay()) }
+                    // The picker works in UTC midnight millis; floorDiv gives the epoch day on every API level.
+                    state.selectedDateMillis?.let { onPick(Math.floorDiv(it, MILLIS_PER_DAY)) }
                         ?: onDismiss()
                 },
             ) { Text(stringResource(R.string.action_ok)) }
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) } },
     ) {
-        DatePicker(state = state)
+        DatePicker(
+            state = state,
+            title = {
+                Text(
+                    stringResource(R.string.field_purchase_date_pick),
+                    modifier = Modifier.padding(start = 24.dp, end = 12.dp, top = 16.dp),
+                )
+            },
+        )
     }
 }
