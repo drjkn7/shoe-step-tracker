@@ -60,6 +60,7 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.navigation.compose)
     implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.kotlinx.serialization.core) // version pin only; see libs.versions.toml
     implementation(libs.androidx.room3.runtime)
     ksp(libs.androidx.room3.compiler)
 
