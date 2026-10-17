@@ -5,7 +5,7 @@ import android.app.Application
 class ShoeStepApp : Application() {
 
     /** Created on first use, not at start-up. */
-    val container: AppContainer by lazy { AppContainer() }
+    val container: AppContainer by lazy { AppContainer(this) }
 
     override fun onCreate() {
         super.onCreate()
