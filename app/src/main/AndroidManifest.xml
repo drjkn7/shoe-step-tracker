@@ -4,6 +4,9 @@
     <!-- SEC-01/SEC-04: no INTERNET or other permissions. NFC (Phase 6) and Health Connect
          READ_STEPS (Phase 5) are the only ones allowed; verifyNoInternetPermission enforces it. -->
     <uses-permission android:name="android.permission.health.READ_STEPS" />
+    <uses-permission android:name="android.permission.NFC" />
+    <!-- Tags are a shortcut; the app works without NFC (manual buttons), so it isn't required. -->
+    <uses-feature android:name="android.hardware.nfc" android:required="false" />
 
     <!-- Lets the app see the Health Connect app on Android 13 and lower (not a permission). -->
     <queries>
@@ -31,6 +34,15 @@
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <!-- Tapping one of our tags opens the app even when it is closed (T06). Tag data is
+                 untrusted: it only reaches TagFormat.parse (product owner approved this filter). -->
+            <intent-filter>
+                <action android:name="android.nfc.action.NDEF_DISCOVERED" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+
+                <data android:mimeType="application/vnd.io.github.drjkn7.shoestep" />
             </intent-filter>
         </activity>
 

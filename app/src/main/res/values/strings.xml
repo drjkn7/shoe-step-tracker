@@ -144,6 +144,42 @@
     <string name="steps_access_install">Get Health Connect</string>
     <string name="steps_access_unavailable_body">Health Connect isn\'t available on this phone right now, so steps can\'t be counted yet. Sessions are still saved.</string>
 
+    <!-- NFC tags -->
+    <string name="tag_card_title">NFC tag</string>
+    <string name="tag_linked">Linked. Tap your phone on the tag to start or pause a session.</string>
+    <string name="tag_not_linked">No tag linked yet.</string>
+    <string name="tag_no_nfc">This phone can\'t read NFC tags. Use the buttons to start sessions.</string>
+    <string name="tag_link">Link NFC tag</string>
+    <string name="tag_replace">Replace tag</string>
+    <string name="tag_unlink">Unlink tag</string>
+    <string name="tag_unlink_title">Unlink this tag?</string>
+    <string name="tag_unlink_body">Tapping it will no longer start sessions for %1$s. You can link it again later.</string>
+    <string name="tag_nfc_off_title">Turn on NFC</string>
+    <string name="tag_nfc_off_body">NFC is off, so the phone can\'t read tags. Turn it on in Settings, then try again.</string>
+    <string name="tag_open_settings">Open settings</string>
+    <string name="tag_new_title">New tag</string>
+    <string name="tag_new_body">This tag isn\'t linked to a pair yet. Linking replaces anything already saved on it.</string>
+    <string name="tag_link_existing">Link to an existing pair</string>
+    <string name="tag_add_new_pair">Add a new pair</string>
+    <string name="tag_pick_title">Link the tag to which pair?</string>
+    <string name="tag_running_title">%1$s session</string>
+    <string name="tag_running_body">The session is running. What would you like to do?</string>
+    <string name="tag_archived_title">%1$s is archived</string>
+    <string name="tag_archived_body">Unarchive this pair to use its tag again.</string>
+    <string name="tag_linking_title">Link a tag to %1$s</string>
+    <string name="tag_linking_body">Hold the top of your phone against the tag and keep it still for a moment.</string>
+    <string name="tag_lock">Lock the tag</string>
+    <string name="tag_lock_warning">Locking is permanent: a locked tag can never be changed, erased or reused.</string>
+    <string name="tag_linked_title">Tag linked</string>
+    <string name="tag_linked_body">Tapping this tag now starts and pauses sessions for %1$s.</string>
+    <string name="tag_linked_lock_failed">The tag works, but it couldn\'t be locked.</string>
+    <string name="tag_problem_read_only">This tag is locked and can\'t be changed. Try another tag.</string>
+    <string name="tag_problem_too_small">This tag is too small. Use an NTAG213, NTAG215 or NTAG216 sticker.</string>
+    <string name="tag_problem_lost">The tag moved away too soon. Hold the phone still against it and try again.</string>
+    <string name="tag_problem_verify">The tag didn\'t save correctly. Try again.</string>
+    <string name="tag_problem_in_use">This tag already belongs to %1$s. Unlink it there first.</string>
+    <string name="tag_problem_cant_use">This tag can\'t be used. Try another tag.</string>
+
     <!-- Health Connect privacy rationale -->
     <string name="rationale_title">Why we read your steps</string>
     <string name="rationale_what">Shoe Step Tracker reads only one thing from Health Connect: your step count. It never reads other health data and never writes anything to Health Connect.</string>

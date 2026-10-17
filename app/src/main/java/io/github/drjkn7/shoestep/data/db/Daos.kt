@@ -49,6 +49,10 @@ interface ShoeDao {
     @Query("SELECT * FROM shoes WHERE tag_uuid = :tagUuid")
     suspend fun getByTagUuid(tagUuid: String): ShoeEntity?
 
+    /** Links or unlinks a tag. Only RoomTagStore calls this; the unique index blocks shared tags. */
+    @Query("UPDATE shoes SET tag_uuid = :tagUuid WHERE id = :id")
+    suspend fun setTagUuid(id: String, tagUuid: String?): Int
+
     @Query("SELECT $SHOE_STATS_COLUMNS FROM shoes s WHERE s.archived = :archived ORDER BY s.name COLLATE NOCASE, s.id")
     fun observeWithStats(archived: Boolean): Flow<List<ShoeWithStats>>
 

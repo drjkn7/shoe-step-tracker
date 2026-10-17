@@ -1,5 +1,8 @@
 package io.github.drjkn7.shoestep.ui.shoe
 
+import android.content.ActivityNotFoundException
+import android.content.Intent
+import android.provider.Settings
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -9,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
@@ -17,6 +21,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -29,6 +34,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
@@ -59,7 +65,14 @@ fun ShoeDetailScreen(
     viewModel: ShoeDetailViewModel,
     onBack: () -> Unit,
     onEdit: () -> Unit,
+    hasNfc: Boolean,
+    isNfcOn: () -> Boolean,
+    onLinkTag: () -> Unit,
+    onUnlinkTag: () -> Unit,
 ) {
+    val context = LocalContext.current
+    var confirmUnlink by rememberSaveable { mutableStateOf(false) }
+    var nfcOff by rememberSaveable { mutableStateOf(false) }
     val state by viewModel.state.collectAsStateWithLifecycle()
     val deleted by viewModel.deleted.collectAsStateWithLifecycle()
     val active by viewModel.activeSession.collectAsStateWithLifecycle()
@@ -140,6 +153,15 @@ fun ShoeDetailScreen(
                 onPause = viewModel::pause,
                 onResume = viewModel::resume,
                 onEnd = { confirmEndId = it },
+                tagCard = {
+                    TagCard(
+                        linked = s.shoe.shoe.tagUuid != null,
+                        archived = s.shoe.shoe.archived,
+                        hasNfc = hasNfc,
+                        onLink = { if (isNfcOn()) onLinkTag() else nfcOff = true },
+                        onUnlink = { confirmUnlink = true },
+                    )
+                },
                 modifier = Modifier.padding(padding),
             )
         }
@@ -180,6 +202,37 @@ fun ShoeDetailScreen(
         )
     }
 
+    if (confirmUnlink && loaded != null) {
+        ConfirmDialog(
+            title = stringResource(R.string.tag_unlink_title),
+            text = stringResource(R.string.tag_unlink_body, loaded.shoe.shoe.name),
+            confirmLabel = stringResource(R.string.tag_unlink),
+            onConfirm = {
+                confirmUnlink = false
+                onUnlinkTag()
+            },
+            onDismiss = { confirmUnlink = false },
+        )
+    }
+
+    if (nfcOff) {
+        ConfirmDialog(
+            title = stringResource(R.string.tag_nfc_off_title),
+            text = stringResource(R.string.tag_nfc_off_body),
+            confirmLabel = stringResource(R.string.tag_open_settings),
+            destructive = false,
+            onConfirm = {
+                nfcOff = false
+                try {
+                    context.startActivity(Intent(Settings.ACTION_NFC_SETTINGS))
+                } catch (_: ActivityNotFoundException) {
+                    // No NFC settings screen on this phone: the message already explains what to do.
+                }
+            },
+            onDismiss = { nfcOff = false },
+        )
+    }
+
     if (confirmDelete && loaded != null) {
         ConfirmDialog(
             title = stringResource(R.string.delete_title, loaded.shoe.shoe.name),
@@ -203,6 +256,7 @@ private fun DetailContent(
     onPause: (String) -> Unit,
     onResume: (String) -> Unit,
     onEnd: (String) -> Unit,
+    tagCard: @Composable () -> Unit,
     modifier: Modifier,
 ) {
     val locale = LocalConfiguration.current.locales[0]
@@ -284,7 +338,35 @@ private fun DetailContent(
             }
         }
 
+        tagCard()
+
         HistoryCard(history)
+    }
+}
+
+/** The pair's NFC tag: linked or not, with Link / Replace / Unlink (not for archived pairs). */
+@Composable
+private fun TagCard(linked: Boolean, archived: Boolean, hasNfc: Boolean, onLink: () -> Unit, onUnlink: () -> Unit) {
+    Card(Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Text(stringResource(R.string.tag_card_title), style = MaterialTheme.typography.titleMedium)
+            val status = when {
+                linked -> R.string.tag_linked
+                !hasNfc -> R.string.tag_no_nfc
+                else -> R.string.tag_not_linked
+            }
+            Text(stringResource(status), style = MaterialTheme.typography.bodyMedium)
+            if (hasNfc && !archived) {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    if (linked) {
+                        OutlinedButton(onClick = onLink, modifier = Modifier.weight(1f)) { Text(stringResource(R.string.tag_replace)) }
+                        OutlinedButton(onClick = onUnlink, modifier = Modifier.weight(1f)) { Text(stringResource(R.string.tag_unlink)) }
+                    } else {
+                        Button(onClick = onLink, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.tag_link)) }
+                    }
+                }
+            }
+        }
     }
 }
 
