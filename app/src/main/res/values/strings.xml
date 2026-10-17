@@ -104,9 +104,39 @@
     <string name="detail_total_steps">Total steps</string>
     <string name="detail_sessions">Sessions</string>
     <string name="detail_cost_per_1000">Cost per 1,000 steps</string>
-    <string name="detail_start">Start session</string>
-    <string name="detail_start_coming">Sessions arrive in the next update.</string>
     <string name="detail_archived_note">This shoe is archived. Its history is kept.</string>
+    <string name="detail_session_running">Session running since %1$s</string>
+    <string name="detail_session_paused">Session paused</string>
+    <string name="detail_other_active">%1$s has a session in progress.</string>
+
+    <!-- Sessions -->
+    <string name="session_start">Start session</string>
+    <string name="session_pause">Pause</string>
+    <string name="session_resume">Resume</string>
+    <string name="session_end">End session</string>
+    <string name="session_end_title">End this session?</string>
+    <string name="session_end_body">The session for %1$s stops now. You can start a new one any time.</string>
+    <string name="session_switch_title">Switch to this pair?</string>
+    <string name="session_switch_body">%1$s has a session in progress. It will end, and a new session will start for %2$s.</string>
+    <string name="session_switch_confirm">Switch</string>
+    <string name="session_card_title">Current session</string>
+    <string name="session_card_running">%1$s · running since %2$s</string>
+    <string name="session_card_paused">%1$s · paused</string>
+    <string name="home_paused_badge">Paused</string>
+
+    <!-- Session history -->
+    <string name="history_title">History</string>
+    <string name="history_empty">No sessions yet.</string>
+    <string name="history_in_progress">In progress</string>
+    <string name="history_switched">Ended by switching pairs</string>
+    <string name="history_row">%1$s · %2$s</string>
+    <string name="history_steps_pending">%1$s (counted later)</string>
+    <string name="duration_hours_minutes">%1$d h %2$d min</string>
+    <string name="duration_minutes">%1$d min</string>
+
+    <!-- Archive confirmation when a session is running -->
+    <string name="archive_title">Archive %1$s?</string>
+    <string name="archive_running_body">This ends the session in progress. The shoe and its history are kept.</string>
 
     <!-- Delete confirmation (SEC-11) -->
     <string name="delete_title">Delete %1$s?</string>

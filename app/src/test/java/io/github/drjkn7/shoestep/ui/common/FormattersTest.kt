@@ -4,6 +4,7 @@ import io.github.drjkn7.shoestep.core.CostCalculator
 import io.github.drjkn7.shoestep.ui.shoe.formatPriceForEditing
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.time.LocalDate
 import java.util.Locale
@@ -18,6 +19,24 @@ class FormattersTest {
     @Test fun dateUsesLocaleFormat() {
         val day = LocalDate.of(2026, 3, 5).toEpochDay()
         assertEquals("Mar 5, 2026", Formatters.date(day, Locale.US))
+    }
+
+    @Test fun timesAreShownInTheZoneTheSessionWasRecordedIn() {
+        val instant = java.time.Instant.parse("2026-03-05T13:05:00Z").toEpochMilli()
+        assertEquals("13:05", Formatters.time(instant, "UTC", Locale.UK))
+        assertEquals("14:05", Formatters.time(instant, "Europe/Berlin", Locale.UK))
+        assertTrue(Formatters.dateTime(instant, "Europe/Berlin", Locale.UK).contains("14:05"))
+    }
+
+    @Test fun unreadableZoneFallsBackToUtc() {
+        val instant = java.time.Instant.parse("2026-03-05T13:05:00Z").toEpochMilli()
+        assertEquals("13:05", Formatters.time(instant, "Not/AZone", Locale.UK))
+    }
+
+    @Test fun hoursAndMinutesRoundDownAndNeverGoNegative() {
+        assertEquals(0L to 0L, Formatters.hoursAndMinutes(59_999))
+        assertEquals(1L to 5L, Formatters.hoursAndMinutes(65 * 60_000L + 30_000))
+        assertEquals(0L to 0L, Formatters.hoursAndMinutes(-3_600_000))
     }
 
     @Test fun priceShowsCurrency() = assertEquals("$129.99", Formatters.price(12_999, "USD", Locale.US))

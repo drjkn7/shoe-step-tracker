@@ -29,6 +29,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
@@ -42,8 +45,11 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.drjkn7.shoestep.R
 import io.github.drjkn7.shoestep.data.db.ShoeWithStats
+import io.github.drjkn7.shoestep.data.model.SessionState
 import io.github.drjkn7.shoestep.ui.common.ColourDot
 import io.github.drjkn7.shoestep.ui.common.Formatters
+import io.github.drjkn7.shoestep.ui.session.ActiveSessionCard
+import io.github.drjkn7.shoestep.ui.session.EndSessionDialog
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -55,6 +61,8 @@ fun HomeScreen(
 ) {
     val shoes by viewModel.shoes.collectAsStateWithLifecycle()
     val showArchived by viewModel.showArchived.collectAsStateWithLifecycle()
+    val active by viewModel.activeSession.collectAsStateWithLifecycle()
+    var confirmEndId by rememberSaveable { mutableStateOf<String?>(null) }
 
     Scaffold(
         topBar = {
@@ -74,6 +82,17 @@ fun HomeScreen(
         },
     ) { padding ->
         Column(Modifier.fillMaxSize().padding(padding)) {
+            active?.let { current ->
+                val id = current.session.id
+                ActiveSessionCard(
+                    active = current,
+                    onOpen = { onOpenShoe(current.session.shoeId) },
+                    onPause = { viewModel.pause(id) },
+                    onResume = { viewModel.resume(id) },
+                    onEnd = { confirmEndId = id },
+                    modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 8.dp),
+                )
+            }
             FilterChip(
                 selected = showArchived,
                 onClick = { viewModel.setShowArchived(!showArchived) },
@@ -95,16 +114,30 @@ fun HomeScreen(
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     items(list, key = { it.shoe.id }) { item ->
-                        ShoeRow(item, onClick = { onOpenShoe(item.shoe.id) })
+                        val paused = active?.session?.let { it.shoeId == item.shoe.id && it.state == SessionState.PAUSED } == true
+                        ShoeRow(item, paused, onClick = { onOpenShoe(item.shoe.id) })
                     }
                 }
             }
         }
     }
+
+    val endId = confirmEndId
+    val current = active
+    if (endId != null && current != null && current.session.id == endId) {
+        EndSessionDialog(
+            shoeName = current.shoeName,
+            onConfirm = {
+                confirmEndId = null
+                viewModel.end(endId)
+            },
+            onDismiss = { confirmEndId = null },
+        )
+    }
 }
 
 @Composable
-private fun ShoeRow(item: ShoeWithStats, onClick: () -> Unit) {
+private fun ShoeRow(item: ShoeWithStats, paused: Boolean, onClick: () -> Unit) {
     val locale = LocalConfiguration.current.locales[0]
     val shoe = item.shoe
     val subtitle = listOf(shoe.brand, shoe.model).filter { it.isNotEmpty() }.joinToString(" ")
@@ -133,7 +166,8 @@ private fun ShoeRow(item: ShoeWithStats, onClick: () -> Unit) {
                 Text(stepsText, style = MaterialTheme.typography.bodyMedium)
             }
             if (item.isActive) {
-                SuggestionChip(onClick = onClick, label = { Text(stringResource(R.string.home_running_badge)) })
+                val badge = if (paused) R.string.home_paused_badge else R.string.home_running_badge
+                SuggestionChip(onClick = onClick, label = { Text(stringResource(badge)) })
             } else if (shoe.archived) {
                 Text(
                     stringResource(R.string.home_archived_badge),

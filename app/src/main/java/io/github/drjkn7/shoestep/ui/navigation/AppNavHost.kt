@@ -34,7 +34,7 @@ fun AppNavHost(container: AppContainer) {
         NavHost(navController = navController, startDestination = Routes.HOME) {
             composable(Routes.HOME) {
                 HomeScreen(
-                    viewModel = viewModel { HomeViewModel(container.shoeRepository) },
+                    viewModel = viewModel { HomeViewModel(container.shoeRepository, container.sessionManager) },
                     onAddShoe = { navController.navigate(Routes.ADD_SHOE) },
                     onOpenShoe = { id -> navController.navigate(Routes.shoeDetail(id)) },
                     onOpenSettings = { navController.navigate(Routes.SETTINGS) },
@@ -64,7 +64,7 @@ fun AppNavHost(container: AppContainer) {
             composable(Routes.SHOE_DETAIL, arguments = shoeIdArg) { entry ->
                 val shoeId = entry.arguments?.getString(Routes.ARG_SHOE_ID).orEmpty()
                 ShoeDetailScreen(
-                    viewModel = viewModel { ShoeDetailViewModel(container.shoeRepository, shoeId) },
+                    viewModel = viewModel { ShoeDetailViewModel(container.shoeRepository, container.sessionManager, shoeId) },
                     onBack = goBack,
                     onEdit = { navController.navigate(Routes.editShoe(shoeId)) },
                 )
