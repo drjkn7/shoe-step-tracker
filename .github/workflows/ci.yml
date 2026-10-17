@@ -78,6 +78,11 @@ jobs:
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
 
+      # Product owner approved accepting the standard Android SDK licences on the CI runner
+      # (needed to download the emulator system image). "yes || true" avoids a SIGPIPE failure.
+      - name: Accept Android SDK licences
+        run: (yes || true) | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null
+
       # Gradle Managed Device defined in app/build.gradle.kts (Pixel 2, API 30, ATD image).
       - name: Run on-device tests
         run: >

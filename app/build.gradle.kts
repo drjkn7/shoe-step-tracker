@@ -55,6 +55,8 @@ android {
                     apiLevel = 30
                     // Automated Test Device image: headless and faster; no Google services needed.
                     systemImageSource = "aosp-atd"
+                    // Explicit so AGP 10 (default arm64-v8a) does not break this x86-only image.
+                    testedAbi = "x86"
                 }
             }
         }
