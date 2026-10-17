@@ -14,3 +14,5 @@ Ideas recorded here are **not** built in M1. Each needs a product decision befor
 | Background step reconciliation (WorkManager) | M1 reconciles only when the app is opened. |
 | Retirement reminder at a step threshold | e.g. "this pair has done 800 km". |
 | iOS version | |
+| "Discard unsaved changes?" prompt | When pressing Back on the Add/Edit form with edits. |
+| Sort and search the shoe list | Useful once there are many pairs. |
