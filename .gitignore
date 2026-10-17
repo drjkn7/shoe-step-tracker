@@ -1,0 +1,28 @@
+# Local machine config (contains your SDK path) - never commit
+local.properties
+
+# Signing secrets - never commit (SEC-09, SEC-12)
+*.jks
+*.keystore
+keystore.properties
+
+# Build outputs
+/build
+**/build/
+*.apk
+*.aab
+captures/
+.externalNativeBuild
+.cxx
+
+# Gradle / Kotlin caches
+.gradle/
+.kotlin/
+
+# IDE files (machine-specific)
+/.idea/
+*.iml
+
+# OS files
+.DS_Store
+Thumbs.db
