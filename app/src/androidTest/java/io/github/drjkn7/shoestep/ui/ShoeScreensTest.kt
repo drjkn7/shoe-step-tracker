@@ -87,8 +87,16 @@ class ShoeScreensTest {
         launch()
         rule.onNodeWithContentDescription(str(R.string.nav_add_shoe)).performClick()
 
-        // Empty name
+        // Empty name: tapping Save shows a popup describing the problem, visible wherever the form
+        // is scrolled (product owner found the inline error was off-screen on a Pixel 9 Pro).
         clickSave()
+        rule.onNodeWithText(str(R.string.save_problems_title)).assertIsDisplayed()
+        rule.onNodeWithText(
+            str(R.string.save_problems_item, str(R.string.field_label_name), str(R.string.error_name_required)),
+        ).assertIsDisplayed()
+        rule.onNodeWithText(str(R.string.action_ok)).performClick()
+        assertTrue(rule.onAllNodesWithText(str(R.string.save_problems_title)).fetchSemanticsNodes().isEmpty())
+        // The field itself stays marked so the user can find it after closing the popup.
         rule.onNodeWithText(str(R.string.error_name_required)).assertExists()
 
         // 200 characters
@@ -204,11 +212,14 @@ class ShoeScreensTest {
     private fun assertIconButtons() {
         rule.waitForIdle()
         val iconButtons = rule.onAllNodes(hasClickAction() and SemanticsMatcher.keyIsDefined(SemanticsProperties.ContentDescription))
-        val nodes = iconButtons.fetchSemanticsNodes()
-        assertTrue("Expected icon buttons on screen", nodes.isNotEmpty())
+        val count = iconButtons.fetchSemanticsNodes().size
+        assertTrue("Expected icon buttons on screen", count > 0)
         // Material draws icon buttons 40dp wide but extends the touch area to 48dp; measure the touch area.
         val minPx = with(rule.density) { 48.dp.toPx() } - 1f
-        nodes.forEach { node ->
+        for (i in 0 until count) {
+            // Off-screen elements (small emulator screens) measure 0x0 until scrolled into view.
+            runCatching { iconButtons[i].performScrollTo() }
+            val node = iconButtons[i].fetchSemanticsNode()
             val touch = node.touchBoundsInRoot
             val label = node.config.getOrNull(SemanticsProperties.ContentDescription)
             assertTrue("Touch target too small for $label: ${touch.width} x ${touch.height}px", touch.width >= minPx && touch.height >= minPx)
