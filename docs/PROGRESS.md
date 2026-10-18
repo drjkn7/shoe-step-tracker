@@ -9,16 +9,15 @@
 - [x] Phase 5: Health Connect and offline step resolution (PR #9, merged)
 - [x] Phase 6: NFC (PR #10, merged; step-count decision PR #11)
 - [x] Phase 7: Stats, export, settings (PR #12, merged; CSV fixes PR #13, #14)
-- [ ] Phase 8: Hardening and release ← **built on branch `feature/phase-8-hardening-release`, awaiting product-owner "go" and PR**
+- [x] Phase 8: Hardening and release (PR #15, merged; v0.1.0 released)
 
-## Next up: Phase 8 hand-off (read this first after /clear)
-Status: Phase 8 plan approved (2026-10-18) and built on `feature/phase-8-hardening-release`; all checks and
-on-device tests pass (Pixel 9 Pro Android 17 and Android 13 emulator, debug and R8 staging). "go" given;
-PR #15 open (paused 2026-10-18, resume next day). Next: "check CI" on PR #15 (confirm the debug AND staging
-emulator runs both executed tests; download on-device-reports) → rebase-merge → `git pull --ff-only`; then
-the owner creates the signing key and signed APK in Android Studio ([docs/RELEASE.md](RELEASE.md)), I verify
-it (apksigner, SHA-256), the owner runs [docs/MANUAL_CHECKS.md](MANUAL_CHECKS.md), and confirms before the
-v0.1.0 tag and GitHub Release are published. The Pixel currently has the staging build installed.
+## Milestone 1 complete (read this first after /clear)
+v0.1.0 is published: [GitHub Release](https://github.com/drjkn7/shoe-step-tracker/releases/tag/v0.1.0), tag
+`v0.1.0` on `ba7a404`, asset `shoe-step-tracker-0.1.0.apk` (SHA-256 `2e3ebf49…8d80`, also attached as a
+`.sha256` file; verified by downloading it back). Signed by the product owner's own key (kept outside the
+project); the product owner reported the [manual checklist](MANUAL_CHECKS.md) as passed on 2026-10-18.
+Next: no milestone planned yet. Ideas live in [BACKLOG.md](BACKLOG.md); each needs a product decision.
+For the next release follow [RELEASE.md](RELEASE.md) (same key, bump versionCode/versionName).
 
 What Phase 8 added:
 - R8 for the app's own code (release); enum names kept (stored in the DB). "staging" build type =
