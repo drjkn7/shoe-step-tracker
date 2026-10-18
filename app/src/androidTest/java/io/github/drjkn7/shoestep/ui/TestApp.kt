@@ -5,6 +5,9 @@ import io.github.drjkn7.shoestep.AppContainer
 import io.github.drjkn7.shoestep.core.Clock
 import io.github.drjkn7.shoestep.data.db.ShoeStepDatabase
 import io.github.drjkn7.shoestep.nfc.NfcState
+import io.github.drjkn7.shoestep.settings.SettingsStore
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import io.github.drjkn7.shoestep.steps.StepsAccess
 import io.github.drjkn7.shoestep.steps.StepsRead
 import io.github.drjkn7.shoestep.steps.StepsSource
@@ -36,10 +39,22 @@ fun testContainer(
     stepsSource: StepsSource = FakeStepsSource(),
     clock: Clock = TestClock,
     nfcState: NfcState = NfcState.ON,
+    settings: SettingsStore = InMemorySettings(),
 ): AppContainer = AppContainer(
     context = ApplicationProvider.getApplicationContext(),
     databaseFactory = ShoeStepDatabase::buildInMemory,
     clock = clock,
     stepsSourceFactory = { stepsSource },
     nfcStateProvider = { nfcState },
+    settingsFactory = { settings },
 )
+
+/** Settings that live only in memory, so UI tests never touch the real settings file. */
+class InMemorySettings(initialCurrency: String? = null) : SettingsStore {
+    private val currency = MutableStateFlow(initialCurrency)
+    override val defaultCurrency: Flow<String?> = currency
+
+    override suspend fun setDefaultCurrency(code: String) {
+        currency.value = code
+    }
+}

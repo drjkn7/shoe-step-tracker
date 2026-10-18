@@ -31,7 +31,7 @@ class NavigationTest {
         rule.onNodeWithText(str(R.string.title_home)).assertIsDisplayed()
 
         rule.onNodeWithContentDescription(str(R.string.nav_settings)).performClick()
-        rule.onNodeWithText(str(R.string.placeholder_settings)).assertIsDisplayed()
+        rule.onNodeWithText(str(R.string.settings_new_pairs)).assertIsDisplayed()
         rule.onNodeWithContentDescription(str(R.string.nav_back)).performClick()
 
         rule.onNodeWithContentDescription(str(R.string.nav_add_shoe)).performClick()
