@@ -40,7 +40,7 @@ class CsvExporterTest {
 
     @Test fun pairsHaveAHeaderAndOneRowEach() {
         val lines = pairs(stats(shoe()))
-        // Header unquoted: a quoted first cell after the BOM showed its quotes in Google Sheets.
+        // Header unquoted: Google Sheets showed a quoted first header (after a BOM) with stray characters.
         assertEquals(
             "Name,Brand,Model,Type,Price,Currency,Purchase date,Colour,Archived," +
                 "Sessions,Total steps,Steps status,Walking minutes,Last worn",

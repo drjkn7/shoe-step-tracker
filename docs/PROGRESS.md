@@ -21,7 +21,7 @@ What Phase 7 added:
   New pairs use it via `ShoeFormViewModel.applyDefaultCurrency` unless the user already chose a currency.
 - `export/`: `Csv` (RFC 4180, always-quoted text, formula neutralising with ', T23), `CsvExporter` (pure:
   pairs and sessions files), `CsvExportRepository` (DAO queries `getAllWithStats`, `getAllForExport`;
-  writes UTF-8 + BOM to the file the user picks via CreateDocument; no permission).
+  writes UTF-8 (no BOM, unquoted header) to the file the user picks via CreateDocument; no permission).
 - Settings screen: default currency, step counting (Open Health Connect / Allow / install), Export pairs,
   Export sessions, Privacy statement and Open-source licences pages (full texts in res/raw), version.
 - Pair page: average per session, walking time, last worn; "About N steps so far" while its session runs
@@ -64,6 +64,7 @@ What Phase 7 added:
 | 2026-10-17 | A count is PROVISIONAL ("About") for one day after its segment ends, then FINAL (product owner changed 2 days → 1 day). No data after a day → UNAVAILABLE, left out of totals (a provisional count already shown is kept as FINAL instead). Read errors retry, except segments older than Health Connect's 30-day history limit, which settle. |
 | 2026-10-18 | Product owner: a provisional count may go down as well as up. Health Connect's latest answer is the accurate one (e.g. after it removes duplicates), so the app shows it rather than keeping the higher number. Once FINAL, a count never changes. |
 | 2026-10-18 | Phase 7 plan approved. Two exports (pairs, sessions) as separate CSV files through the system file picker; the "so far" count also shows on the pair's page. DataStore 1.2.1 applied (pre-approved; latest stable re-checked). No new permission or exported component. |
+| 2026-10-18 | CSV exports: header row unquoted and no UTF-8 byte order mark (product owner, after Google Sheets showed stray characters before the first header). Trade-off accepted: Excel's double-click open may garble accented letters; its Data → From Text import reads them correctly. |
 | 2026-10-17 | The running session card shows "About N steps so far" (live read, display only; shoe totals change only when a segment closes). |
 | 2026-10-17 | connect-client 1.1.0 applied (latest stable on 2026-10-17; 1.2.0 is alpha only). Release export allowlist adds PermissionsRationaleActivity (static text), ViewPermissionUsageActivity (START_VIEW_PERMISSION_USAGE) and the library's HealthDataSdkService (code rejects callers other than the Health Connect package; product owner approved keeping it). |
 | 2026-10-17 | Step counts are written only by StepReconciler; SessionManager creates segments PENDING and never touches steps. Not session state, so the "only SessionManager changes session state" rule is unchanged. |

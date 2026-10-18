@@ -21,7 +21,7 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 
-/** The export straight from a real (in-memory) database: both files, BOM, archived pairs, T23. */
+/** The export straight from a real (in-memory) database: both files, no BOM, UTF-8, archived pairs, T23. */
 @RunWith(AndroidJUnit4::class)
 class ExportDbTest {
 
@@ -48,10 +48,16 @@ class ExportDbTest {
         val out = ByteArrayOutputStream()
         exporter.writeTo(kind, out)
         val bytes = out.toByteArray()
-        assertArrayEquals("UTF-8 BOM first", Csv.UTF8_BOM, bytes.copyOfRange(0, 3))
-        // Straight after the BOM comes a plain letter, never a quote (Google Sheets showed the quotes).
-        assertTrue("first header cell is unquoted", bytes[3] != '"'.code.toByte())
-        return String(bytes, 3, bytes.size - 3, Charsets.UTF_8)
+        // Google Sheets showed both a byte order mark and a quoted first header as stray characters:
+        // the file must start with the plain first header name.
+        val expectedStart = if (kind == ExportKind.PAIRS) "Name," else "Pair,"
+        assertArrayEquals(expectedStart.toByteArray(Charsets.US_ASCII), bytes.copyOfRange(0, 5))
+        return String(bytes, Charsets.UTF_8)
+    }
+
+    @Test fun accentedNamesAreWrittenAsUtf8() = runTest {
+        db.shoeDao().update(db.shoeDao().getById("b")!!.copy(name = "Café Läufer"))
+        assertTrue(export(ExportKind.PAIRS).contains("\"Café Läufer\""))
     }
 
     @Test fun pairsFileIncludesArchivedPairsAndNeutralisesFormulas() = runTest {
