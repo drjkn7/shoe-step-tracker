@@ -136,7 +136,8 @@ class StepsScreensTest {
         waitForText(about)
         rule.onNodeWithText(about, substring = true).performScrollTo().assertIsDisplayed()
         // The shoe's total also says "about" while the count may still change.
-        rule.onNodeWithText(str(R.string.steps_about, count(1_234))).performScrollTo().assertIsDisplayed()
+        rule.onNode(hasText(str(R.string.detail_total_steps)) and hasText(str(R.string.steps_about, count(1_234))))
+            .performScrollTo().assertIsDisplayed()
     }
 
     @Test fun rationaleExplainsStepUseAndCloses() {
