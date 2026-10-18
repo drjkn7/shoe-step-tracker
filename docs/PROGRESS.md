@@ -13,10 +13,12 @@
 
 ## Next up: Phase 8 hand-off (read this first after /clear)
 Status: Phase 8 plan approved (2026-10-18) and built on `feature/phase-8-hardening-release`; all checks and
-on-device tests pass (Pixel 9 Pro Android 17 and Android 13 emulator, debug and R8 staging). Next: the
-product owner's "go" → PR → CI (confirm both emulator runs executed tests) → merge; then the owner creates
-the signing key and signed APK in Android Studio ([docs/RELEASE.md](RELEASE.md)), runs
-[docs/MANUAL_CHECKS.md](MANUAL_CHECKS.md), and says whether to publish the v0.1.0 GitHub Release.
+on-device tests pass (Pixel 9 Pro Android 17 and Android 13 emulator, debug and R8 staging). "go" given;
+PR #15 open (paused 2026-10-18, resume next day). Next: "check CI" on PR #15 (confirm the debug AND staging
+emulator runs both executed tests; download on-device-reports) → rebase-merge → `git pull --ff-only`; then
+the owner creates the signing key and signed APK in Android Studio ([docs/RELEASE.md](RELEASE.md)), I verify
+it (apksigner, SHA-256), the owner runs [docs/MANUAL_CHECKS.md](MANUAL_CHECKS.md), and confirms before the
+v0.1.0 tag and GitHub Release are published. The Pixel currently has the staging build installed.
 
 What Phase 8 added:
 - R8 for the app's own code (release); enum names kept (stored in the DB). "staging" build type =
