@@ -8,25 +8,19 @@
 - [x] Phase 4: Sessions (PR #8, merged)
 - [x] Phase 5: Health Connect and offline step resolution (PR #9, merged)
 - [x] Phase 6: NFC (PR #10, merged; step-count decision PR #11)
-- [ ] Phase 7: Stats, export, settings ← **built on branch `feature/phase-7-stats-export-settings`, awaiting product-owner "go" and PR**
-- [ ] Phase 8: Hardening and release
+- [x] Phase 7: Stats, export, settings (PR #12, merged; CSV fixes PR #13, #14)
+- [ ] Phase 8: Hardening and release ← **branch `feature/phase-8-hardening-release`, plan awaiting "approved"**
 
-## Next up: Phase 7 hand-off (read this first after /clear)
-Status: Phase 7 plan approved (2026-10-18) and built on `feature/phase-7-stats-export-settings`; all local
-checks and on-device tests pass. "go" given (2026-10-18): push → PR → CI (confirm the
-emulator job ran ExportDbTest, SettingsScreensTest, PairStatsScreenTest) → rebase-merge.
+## Next up: Phase 8 hand-off (read this first after /clear)
+Status: branch `feature/phase-8-hardening-release` created from main after PR #14; plan presented, waiting
+for the product owner's "approved". Nothing built yet.
 
-What Phase 7 added:
-- `settings/SettingsStore` (DataStore 1.2.1, one "settings" file; default currency validated on read).
-  New pairs use it via `ShoeFormViewModel.applyDefaultCurrency` unless the user already chose a currency.
-- `export/`: `Csv` (RFC 4180, always-quoted text, formula neutralising with ', T23), `CsvExporter` (pure:
-  pairs and sessions files), `CsvExportRepository` (DAO queries `getAllWithStats`, `getAllForExport`;
-  writes UTF-8 (no BOM, unquoted header) to the file the user picks via CreateDocument; no permission).
-- Settings screen: default currency, step counting (Open Health Connect / Allow / install), Export pairs,
-  Export sessions, Privacy statement and Open-source licences pages (full texts in res/raw), version.
-- Pair page: average per session, walking time, last worn; "About N steps so far" while its session runs
-  (shared `steps/soFarSteps`, also used by Home).
-- Tests: CsvTest, CsvExporterTest (JVM); ExportDbTest, SettingsScreensTest, PairStatsScreenTest (on-device).
+Scope (last phase of M1): large-data check (T26, 40 pairs / 2,000 sessions; history paging if needed),
+right-to-left and TalkBack (T25), backup exclusion (T24), kill/reboot/airplane/time-zone checks (T16–T18,
+T20), release build hardening (R8 for app code, `cross-platform-transfer` rules), full SEC-01..12 review,
+a manual phone checklist for the product owner, then version 0.1.0 release (CHANGELOG, README, tag).
+Needs decisions: how to publish 0.1.0 (signing key is the owner's; never committed), R8 scope, whether to
+test Android 9–13 on a downloaded emulator image. Phase 7 summary is in the decisions log and git history.
 
 ## Decisions log
 | Date | Decision |
