@@ -1,6 +1,5 @@
 package io.github.drjkn7.shoestep.ui.home
 
-import android.content.ActivityNotFoundException
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -112,13 +111,7 @@ fun HomeScreen(
                 StepsAccessCard(
                     access = access,
                     onAllow = { permissionLauncher.launch(HealthConnectStepsSource.PERMISSIONS) },
-                    onInstall = {
-                        try {
-                            context.startActivity(HealthConnectStepsSource.installIntent())
-                        } catch (_: ActivityNotFoundException) {
-                            // No Play Store on this phone: the card's text already explains what is needed.
-                        }
-                    },
+                    onInstall = { HealthConnectStepsSource.openInstallPage(context) },
                     modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 8.dp),
                 )
             }

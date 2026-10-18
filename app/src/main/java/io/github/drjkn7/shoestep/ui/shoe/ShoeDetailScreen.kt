@@ -28,6 +28,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -36,6 +37,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
@@ -405,13 +407,15 @@ private fun TagCard(linked: Boolean, archived: Boolean, hasNfc: Boolean, onLink:
 @Composable
 private fun HistoryCard(history: List<SessionWithSteps>) {
     val locale = LocalConfiguration.current.locales[0]
+    // T26: a long-used pair can have thousands of sessions; build only the newest ones, a page at a time.
+    var shown by rememberSaveable { mutableIntStateOf(HISTORY_PAGE_SIZE) }
     Card(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text(stringResource(R.string.history_title), style = MaterialTheme.typography.titleMedium)
             if (history.isEmpty()) {
                 Text(stringResource(R.string.history_empty), style = MaterialTheme.typography.bodyMedium)
             }
-            history.forEach { row ->
+            history.take(shown).forEach { row ->
                 val session = row.session
                 val steps = labelledSteps(
                     stepsCountText(row.totalSteps),
@@ -445,9 +449,24 @@ private fun HistoryCard(history: List<SessionWithSteps>) {
                     }
                 }
             }
+            val remaining = history.size - shown
+            if (remaining > 0) {
+                OutlinedButton(onClick = { shown += HISTORY_PAGE_SIZE }, modifier = Modifier.fillMaxWidth()) {
+                    Text(
+                        pluralStringResource(
+                            R.plurals.history_show_older,
+                            remaining.coerceAtMost(HISTORY_PAGE_SIZE),
+                            remaining.coerceAtMost(HISTORY_PAGE_SIZE),
+                        ),
+                    )
+                }
+            }
         }
     }
 }
+
+/** How many history rows are built at first and per "Show older sessions" tap. */
+private const val HISTORY_PAGE_SIZE = 50
 
 @Composable
 private fun StatRow(label: String, value: String) {

@@ -16,3 +16,10 @@
     public static int d(...);
     public static int i(...);
 }
+
+# Enum constants are stored in the database by name (data/model/Enums.kt): never rename them.
+-keepclassmembers enum io.github.drjkn7.shoestep.data.model.** {
+    <fields>;
+    public static **[] values();
+    public static ** valueOf(java.lang.String);
+}
