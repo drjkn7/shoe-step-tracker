@@ -61,6 +61,10 @@ interface ShoeDao {
 
     @Query("SELECT $SHOE_STATS_COLUMNS FROM shoes s WHERE s.id = :id")
     suspend fun getWithStatsById(id: String): ShoeWithStats?
+
+    /** Every pair, archived included, for the CSV export. */
+    @Query("SELECT $SHOE_STATS_COLUMNS FROM shoes s ORDER BY s.name COLLATE NOCASE, s.id")
+    suspend fun getAllWithStats(): List<ShoeWithStats>
 }
 
 /**
@@ -109,6 +113,23 @@ interface SessionDao {
         """,
     )
     fun observeHistory(shoeId: String): Flow<List<SessionWithSteps>>
+
+    /** Every session with its pair's name and the same totals as the history list, for the CSV export. */
+    @Query(
+        """
+        SELECT x.*, s.name AS shoe_name,
+            COALESCE((SELECT SUM(g.steps) FROM segments g WHERE g.session_id = x.id), 0) AS total_steps,
+            COALESCE((SELECT SUM(MAX(0, g.end_utc - g.start_utc)) FROM segments g
+                      WHERE g.session_id = x.id AND g.end_utc IS NOT NULL), 0) AS active_millis,
+            EXISTS(SELECT 1 FROM segments g WHERE g.session_id = x.id
+                   AND g.end_utc IS NOT NULL AND g.steps_status IN ('PENDING', 'PROVISIONAL')) AS has_unfinal_steps,
+            EXISTS(SELECT 1 FROM segments g WHERE g.session_id = x.id
+                   AND g.end_utc IS NOT NULL AND g.steps_status = 'PENDING') AS has_pending_steps
+        FROM sessions x JOIN shoes s ON x.shoe_id = s.id
+        ORDER BY x.start_utc, x.id
+        """,
+    )
+    suspend fun getAllForExport(): List<SessionExportRow>
 }
 
 /**

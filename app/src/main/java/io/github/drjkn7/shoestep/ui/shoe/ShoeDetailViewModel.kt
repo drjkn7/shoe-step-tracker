@@ -8,7 +8,11 @@ import io.github.drjkn7.shoestep.data.db.SessionWithSteps
 import io.github.drjkn7.shoestep.data.db.ShoeWithStats
 import io.github.drjkn7.shoestep.session.SessionManager
 import io.github.drjkn7.shoestep.session.SessionResult
+import io.github.drjkn7.shoestep.steps.SoFarSteps
+import io.github.drjkn7.shoestep.steps.StepReconciler
+import io.github.drjkn7.shoestep.steps.soFarSteps
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -26,6 +30,7 @@ class ShoeDetailViewModel(
     private val repository: ShoeRepository,
     private val sessions: SessionManager,
     private val shoeId: String,
+    reconciler: StepReconciler,
 ) : ViewModel() {
 
     val state: StateFlow<DetailState> = repository.observeShoe(shoeId)
@@ -39,6 +44,22 @@ class ShoeDetailViewModel(
     /** This pair's sessions, newest first. */
     val history: StateFlow<List<SessionWithSteps>> = sessions.observeHistory(shoeId)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    private val stepsRefresh = MutableStateFlow(0)
+
+    /** "About N steps so far" while this pair's session runs or is paused (same as the Home card). */
+    val stepsSoFar: StateFlow<SoFarSteps?> = soFarSteps(
+        sessionKey = sessions.activeSession
+            .map { active -> active?.session?.takeIf { it.shoeId == shoeId }?.let { it.id to it.state } }
+            .distinctUntilChanged(),
+        refresh = stepsRefresh,
+        reconciler = reconciler,
+    ).stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+
+    /** Called when the page is shown again: re-read the "so far" count. */
+    fun refreshSteps() {
+        stepsRefresh.value += 1
+    }
 
     private val _askSwitch = MutableStateFlow(false)
     /** True while the "Switch to this pair?" question is showing. */

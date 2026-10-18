@@ -27,7 +27,10 @@ import io.github.drjkn7.shoestep.ui.common.FilterTouchesWhenObscured
 import io.github.drjkn7.shoestep.ui.common.LocalAppContainer
 import io.github.drjkn7.shoestep.ui.home.HomeScreen
 import io.github.drjkn7.shoestep.ui.home.HomeViewModel
+import io.github.drjkn7.shoestep.ui.settings.LicencesScreen
+import io.github.drjkn7.shoestep.ui.settings.PrivacyScreen
 import io.github.drjkn7.shoestep.ui.settings.SettingsScreen
+import io.github.drjkn7.shoestep.ui.settings.SettingsViewModel
 import io.github.drjkn7.shoestep.ui.shoe.ShoeDetailScreen
 import io.github.drjkn7.shoestep.ui.shoe.ShoeDetailViewModel
 import io.github.drjkn7.shoestep.ui.shoe.ShoeFormScreen
@@ -83,16 +86,20 @@ fun AppNavHost(container: AppContainer) {
                 )
             }
             composable(Routes.ADD_SHOE) {
+                val form = viewModel {
+                    ShoeFormViewModel(
+                        repository = container.shoeRepository,
+                        clock = container.clock,
+                        savedState = createSavedStateHandle(),
+                        shoeId = null,
+                        defaultCurrencyCode = Money.defaultCurrencyCode(locale),
+                    )
+                }
+                // The default currency chosen in Settings (if any) replaces the region's guess.
+                val savedCurrency by container.settings.defaultCurrency.collectAsStateWithLifecycle(initialValue = null)
+                LaunchedEffect(savedCurrency) { savedCurrency?.let(form::applyDefaultCurrency) }
                 ShoeFormScreen(
-                    viewModel = viewModel {
-                        ShoeFormViewModel(
-                            repository = container.shoeRepository,
-                            clock = container.clock,
-                            savedState = createSavedStateHandle(),
-                            shoeId = null,
-                            defaultCurrencyCode = Money.defaultCurrencyCode(locale),
-                        )
-                    },
+                    viewModel = form,
                     onBack = {
                         tags.onAddCancelled()
                         goBack()
@@ -111,7 +118,7 @@ fun AppNavHost(container: AppContainer) {
             composable(Routes.SHOE_DETAIL, arguments = shoeIdArg) { entry ->
                 val shoeId = entry.arguments?.getString(Routes.ARG_SHOE_ID).orEmpty()
                 ShoeDetailScreen(
-                    viewModel = viewModel { ShoeDetailViewModel(container.shoeRepository, container.sessionManager, shoeId) },
+                    viewModel = viewModel { ShoeDetailViewModel(container.shoeRepository, container.sessionManager, shoeId, container.stepReconciler) },
                     onBack = goBack,
                     onEdit = { navController.navigate(Routes.editShoe(shoeId)) },
                     hasNfc = hasNfc,
@@ -138,8 +145,17 @@ fun AppNavHost(container: AppContainer) {
                 )
             }
             composable(Routes.SETTINGS) {
-                SettingsScreen(onBack = goBack)
+                SettingsScreen(
+                    viewModel = viewModel {
+                        SettingsViewModel(container.settings, container.stepsSource, container.exporter, container.clock)
+                    },
+                    onBack = goBack,
+                    onOpenPrivacy = { navController.navigate(Routes.PRIVACY) },
+                    onOpenLicences = { navController.navigate(Routes.LICENCES) },
+                )
             }
+            composable(Routes.PRIVACY) { PrivacyScreen(onBack = goBack) }
+            composable(Routes.LICENCES) { LicencesScreen(onBack = goBack) }
         }
 
         val pairs by remember { container.shoeRepository.observeShoes(archived = false) }

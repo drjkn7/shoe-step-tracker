@@ -79,6 +79,7 @@ dependencies {
     implementation(libs.kotlinx.serialization.core) // version pin only; see libs.versions.toml
     implementation(libs.androidx.room3.runtime)
     implementation(libs.androidx.health.connect.client)
+    implementation(libs.androidx.datastore.preferences)
     ksp(libs.androidx.room3.compiler)
 
     testImplementation(libs.junit)

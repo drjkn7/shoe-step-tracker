@@ -40,6 +40,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.drjkn7.shoestep.R
 import io.github.drjkn7.shoestep.core.CostCalculator
@@ -48,6 +50,7 @@ import io.github.drjkn7.shoestep.data.db.SessionWithSteps
 import io.github.drjkn7.shoestep.data.db.ShoeWithStats
 import io.github.drjkn7.shoestep.data.model.EndReason
 import io.github.drjkn7.shoestep.data.model.SessionState
+import io.github.drjkn7.shoestep.steps.SoFarSteps
 import io.github.drjkn7.shoestep.ui.common.ColourDot
 import io.github.drjkn7.shoestep.ui.common.ConfirmDialog
 import io.github.drjkn7.shoestep.ui.common.Formatters
@@ -78,6 +81,8 @@ fun ShoeDetailScreen(
     val active by viewModel.activeSession.collectAsStateWithLifecycle()
     val history by viewModel.history.collectAsStateWithLifecycle()
     val askSwitch by viewModel.askSwitch.collectAsStateWithLifecycle()
+    val stepsSoFar by viewModel.stepsSoFar.collectAsStateWithLifecycle()
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { viewModel.refreshSteps() }
     var menuOpen by rememberSaveable { mutableStateOf(false) }
     var confirmDelete by rememberSaveable { mutableStateOf(false) }
     var confirmArchive by rememberSaveable { mutableStateOf(false) }
@@ -149,6 +154,7 @@ fun ShoeDetailScreen(
                 item = s.shoe,
                 active = active,
                 history = history,
+                stepsSoFar = stepsSoFar,
                 onStart = viewModel::start,
                 onPause = viewModel::pause,
                 onResume = viewModel::resume,
@@ -252,6 +258,7 @@ private fun DetailContent(
     item: ShoeWithStats,
     active: ActiveSessionWithShoe?,
     history: List<SessionWithSteps>,
+    stepsSoFar: SoFarSteps?,
     onStart: () -> Unit,
     onPause: (String) -> Unit,
     onResume: (String) -> Unit,
@@ -308,6 +315,22 @@ private fun DetailContent(
                     ),
                 )
                 StatRow(stringResource(R.string.detail_sessions), Formatters.count(item.sessionCount.toLong(), locale))
+                StatRow(
+                    stringResource(R.string.detail_average_steps),
+                    item.averageStepsPerSession?.let {
+                        labelledSteps(Formatters.count(it, locale), StepsLabel.of(item.hasPendingSteps, item.hasUnfinalSteps))
+                    } ?: dash,
+                )
+                val (hours, minutes) = Formatters.hoursAndMinutes(item.activeMillis)
+                StatRow(
+                    stringResource(R.string.detail_walking_time),
+                    if (hours > 0) stringResource(R.string.duration_hours_minutes, hours, minutes)
+                    else stringResource(R.string.duration_minutes, minutes),
+                )
+                StatRow(
+                    stringResource(R.string.detail_last_worn),
+                    item.lastUsedUtc?.let { Formatters.date(Formatters.localEpochDay(it), locale) } ?: dash,
+                )
                 val cost = CostCalculator.cost(shoe.priceMinor, shoe.currencyCode, item.totalSteps)
                 StatRow(
                     stringResource(R.string.detail_cost_per_1000),
@@ -328,6 +351,15 @@ private fun DetailContent(
             }
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 if (status != null) Text(status, style = MaterialTheme.typography.bodyLarge)
+                if (mine != null) {
+                    val soFar = when (stepsSoFar) {
+                        is SoFarSteps.Count ->
+                            stringResource(R.string.session_card_steps_so_far, stepsCountText(stepsSoFar.steps))
+                        SoFarSteps.Later -> stringResource(R.string.session_card_steps_later)
+                        null -> null
+                    }
+                    soFar?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
+                }
                 SessionButtons(
                     state = mine?.state,
                     onStart = onStart,

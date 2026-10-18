@@ -369,12 +369,12 @@ private fun errorText(field: ShoeField, error: FieldError, currencyCode: String)
     ShoeField.ACCENT_COLOR -> stringResource(R.string.error_colour_invalid)
 }
 
-private fun currencyName(code: String, locale: Locale): String =
+internal fun currencyName(code: String, locale: Locale): String =
     runCatching { Currency.getInstance(code).getDisplayName(locale) }.getOrDefault(code)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun CurrencyPicker(locale: Locale, onPick: (String) -> Unit, onDismiss: () -> Unit) {
+internal fun CurrencyPicker(locale: Locale, onPick: (String) -> Unit, onDismiss: () -> Unit) {
     val all = remember(locale) {
         Currency.getAvailableCurrencies()
             .map { it.currencyCode }

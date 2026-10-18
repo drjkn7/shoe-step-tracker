@@ -96,7 +96,21 @@ class ShoeFormViewModel(
         if (showErrors) revalidate()
     }
 
+    /** True once the currency was set on purpose (editing, restored typing, or picked by the user). */
+    private var currencyChosen = shoeId != null || savedState.get<String>(KEY_CURRENCY) != null
+
+    /**
+     * The default currency from Settings arrives just after the form opens. It replaces the region's
+     * guess unless the user already chose a currency (or this is an existing pair).
+     */
+    fun applyDefaultCurrency(code: String) {
+        if (currencyChosen) return
+        currencyChosen = true
+        update(form.copy(currencyCode = code))
+    }
+
     fun update(newState: ShoeFormState) {
+        if (newState.currencyCode != form.currencyCode) currencyChosen = true
         form = newState
         persist(newState)
         if (showErrors) revalidate()

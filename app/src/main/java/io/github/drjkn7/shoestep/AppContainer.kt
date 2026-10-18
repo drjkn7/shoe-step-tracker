@@ -6,6 +6,9 @@ import io.github.drjkn7.shoestep.core.Debouncer
 import io.github.drjkn7.shoestep.core.SystemWallClock
 import io.github.drjkn7.shoestep.data.ShoeRepository
 import io.github.drjkn7.shoestep.data.db.ShoeStepDatabase
+import io.github.drjkn7.shoestep.export.CsvExportRepository
+import io.github.drjkn7.shoestep.settings.DataStoreSettings
+import io.github.drjkn7.shoestep.settings.SettingsStore
 import io.github.drjkn7.shoestep.nfc.NfcState
 import io.github.drjkn7.shoestep.nfc.RoomTagStore
 import io.github.drjkn7.shoestep.nfc.TagCoordinator
@@ -30,6 +33,8 @@ class AppContainer(
     stepsSourceFactory: (Context) -> StepsSource = ::HealthConnectStepsSource,
     /** Tests pass a fixed answer so they don't depend on the phone's NFC setting. */
     private val nfcStateProvider: (Context) -> NfcState = ::deviceNfcState,
+    /** Tests pass in-memory settings so they never touch the real settings file. */
+    settingsFactory: (Context) -> SettingsStore = ::DataStoreSettings,
 ) {
     private val appContext = context.applicationContext
 
@@ -37,6 +42,12 @@ class AppContainer(
 
     /** Opened on first use; Room does the actual disk work off the main thread. */
     val database: ShoeStepDatabase by lazy { databaseFactory(appContext) }
+
+    /** One DataStore per file per process, so it is created exactly once here. */
+    val settings: SettingsStore by lazy { settingsFactory(appContext) }
+
+    /** Builds the CSV exports from the database (the user picks where they are saved). */
+    val exporter: CsvExportRepository by lazy { CsvExportRepository(database, appContext) }
 
     val shoeRepository: ShoeRepository by lazy { ShoeRepository(database.shoeDao(), clock) }
 

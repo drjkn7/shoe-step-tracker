@@ -31,6 +31,10 @@ object Formatters {
         Instant.ofEpochMilli(epochMillis).atZone(zoneOrUtc(zoneId))
             .format(DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT).withLocale(locale))
 
+    /** The calendar day [epochMillis] falls on in [zone] (the phone's zone by default), for [date]. */
+    fun localEpochDay(epochMillis: Long, zone: ZoneId = ZoneId.systemDefault()): Long =
+        Instant.ofEpochMilli(epochMillis).atZone(zone).toLocalDate().toEpochDay()
+
     /** Whole hours and remaining minutes of a duration; negative durations count as zero. */
     fun hoursAndMinutes(millis: Long): Pair<Long, Long> {
         val totalMinutes = millis.coerceAtLeast(0) / 60_000
