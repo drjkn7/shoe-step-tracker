@@ -6,7 +6,13 @@ Stick an NFC tag on each pair. Tap the tag with your phone to start a session; t
 your steps from **Health Connect** and keeps lifetime totals, session history and cost per step
 for every pair.
 
-> **Status:** Milestone 1 (v0.1.0) in progress. See [docs/PROGRESS.md](docs/PROGRESS.md).
+> **Status:** version 0.1.0 (Milestone 1). What's in it: [CHANGELOG.md](CHANGELOG.md).
+
+## Install
+
+Download the APK from the [Releases](https://github.com/drjkn7/shoe-step-tracker/releases) page and
+open it on your phone (Android asks you to allow installing from your browser or file manager).
+Each release lists the file's SHA-256 checksum so you can check the download is genuine.
 
 ## Privacy in one paragraph
 
@@ -28,7 +34,12 @@ You need Android Studio (it includes the JDK and Android SDK).
 ./gradlew assembleDebug        # build a debug APK
 ./gradlew installDebug         # build and install on a connected phone
 ./gradlew check                # lint + unit tests + security checks
+./gradlew connectedDebugAndroidTest                               # on-device tests (phone unlocked)
+./gradlew connectedStagingAndroidTest -PtestBuildType=staging     # same, against the shrunk release build
 ```
+
+Releases are signed with the maintainer's own key; see [docs/RELEASE.md](docs/RELEASE.md).
+Security review: [docs/SECURITY_REVIEW.md](docs/SECURITY_REVIEW.md).
 
 On Windows use `gradlew.bat` instead of `./gradlew`.
 
