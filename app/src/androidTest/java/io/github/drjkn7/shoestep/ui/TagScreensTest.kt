@@ -164,6 +164,8 @@ class TagScreensTest {
     @Test fun unlinkedTagTappedOnAPairsPageGoesHomeWithThePopUp() {
         addShoe("Daily trainers")
         launch()
+        waitForText("Daily trainers") // slow phones (Android 13 emulator) need Home to settle first
+        rule.waitForIdle()
         rule.onNodeWithText("Daily trainers").performClick()
         waitForText(str(R.string.detail_stats_title))
 
