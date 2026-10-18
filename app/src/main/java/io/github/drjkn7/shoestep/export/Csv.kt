@@ -26,6 +26,19 @@ object Csv {
     fun text(value: String): String = "\"" + neutralise(value).replace("\"", "\"\"") + "\""
 
     /**
+     * The header line, written without quotes. The file starts with a byte order mark, and some
+     * spreadsheet apps (e.g. Google Sheets) keep that mark as part of the first cell; a quoted first
+     * cell then no longer starts with a quote and shows its quotes as text. Header names are fixed
+     * plain words chosen by the app, so they never need quoting (checked here).
+     */
+    fun header(names: List<String>): String {
+        require(names.all { name -> name.isNotEmpty() && name.all { it.isLetterOrDigit() || it == ' ' } }) {
+            "Header names must be plain words"
+        }
+        return names.joinToString(",") + LINE_END
+    }
+
+    /**
      * One line. Strings are quoted text; Long/Int/plain numbers the app made are written as they are;
      * null is an empty cell.
      */

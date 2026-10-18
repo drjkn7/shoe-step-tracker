@@ -1,6 +1,7 @@
 package io.github.drjkn7.shoestep.export
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertThrows
 import org.junit.Test
 
 /** T23: text that a spreadsheet could run as a formula is neutralised; CSV quoting is RFC 4180. */
@@ -30,6 +31,14 @@ class CsvTest {
         assertEquals("\"line one\nline two\"", Csv.text("line one\nline two"))
         assertEquals("\"a, b\"", Csv.text("a, b"))
         assertEquals("\"'=1+1\"", Csv.text("=1+1"))
+    }
+
+    @Test fun headerIsPlainSoTheFirstCellSurvivesTheByteOrderMark() {
+        assertEquals("Name,Total steps\r\n", Csv.header(listOf("Name", "Total steps")))
+        // Header names are fixed by the app; anything needing quotes is a programming mistake.
+        listOf("", "a,b", "\"x\"", "=1", "line\nbreak").forEach { bad ->
+            assertThrows(IllegalArgumentException::class.java) { Csv.header(listOf(bad)) }
+        }
     }
 
     @Test fun rowsMixTextNumbersAndBlanksAndEndInCrLf() {
