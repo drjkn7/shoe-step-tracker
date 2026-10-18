@@ -37,7 +37,11 @@ class CsvExportRepository(private val db: ShoeStepDatabase, context: Context) {
     /** Suggested file name, e.g. "shoe-step-pairs-2026-10-18.csv" (the user can change it). */
     fun fileName(kind: ExportKind, today: LocalDate): String = "${kind.filePrefix}-$today.csv"
 
-    /** Builds the CSV and writes it to [out] (UTF-8 with BOM). The caller closes [out]. */
+    /**
+     * Builds the CSV and writes it to [out] as UTF-8 without a byte order mark (Sheets, Numbers and
+     * LibreOffice read it as is; Excel's double-click may garble accented letters, its import doesn't).
+     * The caller closes [out].
+     */
     suspend fun writeTo(kind: ExportKind, out: OutputStream) {
         val text = csv(kind)
         withContext(Dispatchers.IO) { write(out, text) }
@@ -61,7 +65,6 @@ class CsvExportRepository(private val db: ShoeStepDatabase, context: Context) {
     }
 
     private fun write(out: OutputStream, text: String) {
-        out.write(Csv.UTF8_BOM)
         out.write(text.toByteArray(Charsets.UTF_8))
         out.flush()
     }

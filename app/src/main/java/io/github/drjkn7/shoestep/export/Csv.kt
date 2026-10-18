@@ -11,8 +11,6 @@ package io.github.drjkn7.shoestep.export
 object Csv {
     const val LINE_END = "\r\n"
 
-    /** UTF-8 byte order mark, so spreadsheet apps read accented names correctly. */
-    val UTF8_BOM = byteArrayOf(0xEF.toByte(), 0xBB.toByte(), 0xBF.toByte())
 
     private val FORMULA_STARTS = setOf('=', '+', '-', '@', '\t', '\r', '＝', '＋', '－', '＠')
 
@@ -26,10 +24,9 @@ object Csv {
     fun text(value: String): String = "\"" + neutralise(value).replace("\"", "\"\"") + "\""
 
     /**
-     * The header line, written without quotes. The file starts with a byte order mark, and some
-     * spreadsheet apps (e.g. Google Sheets) keep that mark as part of the first cell; a quoted first
-     * cell then no longer starts with a quote and shows its quotes as text. Header names are fixed
-     * plain words chosen by the app, so they never need quoting (checked here).
+     * The header line, written without quotes: header names are fixed plain words chosen by the app,
+     * so they never need quoting (checked here). The file has no byte order mark (product owner:
+     * Google Sheets showed it as a stray character before the first header).
      */
     fun header(names: List<String>): String {
         require(names.all { name -> name.isNotEmpty() && name.all { it.isLetterOrDigit() || it == ' ' } }) {
