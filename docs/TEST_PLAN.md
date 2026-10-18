@@ -25,8 +25,8 @@ Status: ☐ not run · ✅ passed · ❌ failed. Phase = when it first becomes t
 | T19 | Provisional becomes final | After 1 day and app reopen; until then the count follows Health Connect and may go up or down (product owner, 2026-10-18) | 5 | ◐ rules automated (StepReconcilerTest: later counts replace earlier ones, up or down); final check on phone manual |
 | T20 | Time zone / DST change | Durations and timestamps correct | 4 | ☐ |
 | T21 | Phone + watch both write steps | Not double counted | 5 | ☐ |
-| T22 | Cost per step edge cases | Dash if no price or zero steps; 0 for free shoes | 2 | ✅ (CostCalculatorTest; UI check in Phase 7) |
-| T23 | CSV injection | Cell neutralised | 7 | ☐ |
+| T22 | Cost per step edge cases | Dash if no price or zero steps; 0 for free shoes | 2 | ✅ (CostCalculatorTest; UI: PairStatsScreenTest) |
+| T23 | CSV injection | Cell neutralised | 7 | ✅ (CsvTest, CsvExporterTest, ExportDbTest) |
 | T24 | Backup exclusion | Database not in backups | 1 | ☐ |
 | T25 | TalkBack, 200% font, RTL | Labelled, unclipped, mirrored | 8 | ◐ labels, 48dp, 200% font automated; TalkBack + RTL manual in Phase 8 |
 | T26 | 40 shoes, 2,000 sessions | Smooth scrolling | 8 | ☐ |
