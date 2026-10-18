@@ -13,7 +13,7 @@
 
 ## Next up: Phase 7 hand-off (read this first after /clear)
 Status: Phase 7 plan approved (2026-10-18) and built on `feature/phase-7-stats-export-settings`; all local
-checks and on-device tests pass. Waiting for the product owner's "go", then: push → PR → CI (confirm the
+checks and on-device tests pass. "go" given (2026-10-18): push → PR → CI (confirm the
 emulator job ran ExportDbTest, SettingsScreensTest, PairStatsScreenTest) → rebase-merge.
 
 What Phase 7 added:
