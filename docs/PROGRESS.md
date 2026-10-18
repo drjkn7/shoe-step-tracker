@@ -9,18 +9,25 @@
 - [x] Phase 5: Health Connect and offline step resolution (PR #9, merged)
 - [x] Phase 6: NFC (PR #10, merged; step-count decision PR #11)
 - [x] Phase 7: Stats, export, settings (PR #12, merged; CSV fixes PR #13, #14)
-- [ ] Phase 8: Hardening and release ← **branch `feature/phase-8-hardening-release`, plan awaiting "approved"**
+- [ ] Phase 8: Hardening and release ← **built on branch `feature/phase-8-hardening-release`, awaiting product-owner "go" and PR**
 
 ## Next up: Phase 8 hand-off (read this first after /clear)
-Status: branch `feature/phase-8-hardening-release` created from main after PR #14; plan presented, waiting
-for the product owner's "approved". Nothing built yet.
+Status: Phase 8 plan approved (2026-10-18) and built on `feature/phase-8-hardening-release`; all checks and
+on-device tests pass (Pixel 9 Pro Android 17 and Android 13 emulator, debug and R8 staging). Next: the
+product owner's "go" → PR → CI (confirm both emulator runs executed tests) → merge; then the owner creates
+the signing key and signed APK in Android Studio ([docs/RELEASE.md](RELEASE.md)), runs
+[docs/MANUAL_CHECKS.md](MANUAL_CHECKS.md), and says whether to publish the v0.1.0 GitHub Release.
 
-Scope (last phase of M1): large-data check (T26, 40 pairs / 2,000 sessions; history paging if needed),
-right-to-left and TalkBack (T25), backup exclusion (T24), kill/reboot/airplane/time-zone checks (T16–T18,
-T20), release build hardening (R8 for app code, `cross-platform-transfer` rules), full SEC-01..12 review,
-a manual phone checklist for the product owner, then version 0.1.0 release (CHANGELOG, README, tag).
-Needs decisions: how to publish 0.1.0 (signing key is the owner's; never committed), R8 scope, whether to
-test Android 9–13 on a downloaded emulator image. Phase 7 summary is in the decisions log and git history.
+What Phase 8 added:
+- R8 for the app's own code (release); enum names kept (stored in the DB). "staging" build type =
+  release + debug key; `-PtestBuildType=staging` runs the on-device suite on it (`src/staging/keepRules`
+  keep code from removal but still rename app code). CI runs both and fails if zero tests ran.
+- Pair page history in pages of 50 ("Show N older sessions"); HardeningScreensTest (T26 2,000 sessions,
+  RTL mirroring). "Get Health Connect" falls back to the web page without the Play Store.
+- iPhone (`cross-platform-transfer`) exclude-all rules. Docs: SECURITY_REVIEW.md, MANUAL_CHECKS.md,
+  RELEASE.md, CHANGELOG.md, README install section.
+- Local tooling (not in the repo): Android SDK command-line tools 23.0 and the Android 13 Google APIs
+  x86_64 image (AVD `ShoeStep_API33`, no Play Store) for older-Android checks.
 
 ## Decisions log
 | Date | Decision |
@@ -59,6 +66,7 @@ test Android 9–13 on a downloaded emulator image. Phase 7 summary is in the de
 | 2026-10-18 | Product owner: a provisional count may go down as well as up. Health Connect's latest answer is the accurate one (e.g. after it removes duplicates), so the app shows it rather than keeping the higher number. Once FINAL, a count never changes. |
 | 2026-10-18 | Phase 7 plan approved. Two exports (pairs, sessions) as separate CSV files through the system file picker; the "so far" count also shows on the pair's page. DataStore 1.2.1 applied (pre-approved; latest stable re-checked). No new permission or exported component. |
 | 2026-10-18 | CSV exports: header row unquoted and no UTF-8 byte order mark (product owner, after Google Sheets showed stray characters before the first header). Trade-off accepted: Excel's double-click open may garble accented letters; its Data → From Text import reads them correctly. |
+| 2026-10-18 | Phase 8 plan approved: v0.1.0 as a GitHub Release with an APK signed by the product owner's own key (created in Android Studio, never committed or shared); R8 shrinks the app's own code; Android 13 emulator downloaded for older-Android checks. || 2026-10-18 | Release testing: full on-device suite on a "staging" R8 build (removal of unused code disabled there, renaming kept) in CI and locally, plus a smoke test of the real release APK (flows + monkey). Pair history shows 50 sessions per page. |
 | 2026-10-17 | The running session card shows "About N steps so far" (live read, display only; shoe totals change only when a segment closes). |
 | 2026-10-17 | connect-client 1.1.0 applied (latest stable on 2026-10-17; 1.2.0 is alpha only). Release export allowlist adds PermissionsRationaleActivity (static text), ViewPermissionUsageActivity (START_VIEW_PERMISSION_USAGE) and the library's HealthDataSdkService (code rejects callers other than the Health Connect package; product owner approved keeping it). |
 | 2026-10-17 | Step counts are written only by StepReconciler; SessionManager creates segments PENDING and never touches steps. Not session state, so the "only SessionManager changes session state" rule is unchanged. |
@@ -74,12 +82,9 @@ test Android 9–13 on a downloaded emulator image. Phase 7 summary is in the de
 ## Open items carried to later phases
 - SessionDao/ActiveSessionDao write methods must be called only via SessionManager/RoomSessionStore (convention; not enforced by visibility).
 - Open segments are excluded from totals (the Home card's "so far" is display-only).
-- Phase 5 manual check on an Android 9–13 phone (Health Connect app path, `HealthDataSdkService`, rationale via ACTION_SHOW_PERMISSIONS_RATIONALE) was not possible on the Android 17 Pixel; do it in Phase 8 if a device is available.
 - Re-verify `HealthDataSdkService`'s caller check (bytecode) whenever connect-client is upgraded.
-- Phase 7/8: Shoe detail history shows every session (no paging); revisit if lists get long. A visible live timer on the session card was left out.
-- Phase 6 manual: try a real NTAG213/215/216 sticker on the Pixel (link, tap closed/open, lock on a spare tag); automated tests simulate taps.
-- Phase 8: manual TalkBack and right-to-left check (T25); automated checks cover labels, 48dp targets and 200% font.
-- Phase 8: R8 `packageScope` currently limits optimisation to androidx/kotlin/kotlinx; decide whether app code should be shrunk too. Room ships its own keep rule for generated `_Impl` classes.
-- Phase 8: `cross-platform-transfer` (iOS) section of data-extraction rules not yet handled.
 - After any build-tools upgrade: re-verify on-device tests keep app data (the keep-installed property is an IDE-injected one).
 - Gradle 10 deprecation warning (`Configuration.setVisible`) comes from AGP/KGP plugins, not our scripts; recheck on plugin updates.
+- Android 9–13 with the Health Connect app installed (needs a real phone or a Play Store emulator with a Google sign-in) was not tested; the "not installed" path was. Same for the legacy NFC entry with a real tag.
+- Manual checks before each release: docs/MANUAL_CHECKS.md (TalkBack, restart, airplane mode, watch, lock, export).
+- A live timer on the session card was left out (M1); see BACKLOG for further ideas.
