@@ -24,7 +24,7 @@ import io.github.drjkn7.shoestep.ui.common.ColourDot
 import io.github.drjkn7.shoestep.ui.common.ConfirmDialog
 import io.github.drjkn7.shoestep.ui.common.Formatters
 import io.github.drjkn7.shoestep.ui.common.stepsCountText
-import io.github.drjkn7.shoestep.ui.home.SoFarSteps
+import io.github.drjkn7.shoestep.steps.SoFarSteps
 
 /**
  * Start when idle; Pause + End while running; Resume + End while paused.

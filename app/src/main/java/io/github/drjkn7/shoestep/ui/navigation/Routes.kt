@@ -8,6 +8,8 @@ object Routes {
 
     const val HOME = "home"
     const val SETTINGS = "settings"
+    const val PRIVACY = "settings/privacy"
+    const val LICENCES = "settings/licences"
     const val ADD_SHOE = "shoe/new"
     const val SHOE_DETAIL = "shoe/{$ARG_SHOE_ID}"
     const val EDIT_SHOE = "shoe/{$ARG_SHOE_ID}/edit"

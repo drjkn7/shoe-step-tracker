@@ -42,3 +42,13 @@ data class SessionWithSteps(
     /** True while any closed segment has no count yet (UI shows "counted later"). */
     @ColumnInfo(name = "has_pending_steps") val hasPendingSteps: Boolean,
 )
+
+/** One session row of the CSV export: the session, its pair's name and computed totals. */
+data class SessionExportRow(
+    @Embedded val session: SessionEntity,
+    @ColumnInfo(name = "shoe_name") val shoeName: String,
+    @ColumnInfo(name = "total_steps") val totalSteps: Long,
+    @ColumnInfo(name = "active_millis") val activeMillis: Long,
+    @ColumnInfo(name = "has_unfinal_steps") val hasUnfinalSteps: Boolean,
+    @ColumnInfo(name = "has_pending_steps") val hasPendingSteps: Boolean,
+)

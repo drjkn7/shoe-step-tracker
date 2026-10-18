@@ -1,0 +1,62 @@
+package io.github.drjkn7.shoestep.ui.settings
+
+import android.net.Uri
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import io.github.drjkn7.shoestep.core.Clock
+import io.github.drjkn7.shoestep.export.CsvExportRepository
+import io.github.drjkn7.shoestep.export.ExportKind
+import io.github.drjkn7.shoestep.settings.SettingsStore
+import io.github.drjkn7.shoestep.steps.StepsAccess
+import io.github.drjkn7.shoestep.steps.StepsSource
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
+import java.time.Instant
+
+enum class ExportOutcome { SAVED, FAILED }
+
+class SettingsViewModel(
+    private val settings: SettingsStore,
+    private val stepsSource: StepsSource,
+    private val exporter: CsvExportRepository,
+    private val clock: Clock,
+) : ViewModel() {
+
+    /** Null = not chosen yet (new pairs use the region's currency). */
+    val defaultCurrency: StateFlow<String?> = settings.defaultCurrency
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+
+    private val _stepsAccess = MutableStateFlow<StepsAccess?>(null)
+    val stepsAccess: StateFlow<StepsAccess?> = _stepsAccess.asStateFlow()
+
+    private val _exportOutcome = MutableStateFlow<ExportOutcome?>(null)
+    val exportOutcome: StateFlow<ExportOutcome?> = _exportOutcome.asStateFlow()
+
+    fun setDefaultCurrency(code: String) {
+        viewModelScope.launch { settings.setDefaultCurrency(code) }
+    }
+
+    /** Called each time Settings is shown: access can change in Health Connect meanwhile. */
+    fun refreshSteps() {
+        viewModelScope.launch { _stepsAccess.value = stepsSource.access() }
+    }
+
+    fun suggestedFileName(kind: ExportKind): String =
+        exporter.fileName(kind, Instant.ofEpochMilli(clock.nowUtcMillis()).atZone(clock.zoneId()).toLocalDate())
+
+    /** The user picked [uri] in the system file picker (null = they cancelled: nothing happens). */
+    fun export(kind: ExportKind, uri: Uri?) {
+        if (uri == null) return
+        viewModelScope.launch {
+            _exportOutcome.value = if (exporter.writeTo(kind, uri)) ExportOutcome.SAVED else ExportOutcome.FAILED
+        }
+    }
+
+    fun dismissExportOutcome() {
+        _exportOutcome.value = null
+    }
+}

@@ -103,6 +103,9 @@
     <string name="detail_stats_title">Stats</string>
     <string name="detail_total_steps">Total steps</string>
     <string name="detail_sessions">Sessions</string>
+    <string name="detail_average_steps">Average per session</string>
+    <string name="detail_walking_time">Walking time</string>
+    <string name="detail_last_worn">Last worn</string>
     <string name="detail_cost_per_1000">Cost per 1,000 steps</string>
     <string name="detail_archived_note">This shoe is archived. Its history is kept.</string>
     <string name="detail_session_running">Session running since %1$s</string>
@@ -200,5 +203,41 @@
 
     <!-- Settings (Phase 7) -->
     <string name="title_settings">Settings</string>
-    <string name="placeholder_settings">Settings will appear here.</string>
+    <string name="settings_new_pairs">New pairs</string>
+    <string name="settings_default_currency">Default currency</string>
+    <string name="settings_currency_value">%1$s – %2$s</string>
+    <string name="settings_currency_not_set">%1$s – %2$s (from your region)</string>
+    <string name="settings_steps">Step counting</string>
+    <string name="settings_steps_ready">Steps are read from Health Connect. You can stop this at any time there.</string>
+    <string name="settings_manage_health_connect">Open Health Connect</string>
+    <string name="settings_your_data">Your data</string>
+    <string name="settings_export_body">Save your pairs or your sessions as a spreadsheet (CSV) file, in a place you choose. This is the only way data leaves the app.</string>
+    <string name="settings_export_pairs">Export pairs</string>
+    <string name="settings_export_sessions">Export sessions</string>
+    <string name="settings_export_done">Saved.</string>
+    <string name="settings_export_failed">The file couldn\'t be saved. Try again or pick another place.</string>
+    <string name="settings_about">About</string>
+    <string name="settings_privacy">Privacy statement</string>
+    <string name="settings_licences">Open-source licences</string>
+    <string name="settings_version">Version %1$s</string>
+
+    <!-- Privacy statement (same as PRIVACY.md) -->
+    <string name="privacy_short">Your data never leaves your phone. The app cannot connect to the internet.</string>
+    <string name="privacy_reads_title">What the app reads</string>
+    <string name="privacy_reads">• Step counts from Health Connect, only for the times of your own sessions. It reads no other health data and never writes to Health Connect.\n• NFC tags that you tap, to recognise which pair you are wearing. It only reads a random code it wrote to the tag itself and ignores everything else.</string>
+    <string name="privacy_stores_title">What the app stores</string>
+    <string name="privacy_stores">On your phone only, in the app\'s private storage: your pairs (name, brand, model, type, price, purchase date, colour), your sessions (start and end times, time zone, step counts) and your settings (such as the default currency). The app does not collect your location, contacts, photos or any identifier of you or your phone.</string>
+    <string name="privacy_shares_title">What the app shares</string>
+    <string name="privacy_shares">Nothing. The app has no internet permission, no accounts, no analytics, no advertising and no tracking libraries. Its data is left out of Android cloud backups and device transfers. The only way data leaves the app is when you export a CSV file to a place you pick.</string>
+    <string name="privacy_delete_title">Deleting your data</string>
+    <string name="privacy_delete">Delete a pair to remove it and its sessions, or uninstall the app to remove everything. You can stop step reading at any time in Health Connect.</string>
+
+    <!-- Open-source licences -->
+    <string name="licences_intro">Shoe Step Tracker is open source under the Apache License 2.0. It is built with these open-source parts:</string>
+    <string name="licences_apache_parts">• Shoe Step Tracker itself\n• AndroidX libraries by Google (Compose, Material 3, Room, DataStore, Health Connect client, Navigation, Lifecycle and others)\n• Kotlin and kotlinx (coroutines, serialization) by JetBrains\n• Guava and Error Prone annotations by Google\n• J2ObjC annotations by Google\n• JSR 305 annotations\n• JSpecify annotations\n• JetBrains annotations\n• Material Symbols icons by Google</string>
+    <string name="licences_mit_parts">• Checker Framework qualifiers (checker-qual)</string>
+    <string name="licences_apache_title">Apache License 2.0</string>
+    <string name="licences_mit_title">MIT License</string>
+    <string name="licences_show_text">Show full text</string>
+    <string name="licences_hide_text">Hide full text</string>
 </resources>
