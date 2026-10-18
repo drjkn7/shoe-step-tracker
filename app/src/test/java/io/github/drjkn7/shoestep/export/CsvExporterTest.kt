@@ -40,9 +40,10 @@ class CsvExporterTest {
 
     @Test fun pairsHaveAHeaderAndOneRowEach() {
         val lines = pairs(stats(shoe()))
+        // Header unquoted: a quoted first cell after the BOM showed its quotes in Google Sheets.
         assertEquals(
-            "\"Name\",\"Brand\",\"Model\",\"Type\",\"Price\",\"Currency\",\"Purchase date\",\"Colour\",\"Archived\"," +
-                "\"Sessions\",\"Total steps\",\"Steps status\",\"Walking minutes\",\"Last worn\"",
+            "Name,Brand,Model,Type,Price,Currency,Purchase date,Colour,Archived," +
+                "Sessions,Total steps,Steps status,Walking minutes,Last worn",
             lines[0],
         )
         assertEquals(
@@ -84,10 +85,7 @@ class CsvExporterTest {
             SessionExportRow(session("c", null, SessionState.RUNNING, null, "not/a-zone"), "+Trail", 0, 0, false, true),
         )
         val lines = CsvExporter.sessions(rows).split("\r\n")
-        assertEquals(
-            "\"Pair\",\"Started\",\"Ended\",\"Time zone\",\"Status\",\"Walking minutes\",\"Steps\",\"Steps status\"",
-            lines[0],
-        )
+        assertEquals("Pair,Started,Ended,Time zone,Status,Walking minutes,Steps,Steps status", lines[0])
         assertEquals("\"Daily trainers\",\"2026-10-17 12:00\",\"2026-10-17 13:00\",\"Europe/Berlin\",\"ended\",60,4000,\"final\"", lines[1])
         assertEquals(
             "\"Daily trainers\",\"2026-10-17 06:00\",\"2026-10-17 06:01\",\"America/New_York\",\"ended (switched pairs)\",1,40,\"provisional\"",

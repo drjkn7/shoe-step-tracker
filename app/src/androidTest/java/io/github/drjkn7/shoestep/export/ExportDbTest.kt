@@ -49,6 +49,8 @@ class ExportDbTest {
         exporter.writeTo(kind, out)
         val bytes = out.toByteArray()
         assertArrayEquals("UTF-8 BOM first", Csv.UTF8_BOM, bytes.copyOfRange(0, 3))
+        // Straight after the BOM comes a plain letter, never a quote (Google Sheets showed the quotes).
+        assertTrue("first header cell is unquoted", bytes[3] != '"'.code.toByte())
         return String(bytes, 3, bytes.size - 3, Charsets.UTF_8)
     }
 

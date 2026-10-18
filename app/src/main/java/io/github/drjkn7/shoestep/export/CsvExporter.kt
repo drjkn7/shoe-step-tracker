@@ -38,7 +38,7 @@ object CsvExporter {
         colourLabel: (Int) -> String,
         zone: ZoneId,
     ): String = buildString {
-        append(Csv.row(*PAIRS_HEADER.toTypedArray()))
+        append(Csv.header(PAIRS_HEADER))
         for (row in rows) {
             val shoe = row.shoe
             append(
@@ -63,7 +63,7 @@ object CsvExporter {
     }
 
     fun sessions(rows: List<SessionExportRow>): String = buildString {
-        append(Csv.row(*SESSIONS_HEADER.toTypedArray()))
+        append(Csv.header(SESSIONS_HEADER))
         for (row in rows) {
             val session = row.session
             val zone = zoneOrUtc(session.zoneId)
