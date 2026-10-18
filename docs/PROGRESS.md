@@ -8,18 +8,25 @@
 - [x] Phase 4: Sessions (PR #8, merged)
 - [x] Phase 5: Health Connect and offline step resolution (PR #9, merged)
 - [x] Phase 6: NFC (PR #10, merged; step-count decision PR #11)
-- [ ] Phase 7: Stats, export, settings ← **branch `feature/phase-7-stats-export-settings`, plan awaiting "approved"**
+- [ ] Phase 7: Stats, export, settings ← **built on branch `feature/phase-7-stats-export-settings`, awaiting product-owner "go" and PR**
 - [ ] Phase 8: Hardening and release
 
 ## Next up: Phase 7 hand-off (read this first after /clear)
-Status: branch `feature/phase-7-stats-export-settings` created from main after PR #11; plan presented,
-waiting for the product owner's "approved". Nothing built yet.
+Status: Phase 7 plan approved (2026-10-18) and built on `feature/phase-7-stats-export-settings`; all local
+checks and on-device tests pass. Waiting for the product owner's "go", then: push → PR → CI (confirm the
+emulator job ran ExportDbTest, SettingsScreensTest, PairStatsScreenTest) → rebase-merge.
 
-Scope: Settings (default currency, step-counting status, privacy statement, open-source licences, version),
-CSV export through the system file picker (T23 CSV injection), fuller pair stats (T22 UI check).
-Needs approval: applying the pre-approved DataStore 1.2.1 (re-checked: latest stable on 2026-10-18).
-No new permission (the file picker needs none) and no new exported component expected.
-Phase 6 summary (TagFormat, TagCoordinator, NFC entry aliases) is in the decisions log and git history.
+What Phase 7 added:
+- `settings/SettingsStore` (DataStore 1.2.1, one "settings" file; default currency validated on read).
+  New pairs use it via `ShoeFormViewModel.applyDefaultCurrency` unless the user already chose a currency.
+- `export/`: `Csv` (RFC 4180, always-quoted text, formula neutralising with ', T23), `CsvExporter` (pure:
+  pairs and sessions files), `CsvExportRepository` (DAO queries `getAllWithStats`, `getAllForExport`;
+  writes UTF-8 + BOM to the file the user picks via CreateDocument; no permission).
+- Settings screen: default currency, step counting (Open Health Connect / Allow / install), Export pairs,
+  Export sessions, Privacy statement and Open-source licences pages (full texts in res/raw), version.
+- Pair page: average per session, walking time, last worn; "About N steps so far" while its session runs
+  (shared `steps/soFarSteps`, also used by Home).
+- Tests: CsvTest, CsvExporterTest (JVM); ExportDbTest, SettingsScreensTest, PairStatsScreenTest (on-device).
 
 ## Decisions log
 | Date | Decision |
@@ -56,6 +63,7 @@ Phase 6 summary (TagFormat, TagCoordinator, NFC entry aliases) is in the decisio
 | 2026-10-17 | Counts are read only while the app is open (no background-read permission, no WorkManager); steps walked while it is closed appear on the next open. |
 | 2026-10-17 | A count is PROVISIONAL ("About") for one day after its segment ends, then FINAL (product owner changed 2 days → 1 day). No data after a day → UNAVAILABLE, left out of totals (a provisional count already shown is kept as FINAL instead). Read errors retry, except segments older than Health Connect's 30-day history limit, which settle. |
 | 2026-10-18 | Product owner: a provisional count may go down as well as up. Health Connect's latest answer is the accurate one (e.g. after it removes duplicates), so the app shows it rather than keeping the higher number. Once FINAL, a count never changes. |
+| 2026-10-18 | Phase 7 plan approved. Two exports (pairs, sessions) as separate CSV files through the system file picker; the "so far" count also shows on the pair's page. DataStore 1.2.1 applied (pre-approved; latest stable re-checked). No new permission or exported component. |
 | 2026-10-17 | The running session card shows "About N steps so far" (live read, display only; shoe totals change only when a segment closes). |
 | 2026-10-17 | connect-client 1.1.0 applied (latest stable on 2026-10-17; 1.2.0 is alpha only). Release export allowlist adds PermissionsRationaleActivity (static text), ViewPermissionUsageActivity (START_VIEW_PERMISSION_USAGE) and the library's HealthDataSdkService (code rejects callers other than the Health Connect package; product owner approved keeping it). |
 | 2026-10-17 | Step counts are written only by StepReconciler; SessionManager creates segments PENDING and never touches steps. Not session state, so the "only SessionManager changes session state" rule is unchanged. |
@@ -72,7 +80,6 @@ Phase 6 summary (TagFormat, TagCoordinator, NFC entry aliases) is in the decisio
 - SessionDao/ActiveSessionDao write methods must be called only via SessionManager/RoomSessionStore (convention; not enforced by visibility).
 - Open segments are excluded from totals (the Home card's "so far" is display-only).
 - Phase 5 manual check on an Android 9–13 phone (Health Connect app path, `HealthDataSdkService`, rationale via ACTION_SHOW_PERMISSIONS_RATIONALE) was not possible on the Android 17 Pixel; do it in Phase 8 if a device is available.
-- Shoe detail's "Session running" line has no "so far" count (Home card only); add in Phase 7 if wanted.
 - Re-verify `HealthDataSdkService`'s caller check (bytecode) whenever connect-client is upgraded.
 - Phase 7/8: Shoe detail history shows every session (no paging); revisit if lists get long. A visible live timer on the session card was left out.
 - Phase 6 manual: try a real NTAG213/215/216 sticker on the Pixel (link, tap closed/open, lock on a spare tag); automated tests simulate taps.
