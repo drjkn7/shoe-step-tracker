@@ -1,7 +1,7 @@
 package io.github.drjkn7.shoestep.export
 
 /**
- * RFC 4180 CSV with spreadsheet-formula protection (SEC-08 / T23).
+ * RFC 4180 CSV with spreadsheet-formula protection (TEST_PLAN T23).
  *
  * Text cells are always quoted. A text cell that a spreadsheet could treat as a formula (it starts
  * with = + - @, a tab or a carriage return, possibly after spaces; full-width forms included) gets

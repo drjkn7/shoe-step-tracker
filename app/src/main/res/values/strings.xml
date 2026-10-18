@@ -130,6 +130,10 @@
     <!-- Session history -->
     <string name="history_title">History</string>
     <string name="history_empty">No sessions yet.</string>
+    <plurals name="history_show_older">
+        <item quantity="one">Show %1$d older session</item>
+        <item quantity="other">Show %1$d older sessions</item>
+    </plurals>
     <string name="history_in_progress">In progress</string>
     <string name="history_switched">Ended by switching pairs</string>
     <string name="history_row">%1$s · %2$s</string>

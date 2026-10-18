@@ -89,6 +89,22 @@ jobs:
           ./gradlew pixel2api30DebugAndroidTest --stacktrace
           -Pandroid.testoptions.manageddevices.emulator.gpu=swiftshader_indirect
 
+      # Phase 8: the same suite against the R8-shrunk release build ("staging" = release + debug key).
+      - name: Run on-device tests on the release (R8) build
+        run: >
+          ./gradlew pixel2api30StagingAndroidTest -PtestBuildType=staging --stacktrace
+          -Pandroid.testoptions.manageddevices.emulator.gpu=swiftshader_indirect
+
+      # Gradle reports success when the test runner crashes before any test starts (seen in Phase 8),
+      # so fail unless both runs really executed tests.
+      - name: Check that on-device tests actually ran
+        run: |
+          for build in debug staging; do
+            count=$(cat app/build/outputs/androidTest-results/managedDevice/$build/*/*.xml 2>/dev/null | grep -c "<testcase" || true)
+            echo "$build: $count test cases"
+            if [ "$count" -eq 0 ]; then echo "No on-device tests ran for $build"; exit 1; fi
+          done
+
       - name: Upload on-device test reports
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2

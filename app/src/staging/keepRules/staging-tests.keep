@@ -1,0 +1,13 @@
+# Staging only (never the shipped release): lets the on-device test suite run against the R8 build.
+# The test APK is rewritten with the app's R8 mapping, so renaming (obfuscation) is still tested;
+# what tests can't survive is removal of code the app itself doesn't use. So for staging:
+# - keep the androidx.test runtime pieces that live in the app APK,
+# - keep app classes from being removed or reshaped, but let R8 rename them as in release.
+-keep class androidx.tracing.** { *; }
+-keep,allowobfuscation class io.github.drjkn7.shoestep.** { *; }
+# The test APK also uses library code the app doesn't (Kotlin, coroutines, Compose test hooks):
+# keep it whole (the Compose test toolkit breaks if coroutines are renamed). Library shrinking and
+# removal of unused app code are checked on the real release APK by the release smoke test.
+-keep class kotlin.** { *; }
+-keep class kotlinx.** { *; }
+-keep class androidx.** { *; }

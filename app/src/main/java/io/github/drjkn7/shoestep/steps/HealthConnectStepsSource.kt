@@ -1,5 +1,6 @@
 package io.github.drjkn7.shoestep.steps
 
+import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import androidx.core.net.toUri
@@ -85,5 +86,21 @@ class HealthConnectStepsSource(context: Context) : StepsSource {
         fun installIntent(): Intent =
             Intent(Intent.ACTION_VIEW, "market://details?id=$HEALTH_CONNECT_PACKAGE".toUri())
                 .setPackage("com.android.vending")
+
+        /** The same page in the browser, for phones without the Play Store app (this app stays offline). */
+        fun installWebIntent(): Intent =
+            Intent(Intent.ACTION_VIEW, "https://play.google.com/store/apps/details?id=$HEALTH_CONNECT_PACKAGE".toUri())
+
+        /** Play Store app first, then the web page; does nothing if neither can be opened. */
+        fun openInstallPage(context: Context) {
+            for (intent in listOf(installIntent(), installWebIntent())) {
+                try {
+                    context.startActivity(intent)
+                    return
+                } catch (_: ActivityNotFoundException) {
+                    // try the next way
+                }
+            }
+        }
     }
 }

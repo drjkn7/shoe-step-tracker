@@ -32,12 +32,28 @@ android {
 
     buildTypes {
         release {
+            // Phase 8 (product owner): shrink, optimise and obfuscate the app's own code too, not just
+            // the libraries. Keep rules: src/main/keepRules/rules.keep.
             optimization {
                 enable = true
-                packageScope = setOf("androidx.**", "kotlin.**", "kotlinx.**")
             }
         }
+        // The release build exactly (R8 on), signed with the debug key so the full on-device test
+        // suite can run against it: ./gradlew connectedStagingAndroidTest -PtestBuildType=staging
+        create("staging") {
+            initWith(getByName("release"))
+            signingConfig = signingConfigs.getByName("debug")
+            matchingFallbacks += "release"
+        }
     }
+    // Staging uses release's code (the no-op DebugTools in src/release), so it is the release app.
+    sourceSets {
+        getByName("staging") {
+            kotlin.directories += "src/release/java"
+        }
+    }
+    // On-device tests run against debug unless -PtestBuildType=staging is given (see "staging" above).
+    testBuildType = providers.gradleProperty("testBuildType").getOrElse("debug")
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
@@ -93,6 +109,8 @@ dependencies {
     androidTestImplementation(libs.androidx.room3.testing)
     androidTestImplementation(libs.kotlinx.coroutines.test)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
+    // Same test-only host screen for the staging (R8) test build; never part of release.
+    "stagingImplementation"(libs.androidx.compose.ui.test.manifest)
     debugImplementation(libs.androidx.compose.ui.tooling)
 }
 

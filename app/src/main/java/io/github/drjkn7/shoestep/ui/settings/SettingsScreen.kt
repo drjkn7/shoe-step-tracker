@@ -114,7 +114,7 @@ fun SettingsScreen(
                     else -> StepsAccessCard(
                         access = access,
                         onAllow = { permissionLauncher.launch(HealthConnectStepsSource.PERMISSIONS) },
-                        onInstall = { startSafely(context) { it.startActivity(HealthConnectStepsSource.installIntent()) } },
+                        onInstall = { HealthConnectStepsSource.openInstallPage(context) },
                     )
                 }
             }
