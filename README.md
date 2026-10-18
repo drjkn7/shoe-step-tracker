@@ -14,6 +14,13 @@ Download the APK from the [Releases](https://github.com/drjkn7/shoe-step-tracker
 open it on your phone (Android asks you to allow installing from your browser or file manager).
 Each release lists the file's SHA-256 checksum so you can check the download is genuine.
 
+All releases are signed with this certificate (SHA-256), which you can compare with
+`apksigner verify --print-certs`:
+
+```
+B5:82:C2:A5:E8:EE:D7:5C:5A:A8:CF:A2:11:18:8A:29:D1:D1:FB:D9:88:B6:65:3F:07:1F:70:B8:B5:7E:22:7F
+```
+
 ## Privacy in one paragraph
 
 The app has **no internet permission**. It has no accounts, no cloud, no analytics and no ads.

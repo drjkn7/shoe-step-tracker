@@ -6,7 +6,8 @@ local.properties
 *.keystore
 keystore.properties
 
-# Build outputs
+# Build outputs (app/release/ = Android Studio signed APK, mapping.txt and metadata; keep mapping.txt privately)
+app/release/
 /build
 **/build/
 *.apk
