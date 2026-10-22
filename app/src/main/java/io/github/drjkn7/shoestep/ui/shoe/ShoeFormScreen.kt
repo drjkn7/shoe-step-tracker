@@ -1,6 +1,5 @@
 package io.github.drjkn7.shoestep.ui.shoe
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,26 +14,21 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SelectableDates
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -60,6 +54,23 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import io.github.drjkn7.shoestep.R
+import io.github.drjkn7.shoestep.ui.common.CardLabel
+import io.github.drjkn7.shoestep.ui.common.DialogAction
+import io.github.drjkn7.shoestep.ui.common.DialogText
+import io.github.drjkn7.shoestep.ui.common.InfoDialog
+import io.github.drjkn7.shoestep.ui.common.PickerField
+import io.github.drjkn7.shoestep.ui.common.PrimaryButton
+import io.github.drjkn7.shoestep.ui.common.SilverChip
+import io.github.drjkn7.shoestep.ui.common.SilverDialog
+import io.github.drjkn7.shoestep.ui.common.SilverTextField
+import io.github.drjkn7.shoestep.ui.theme.SilverShapes
+import io.github.drjkn7.shoestep.ui.theme.SilverSpacing
+import io.github.drjkn7.shoestep.ui.theme.SilverTheme
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.ui.graphics.Color
 import io.github.drjkn7.shoestep.core.Money
 import io.github.drjkn7.shoestep.data.FieldError
 import io.github.drjkn7.shoestep.data.ShoeField
@@ -125,11 +136,7 @@ fun ShoeFormScreen(
     }
 
     if (status == FormStatus.SaveFailed) {
-        AlertDialog(
-            onDismissRequest = viewModel::dismissSaveError,
-            text = { Text(stringResource(R.string.error_save_failed)) },
-            confirmButton = { TextButton(onClick = viewModel::dismissSaveError) { Text(stringResource(R.string.action_ok)) } },
-        )
+        InfoDialog(title = null, text = stringResource(R.string.error_save_failed), onDismiss = viewModel::dismissSaveError)
     }
 }
 
@@ -178,27 +185,25 @@ private fun FormContent(
             error = errors[ShoeField.MODEL]?.let { errorText(ShoeField.MODEL, it, form.currencyCode) },
         )
 
-        SectionLabel(stringResource(R.string.field_type))
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        CardLabel(stringResource(R.string.field_type), heading = false)
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(SilverSpacing.s), verticalArrangement = Arrangement.spacedBy(SilverSpacing.s)) {
             ShoeType.entries.forEach { type ->
-                FilterChip(
+                SilverChip(
+                    text = stringResource(type.labelRes()),
                     selected = form.type == type,
                     onClick = { onChange(form.copy(type = type)) },
-                    label = { Text(stringResource(type.labelRes())) },
                 )
             }
         }
 
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.Top) {
-            OutlinedTextField(
+        Row(horizontalArrangement = Arrangement.spacedBy(SilverSpacing.m), verticalAlignment = Alignment.Top) {
+            SilverTextField(
                 value = form.priceText,
                 onValueChange = { if (it.length <= 20) onChange(form.copy(priceText = it)) },
-                label = { Text(stringResource(R.string.field_price)) },
-                singleLine = true,
-                isError = ShoeField.PRICE in errors,
-                supportingText = errors[ShoeField.PRICE]?.let { { Text(errorText(ShoeField.PRICE, it, form.currencyCode)) } },
+                label = stringResource(R.string.field_price),
+                error = errors[ShoeField.PRICE]?.let { errorText(ShoeField.PRICE, it, form.currencyCode) },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal, imeAction = ImeAction.Done),
-                modifier = Modifier.weight(1f),
+                modifier = Modifier.weight(1.4f),
             )
             val currencyDescription = stringResource(
                 R.string.currency_button_description,
@@ -206,57 +211,41 @@ private fun FormContent(
                 form.currencyCode,
                 currencyName(form.currencyCode, locale),
             )
-            OutlinedButton(
-                onClick = { showCurrencyPicker = true },
-                modifier = Modifier.padding(top = 8.dp).semantics { contentDescription = currencyDescription },
-            ) { Text(form.currencyCode) }
+            Column(Modifier.weight(1f)) {
+                PickerField(
+                    label = stringResource(R.string.field_currency),
+                    value = form.currencyCode,
+                    icon = painterResource(R.drawable.ic_chevron_right),
+                    onClick = { showCurrencyPicker = true },
+                    modifier = Modifier.semantics { contentDescription = currencyDescription },
+                )
+            }
         }
 
-        SectionLabel(stringResource(R.string.field_purchase_date))
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            OutlinedButton(onClick = { showDatePicker = true }, modifier = Modifier.weight(1f)) {
-                Icon(painterResource(R.drawable.ic_calendar_month), contentDescription = null)
-                Text(
-                    form.purchaseEpochDay?.let { Formatters.date(it, locale) } ?: stringResource(R.string.field_purchase_date_none),
-                    modifier = Modifier.padding(start = 8.dp),
+        Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(SilverSpacing.s)) {
+            Column(Modifier.weight(1f)) {
+                PickerField(
+                    label = stringResource(R.string.field_purchase_date),
+                    value = form.purchaseEpochDay?.let { Formatters.date(it, locale) } ?: stringResource(R.string.field_purchase_date_none),
+                    icon = painterResource(R.drawable.ic_calendar_month),
+                    onClick = { showDatePicker = true },
+                    placeholder = form.purchaseEpochDay == null,
                 )
             }
             if (form.purchaseEpochDay != null) {
                 IconButton(onClick = { onChange(form.copy(purchaseEpochDay = null)) }) {
-                    Icon(painterResource(R.drawable.ic_close), stringResource(R.string.field_purchase_date_clear))
+                    Icon(painterResource(R.drawable.ic_close), stringResource(R.string.field_purchase_date_clear), tint = SilverTheme.colors.textPrimary)
                 }
             }
         }
         errors[ShoeField.PURCHASE_DATE]?.let {
-            Text(errorText(ShoeField.PURCHASE_DATE, it, form.currencyCode), color = MaterialTheme.colorScheme.error)
+            Text(errorText(ShoeField.PURCHASE_DATE, it, form.currencyCode), style = SilverTheme.type.note, color = SilverTheme.colors.danger)
         }
 
-        SectionLabel(stringResource(R.string.field_colour))
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            ShoePalette.forEachIndexed { index, accent ->
-                val selected = form.accentColor == index
-                val name = stringResource(accent.nameRes)
-                Surface(
-                    shape = CircleShape,
-                    color = accent.colour,
-                    border = if (selected) BorderStroke(3.dp, MaterialTheme.colorScheme.onSurface) else null,
-                    modifier = Modifier
-                        .size(48.dp)
-                        .selectable(selected = selected, role = Role.RadioButton) { onChange(form.copy(accentColor = index)) }
-                        .semantics { contentDescription = name },
-                ) {
-                    if (selected) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Icon(painterResource(R.drawable.ic_check), contentDescription = null, tint = androidx.compose.ui.graphics.Color.White)
-                        }
-                    }
-                }
-            }
-        }
+        CardLabel(stringResource(R.string.field_colour), heading = false)
+        ColourSwatches(selected = form.accentColor, onSelect = { onChange(form.copy(accentColor = it)) })
 
-        Button(onClick = onSave, enabled = !saving, modifier = Modifier.fillMaxWidth()) {
-            Text(stringResource(R.string.action_save))
-        }
+        PrimaryButton(stringResource(R.string.action_save), onSave, Modifier.fillMaxWidth(), enabled = !saving)
     }
 
     if (showCurrencyPicker) {
@@ -284,26 +273,63 @@ private fun FormContent(
 /** Shown when Save finds problems, so the message is visible wherever the form is scrolled. */
 @Composable
 private fun ProblemsDialog(errors: Map<ShoeField, FieldError>, currencyCode: String, onOk: () -> Unit) {
-    AlertDialog(
-        onDismissRequest = onOk,
-        title = { Text(stringResource(R.string.save_problems_title)) },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(stringResource(R.string.save_problems_intro))
-                // Same order as the fields appear on screen.
-                ShoeField.entries.filter { it in errors }.forEach { field ->
-                    Text(
-                        stringResource(
-                            R.string.save_problems_item,
-                            stringResource(field.labelRes()),
-                            errorText(field, errors.getValue(field), currencyCode),
-                        ),
-                    )
+    SilverDialog(
+        title = stringResource(R.string.save_problems_title),
+        onDismiss = onOk,
+        actions = listOf(DialogAction(stringResource(R.string.action_ok), DialogAction.Kind.PRIMARY, onOk)),
+    ) {
+        DialogText(stringResource(R.string.save_problems_intro))
+        // Same order as the fields appear on screen.
+        ShoeField.entries.filter { it in errors }.forEach { field ->
+            DialogText(
+                stringResource(
+                    R.string.save_problems_item,
+                    stringResource(field.labelRes()),
+                    errorText(field, errors.getValue(field), currencyCode),
+                ),
+            )
+        }
+    }
+}
+
+/**
+ * The eight shoe colours. Each is a 30 dp circle with a 48 dp touch target; the selected one gets a
+ * white ring and tick, so colour is not the only cue, and each is read out by its colour name. One
+ * row when there is room for eight 48 dp targets, otherwise two rows of four.
+ */
+@Composable
+private fun ColourSwatches(selected: Int, onSelect: (Int) -> Unit) {
+    BoxWithConstraints(Modifier.fillMaxWidth()) {
+        val perRow = if (maxWidth >= SilverSpacing.touch * ShoePalette.size) ShoePalette.size else ShoePalette.size / 2
+        Column(Modifier.selectableGroup()) {
+            ShoePalette.indices.chunked(perRow).forEach { row ->
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                    row.forEach { index -> Swatch(index, selected == index) { onSelect(index) } }
                 }
             }
-        },
-        confirmButton = { TextButton(onClick = onOk) { Text(stringResource(R.string.action_ok)) } },
-    )
+        }
+    }
+}
+
+@Composable
+private fun Swatch(index: Int, selected: Boolean, onClick: () -> Unit) {
+    val accent = ShoePalette[index]
+    val name = stringResource(accent.nameRes)
+    Box(
+        Modifier
+            .size(SilverSpacing.touch)
+            .selectable(selected = selected, role = Role.RadioButton, onClick = onClick)
+            .semantics { contentDescription = name },
+        contentAlignment = Alignment.Center,
+    ) {
+        if (selected) Box(Modifier.size(40.dp).border(3.dp, Color.White, SilverShapes.circle))
+        Box(
+            Modifier.size(SilverSpacing.swatch).background(accent.colour, SilverShapes.circle),
+            contentAlignment = Alignment.Center,
+        ) {
+            if (selected) Icon(painterResource(R.drawable.ic_check), contentDescription = null, tint = Color.White, modifier = Modifier.size(20.dp))
+        }
+    }
 }
 
 private fun ShoeField.labelRes(): Int = when (this) {
@@ -326,23 +352,16 @@ private fun TextInput(
     placeholder: String? = null,
 ) {
     val length = value.codePointCount(0, value.length)
-    OutlinedTextField(
+    SilverTextField(
         value = value,
         // Allow typing a little past the limit so the error is visible, but cap pasted text (SEC-07).
         onValueChange = { if (it.length <= max * 4) onValueChange(it) },
-        label = { Text(label) },
-        placeholder = placeholder?.let { { Text(it) } },
-        singleLine = true,
-        isError = error != null,
-        supportingText = { Text(error ?: stringResource(R.string.char_counter, length, max)) },
+        label = label,
+        placeholder = placeholder,
+        error = error,
+        helper = stringResource(R.string.char_counter, length, max),
         keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences, imeAction = ImeAction.Next),
-        modifier = Modifier.fillMaxWidth(),
     )
-}
-
-@Composable
-private fun SectionLabel(text: String) {
-    Text(text, style = MaterialTheme.typography.titleSmall)
 }
 
 @Composable

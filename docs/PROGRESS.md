@@ -9,8 +9,8 @@ Out of scope (moved to M3): widget, inactivity detection and auto-pause, charger
 length, background Health Connect reads, WorkManager.
 
 - [x] Phase 0: Plan and paperwork (PR #17, merged)
-- [ ] Phase 1: Theme layer (tokens, Chakra Petch, depth, backdrop, theme setting; previews only) – PR #18 in review
-- [ ] Phase 2: Components (restyle existing composables; previews at 1.0/2.0 font, light/night)
+- [x] Phase 1: Theme layer (PR #18, merged)
+- [ ] Phase 2: Components (restyle existing composables; previews at 1.0/2.0 font, light/night) – in review
 - [ ] Phase 3: Restyle every screen + "Discard changes?" + Appearance card
 - [ ] Phase 4: Distance data (READ_DISTANCE, schema v1 → v2, reconciler reads distance, backfill)
 - [ ] Phase 5: Distance in the UI, units setting, cost per km/mile, CSV distance_m
@@ -123,6 +123,10 @@ What Phase 8 added:
 | 2026-10-22 | Theme setting stored in DataStore (`theme_mode`, unknown values → System) and applied live at the top of MainActivity and the Health Connect rationale screen; status bar icons follow the app theme. On Android 12+ the choice is also handed to `UiModeManager.setApplicationNightMode` (API 31, verified in the SDK source: persisted until changed or app data cleared; no permission) when the user changes it, so the launch window matches; tests pass a no-op so they never change the real app's setting. Launch window colour = backdrop top colour. |
 | 2026-10-22 | Chakra Petch bundled as 4 static weights in `res/font` (Regular, Medium, SemiBold, Bold), OFL text in `licenses/ChakraPetch-OFL.txt` and in the in-app licences screen. Files as supplied by the product owner (docs/Chakra_Petch, not committed); SHA-256: Regular 75a36533…0333, Medium 24b98ee7…f180, SemiBold e0e25888…e113, Bold fb428d38…1798. |
 | 2026-10-22 | Debug builds get application id suffix `.debug` (label "Shoe Step (test)"): the product owner's phone has the real v0.1.0 signed with the release key, which a debug-key build cannot replace, and uninstalling it would delete real data. Tests now install side by side. NFC alias names are taken from the code package (not the application id); the permission allowlist names AndroidX's receiver permission after each variant's application id. Release manifest and audit unchanged. Full on-device suite 168/168 on the Pixel 9 Pro (Android 17); real app checked unchanged afterwards (0.1.0, same signature, same install time). |
+| 2026-10-22 | Phase 2 (components): Silver Matte kit in `ui/common` (Buttons, Surfaces, Fields, Dialogs, DataRows) replacing Material buttons, cards, chips, fields, dialogs, menu and swatches inside the existing composables; screen layouts follow in Phase 3. Every pop-up is `SilverDialog` (own window, tapjacking filter kept, page dimmed 42% / 60% night); two actions side by side (wrapping at large text), three or more stacked. Destructive confirmations (delete, unlink, archive) use the filled danger button. |
+| 2026-10-22 | Capital-letter labels ("STATS", field labels) are drawn in capitals but read out and matched by their normal wording, and card labels are headings for TalkBack. The live count shows "About 3,214" large with "steps so far" beside it, read out as one sentence. Distance places show "–" until Phase 5. |
+| 2026-10-22 | Colour swatches keep 48 dp touch targets: one row of eight when the form is wide enough (8 × 48 dp), otherwise two rows of four. The mockup's single row would need targets of about 39 dp on a phone. Shoe colours now use the DESIGN.md palette (same order, so stored pairs keep their colour name). |
+| 2026-10-22 | Large text (font scale ≥ 1.5): Home rows put the totals under the name instead of beside it (at 200% the count otherwise squeezed the name to one letter per line). History rows follow PNG 08: "date, time · duration" on the left, steps and distance on the right; one test now looks for " · 0 min" instead of "0 min · " (the row's wording changed with the design, not a Material detail). Menu entries are text only (PNG 11); the unused archive/delete/unarchive icons were removed. |
 | 2026-10-22 | Existing sessions get distance where Health Connect still allows the read. Whether the 30-day window is anchored to the first steps grant or the later distance grant is not stated in the docs; to be checked on the phone in Phase 4. |
 
 ## Open items carried to later phases
