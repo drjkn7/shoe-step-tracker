@@ -242,7 +242,7 @@ class TagScreensTest {
     @Test fun linkAndUnlinkFromThePairsPage() {
         addShoe("Daily trainers")
         launch()
-        rule.onNodeWithText("Daily trainers").performClick()
+        rule.clickWhenShown("Daily trainers")
         rule.onNodeWithText(str(R.string.tag_link)).performScrollTo().performClick()
         waitForText(str(R.string.tag_linking_title, "Daily trainers"))
         tap(TagContent.Blank)
@@ -257,7 +257,7 @@ class TagScreensTest {
         useNfcState(NfcState.OFF)
         addShoe("Daily trainers")
         launch()
-        rule.onNodeWithText("Daily trainers").performClick()
+        rule.clickWhenShown("Daily trainers")
         rule.onNodeWithText(str(R.string.tag_link)).performScrollTo().performClick()
         waitForText(str(R.string.tag_nfc_off_body))
         dialogButton(str(R.string.tag_open_settings)).assertIsDisplayed()
@@ -268,7 +268,7 @@ class TagScreensTest {
         useNfcState(NfcState.UNSUPPORTED)
         addShoe("Daily trainers")
         launch()
-        rule.onNodeWithText("Daily trainers").performClick()
+        rule.clickWhenShown("Daily trainers")
         rule.onNodeWithText(str(R.string.tag_no_nfc)).performScrollTo().assertIsDisplayed()
         assertTrue(rule.onAllNodesWithText(str(R.string.tag_link)).fetchSemanticsNodes().isEmpty())
     }
