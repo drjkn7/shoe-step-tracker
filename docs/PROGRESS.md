@@ -10,13 +10,18 @@ length, background Health Connect reads, WorkManager.
 
 - [x] Phase 0: Plan and paperwork (PR #17, merged)
 - [x] Phase 1: Theme layer (PR #18, merged)
-- [ ] Phase 2: Components (restyle existing composables; previews at 1.0/2.0 font, light/night) – in review
+- [x] Phase 2: Components (PR #19, merged)
 - [ ] Phase 3: Restyle every screen + "Discard changes?" + Appearance card
 - [ ] Phase 4: Distance data (READ_DISTANCE, schema v1 → v2, reconciler reads distance, backfill)
 - [ ] Phase 5: Distance in the UI, units setting, cost per km/mile, CSV distance_m
 - [ ] Phase 6: Add past session (and deleting "Added later" sessions)
 - [ ] Phase 7: Session notification (POST_NOTIFICATIONS)
 - [ ] Phase 8: Hardening and release 0.2.0
+
+Next: Phase 3 (restyle every screen, "Discard changes?", Appearance card). Product owner asked to start it on
+2026-10-23: give the plain-English Phase 3 plan first, including how the restyled screens are checked on the
+phone (test app "Shoe Step (test)" with sample pairs, or a build the product owner signs with their own key to
+see real data).
 
 Waiting on the product owner:
 - 7 of the 30 mockups are not in `docs/design/` (23 files there): Add past session, Add past session
