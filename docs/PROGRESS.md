@@ -1,6 +1,35 @@
-# Progress – Milestone 1 (v0.1.0)
+# Progress
 
-## Phases
+## Milestone 2 (v0.2.0) – in progress (read this first after /clear)
+Goal: Silver Matte restyle in a light and a night theme ([DESIGN.md](DESIGN.md), mockups in
+[design/](design/)); distance from Health Connect per session, in totals and as cost per km or mile;
+a session notification with a timer and Pause/Resume and End session; "Discard changes?" on the shoe
+form; Settings → Appearance (Light / Dark / System); add a past session for a forgotten tap.
+Out of scope (moved to M3): widget, inactivity detection and auto-pause, charger prompt, maximum session
+length, background Health Connect reads, WorkManager.
+
+- [ ] Phase 0: Plan and paperwork (approved 2026-10-22; this docs PR)
+- [ ] Phase 1: Theme layer (tokens, Chakra Petch, depth, backdrop, theme setting; previews only)
+- [ ] Phase 2: Components (restyle existing composables; previews at 1.0/2.0 font, light/night)
+- [ ] Phase 3: Restyle every screen + "Discard changes?" + Appearance card
+- [ ] Phase 4: Distance data (READ_DISTANCE, schema v1 → v2, reconciler reads distance, backfill)
+- [ ] Phase 5: Distance in the UI, units setting, cost per km/mile, CSV distance_m
+- [ ] Phase 6: Add past session (and deleting "Added later" sessions)
+- [ ] Phase 7: Session notification (POST_NOTIFICATIONS)
+- [ ] Phase 8: Hardening and release 0.2.0
+
+Waiting on the product owner:
+- 7 of the 30 mockups are not in `docs/design/` (23 files there): Add past session, Add past session
+  overlap error, the five night frames (Home, pair page, tag-tap pop-up, Add past session, Settings), and
+  a Settings frame with the Appearance card. The files were renumbered, so the numbers in DESIGN.md
+  section 7 and in the M2 brief do not match the file names; work refers to file names. Night screens
+  are needed before Phase 3 is finished, Add past session before Phase 6.
+- Draft copy on the M2 screens (permission cards, notification, Add past session) is confirmed per phase
+  (Phase 6 and Phase 7 ask first).
+
+## Milestone 1 (v0.1.0)
+
+### Phases
 - [x] Phase 0: Preflight and repository (merged)
 - [x] Phase 1: Foundations (PR #5, merged)
 - [x] Phase 2: Data layer (PR #6, merged)
@@ -11,12 +40,12 @@
 - [x] Phase 7: Stats, export, settings (PR #12, merged; CSV fixes PR #13, #14)
 - [x] Phase 8: Hardening and release (PR #15, merged; v0.1.0 released)
 
-## Milestone 1 complete (read this first after /clear)
+### Milestone 1 complete
 v0.1.0 is published: [GitHub Release](https://github.com/drjkn7/shoe-step-tracker/releases/tag/v0.1.0), tag
 `v0.1.0` on `ba7a404`, asset `shoe-step-tracker-0.1.0.apk` (SHA-256 `2e3ebf49…8d80`, also attached as a
 `.sha256` file; verified by downloading it back). Signed by the product owner's own key (kept outside the
 project); the product owner reported the [manual checklist](MANUAL_CHECKS.md) as passed on 2026-10-18.
-Next: no milestone planned yet. Ideas live in [BACKLOG.md](BACKLOG.md); each needs a product decision.
+Next: Milestone 2 (above). Other ideas live in [BACKLOG.md](BACKLOG.md); each needs a product decision.
 For the next release follow [RELEASE.md](RELEASE.md) (same key, bump versionCode/versionName).
 
 What Phase 8 added:
@@ -81,6 +110,15 @@ What Phase 8 added:
 | 2026-10-18 | Tag write is read back to verify (T04); a never-formatted tag can only be checked by format() succeeding (Android can't re-read it until the next tap). |
 | 2026-10-18 | Product owner (after testing a real tag): a tap always lands in the same place. Linked tag → its pair's page (session starts there; Pause/End or Switch questions are asked there). Unlinked tag → Home with the "New tag" pop-up. |
 | 2026-10-18 | Android 17 (API 37, the Pixel's version): NFC intents only reach activities guarded by DISPATCH_NFC_MESSAGE, and never stopped apps (official NFC guide). Tag intents now enter via activity-alias `.NfcTagEntry` (guarded; enabled on 37+ via values-v37) or `.NfcTagEntryLegacy` (unguarded; Android 9–16, which don't define the permission). MainActivity ignores tag intents not addressed to the enabled alias, so on 17+ fake tag intents are refused; foreground dispatch targets the same alias. |
+| 2026-10-22 | **Milestone 2 scope approved** (see the M2 section above). Product owner approved by name: permission `android.permission.health.READ_DISTANCE`, permission `android.permission.POST_NOTIFICATIONS`, and the bundled Chakra Petch font (SIL Open Font License 1.1; bundled in the app, never downloaded). |
+| 2026-10-22 | Distance comes only from Health Connect (`DistanceRecord`, aggregate `DISTANCE_TOTAL`). No estimate from steps, no GPS, no location permission. Stored in metres; units only change display; CSV stays in metres. Steps keep working if distance is refused. |
+| 2026-10-22 | Units: kilometres or miles in Settings. Default from the phone's region: miles for US and GB (CLDR road-distance preference), kilometres elsewhere. Android's measurement-system data also puts Liberia and Myanmar in the US system; not used, because CLDR's road preference lists only US and GB. |
+| 2026-10-22 | Home rows show total distance under total steps. Stats add total distance, average distance per session and cost per km or mile (follows the unit setting), next to cost per 1,000 steps. Pair page order: header, Stats, session controls, NFC tag, History (already the M1 order). |
+| 2026-10-22 | Theme: Light / Dark / System, default System; night palette and contrast in DESIGN.md section 3 and 8. Components use tokens only. Dynamic colour off. |
+| 2026-10-22 | Session notification follows design decision F2: a timer notification, no foreground service. Accepted limitation: on Android 14+ a non-foreground-service ongoing notification can be swiped away (official Android 14 behaviour change); the app posts it again on the next pause/resume or app open. After a phone restart it returns when the app is next opened (no boot receiver). |
+| 2026-10-22 | Add past session: one pair, a date, start and end; not in the future, end after start, no overlap with any session of any pair (including the running one). Health Connect's default read limit is "30 days prior to when any permission was first granted" (official read-data guide); the app does not know that date, so the form allows up to 30 days back from now, which is always readable. Shown in History as "Added later"; counts go through the normal reconciler (an added session whose segment ended over a day ago settles FINAL at the first read, so it never shows "About"). |
+| 2026-10-22 | Product owner: sessions marked "Added later" can be deleted (only those, with a confirmation). Normal sessions stay undeletable. Deletion goes through SessionManager. |
+| 2026-10-22 | Existing sessions get distance where Health Connect still allows the read. Whether the 30-day window is anchored to the first steps grant or the later distance grant is not stated in the docs; to be checked on the phone in Phase 4. |
 
 ## Open items carried to later phases
 - SessionDao/ActiveSessionDao write methods must be called only via SessionManager/RoomSessionStore (convention; not enforced by visibility).
