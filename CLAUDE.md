@@ -4,7 +4,8 @@ Tracks steps per pair of shoes via NFC tags + Health Connect. Milestone 1 only. 
 ## Commands
 - Build: ./gradlew assembleDebug | Install: ./gradlew installDebug
 - Tests: ./gradlew testDebugUnitTest | On-device: ./gradlew connectedDebugAndroidTest (phone unlocked;
-  app stays installed so real data is kept; UI tests use testContainer() with an in-memory DB)
+  debug is a separate app "io.github.drjkn7.shoestep.debug" next to the real release-signed one, which is
+  never replaced or uninstalled; UI tests use testContainer() with an in-memory DB)
 - CI emulator: ./gradlew pixel2api30DebugAndroidTest
 - All checks: ./gradlew check (includes verifyNoInternetPermission = merged-manifest audit)
 - Windows: use gradlew.bat. java is not on PATH; set JAVA_HOME to

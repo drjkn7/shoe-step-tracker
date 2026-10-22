@@ -31,6 +31,12 @@ android {
     }
 
     buildTypes {
+        // Debug builds are a separate app (".debug"), so tests can run on a phone that has the real,
+        // release-signed app without replacing it: a debug build can't install over it (different key),
+        // and uninstalling the real app would delete its data. Labelled "Shoe Step (test)" (src/debug).
+        debug {
+            applicationIdSuffix = ".debug"
+        }
         release {
             // Phase 8 (product owner): shrink, optimise and obfuscate the app's own code too, not just
             // the libraries. Keep rules: src/main/keepRules/rules.keep.
@@ -119,12 +125,13 @@ dependencies {
 // build variant, so permissions or components added by libraries are caught too.
 // ---------------------------------------------------------------------------------------------
 
-/** Every permission the app may request. Anything else fails the build. */
-val manifestPermissionAllowlist = setOf(
+/** Every permission the app (application id [appId]) may request. Anything else fails the build. */
+fun manifestPermissionAllowlist(appId: String) = setOf(
     "android.permission.NFC",
     "android.permission.health.READ_STEPS",
-    // Signature-level permission AndroidX Core declares for the app's own receivers.
-    "io.github.drjkn7.shoestep.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION",
+    // Signature-level permission AndroidX Core declares for the app's own receivers (named after the
+    // application id, so the debug build's carries ".debug").
+    "$appId.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION",
 )
 
 /** Components allowed to be exported in release, mapped to the permission that must guard them (null = none). */
@@ -227,7 +234,7 @@ androidComponents {
             group = "verification"
             description = "Audits the merged ${variant.name} manifest against SEC-01..04."
             mergedManifest.set(variant.artifacts.get(SingleArtifact.MERGED_MANIFEST))
-            allowedPermissions.set(manifestPermissionAllowlist)
+            allowedPermissions.set(variant.applicationId.map { manifestPermissionAllowlist(it) })
             // Map values cannot be null in Gradle inputs; "" means "no guard permission required".
             allowedExports.set(manifestReleaseExportAllowlist.mapValues { it.value.orEmpty() })
             // Debug builds include tooling activities (Compose preview/test); exports are audited on release.
