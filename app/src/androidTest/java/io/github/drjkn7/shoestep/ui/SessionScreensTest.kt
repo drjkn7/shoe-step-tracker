@@ -94,7 +94,7 @@ class SessionScreensTest {
     @Test fun startPauseResumeAndEndFromShoeDetail() {
         addShoe("Daily trainers")
         launch()
-        rule.onNodeWithText("Daily trainers").performClick()
+        rule.clickWhenShown("Daily trainers")
         rule.onNodeWithText(str(R.string.history_empty)).performScrollTo().assertIsDisplayed()
 
         tap(R.string.session_start)
@@ -124,7 +124,7 @@ class SessionScreensTest {
         val id = addShoe("Trail shoes")
         runBlocking { container.sessionManager.start(id) }
         launch()
-        rule.onNodeWithText("Trail shoes").performClick()
+        rule.clickWhenShown("Trail shoes")
         tap(R.string.session_end)
         dialogButton(R.string.action_cancel).performClick()
         assertEquals(SessionState.RUNNING, active()?.session?.state)
@@ -168,7 +168,7 @@ class SessionScreensTest {
         addShoe("Second pair")
         runBlocking { container.sessionManager.start(first) }
         launch()
-        rule.onNodeWithText("Second pair").performClick()
+        rule.clickWhenShown("Second pair")
         rule.onNodeWithText(str(R.string.detail_other_active, "First pair")).performScrollTo().assertIsDisplayed()
 
         tap(R.string.session_start)
@@ -189,7 +189,7 @@ class SessionScreensTest {
         runBlocking { container.shoeRepository.setArchived(id, true) }
         launch()
         rule.onNodeWithText(str(R.string.home_show_archived)).performClick()
-        rule.onNodeWithText("Retired").performClick()
+        rule.clickWhenShown("Retired")
         waitForText(str(R.string.detail_archived_note))
         assertTrue(rule.onAllNodesWithText(str(R.string.session_start)).fetchSemanticsNodes().isEmpty())
     }
@@ -198,7 +198,7 @@ class SessionScreensTest {
         val id = addShoe("Busy pair")
         runBlocking { container.sessionManager.start(id) }
         launch()
-        rule.onNodeWithText("Busy pair").performClick()
+        rule.clickWhenShown("Busy pair")
         rule.onNodeWithContentDescription(str(R.string.action_more)).performClick()
         rule.onNodeWithText(str(R.string.action_archive)).performClick()
         rule.onNodeWithText(str(R.string.archive_running_body)).assertIsDisplayed()
@@ -218,7 +218,7 @@ class SessionScreensTest {
             val touch = node.touchBoundsInRoot
             assertTrue("${str(label)} too small: ${touch.width} x ${touch.height}px", touch.width >= minPx && touch.height >= minPx)
         }
-        rule.onNodeWithText("Big text").performClick()
+        rule.clickWhenShown("Big text")
         tap(R.string.session_pause)
         waitForText(str(R.string.session_resume))
     }

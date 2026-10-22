@@ -62,7 +62,7 @@ class PairStatsScreenTest {
 
     private fun openPair(name: String) {
         rule.setContent { ShoeStepTheme { AppNavHost(container) } }
-        rule.onNodeWithText(name).performClick()
+        rule.clickWhenShown(name)
         rule.waitUntil(5_000) { rule.onAllNodesWithText(str(R.string.detail_stats_title)).fetchSemanticsNodes().isNotEmpty() }
     }
 

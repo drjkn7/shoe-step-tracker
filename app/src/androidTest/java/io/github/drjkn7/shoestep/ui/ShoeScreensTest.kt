@@ -77,6 +77,7 @@ class ShoeScreensTest {
 
     @Test fun emptyStateExplainsHowToStart() {
         launch()
+        rule.waitForNode(str(R.string.home_empty_title))
         rule.onNodeWithText(str(R.string.home_empty_title)).assertIsDisplayed()
         rule.onNodeWithText(str(R.string.home_empty_body)).assertIsDisplayed()
     }
@@ -137,7 +138,7 @@ class ShoeScreensTest {
     @Test fun editingNameUpdatesDetailAndList() {
         addShoeDirectly("Old name")
         launch()
-        rule.onNodeWithText("Old name").performClick()
+        rule.clickWhenShown("Old name")
         rule.onNodeWithContentDescription(str(R.string.action_edit)).performClick()
         rule.waitUntil(5_000) { rule.onAllNodesWithText("Old name").fetchSemanticsNodes().isNotEmpty() }
 
@@ -156,7 +157,7 @@ class ShoeScreensTest {
     @Test fun archiveHidesShoeAndUnarchiveBringsItBack() {
         addShoeDirectly("Winter boots")
         launch()
-        rule.onNodeWithText("Winter boots").performClick()
+        rule.clickWhenShown("Winter boots")
         rule.onNodeWithContentDescription(str(R.string.action_more)).performClick()
         rule.onNodeWithText(str(R.string.action_archive)).performClick()
         rule.onNodeWithText(str(R.string.detail_archived_note)).assertIsDisplayed()
@@ -181,7 +182,7 @@ class ShoeScreensTest {
     @Test fun deleteNeedsConfirmationAndCancelKeepsShoe() {
         val id = addShoeDirectly("Old runners")
         launch()
-        rule.onNodeWithText("Old runners").performClick()
+        rule.clickWhenShown("Old runners")
 
         rule.onNodeWithContentDescription(str(R.string.action_more)).performClick()
         rule.onNodeWithText(str(R.string.action_delete)).performClick()
@@ -203,7 +204,7 @@ class ShoeScreensTest {
         addShoeDirectly("Labelled")
         launch()
         assertIconButtons()
-        rule.onNodeWithText("Labelled").performClick()
+        rule.clickWhenShown("Labelled")
         assertIconButtons()
         rule.onNodeWithContentDescription(str(R.string.action_edit)).performClick()
         assertIconButtons()

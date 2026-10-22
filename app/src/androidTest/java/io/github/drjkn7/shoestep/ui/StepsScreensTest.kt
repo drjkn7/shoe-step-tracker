@@ -126,7 +126,7 @@ class StepsScreensTest {
             container.sessionManager.end(container.sessionManager.activeSession.first()!!.session.id)
         }
         launch()
-        rule.onNodeWithText("Daily trainers").performClick()
+        rule.clickWhenShown("Daily trainers")
         val pending = str(R.string.history_steps_pending, steps(0))
         waitForText(pending)
 

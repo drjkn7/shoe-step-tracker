@@ -93,7 +93,7 @@ class HardeningScreensTest {
         val id = addShoe("Daily trainers")
         addSessions(id, 50)
         rule.setContent { ShoeStepTheme { AppNavHost(container) } }
-        rule.onNodeWithText("Daily trainers").performClick()
+        rule.clickWhenShown("Daily trainers")
         rule.waitUntil(5_000) { rule.onAllNodesWithText(str(R.string.history_title)).fetchSemanticsNodes().isNotEmpty() }
         assertTrue(rule.onAllNodesWithText("older session", substring = true).fetchSemanticsNodes().isEmpty())
     }
@@ -105,7 +105,7 @@ class HardeningScreensTest {
                 ShoeStepTheme { AppNavHost(container) }
             }
         }
-        rule.onNodeWithText("Daily trainers").performClick()
+        rule.clickWhenShown("Daily trainers")
         rule.waitUntil(5_000) { rule.onAllNodesWithText(str(R.string.detail_stats_title)).fetchSemanticsNodes().isNotEmpty() }
         val back = rule.onNodeWithContentDescription(str(R.string.nav_back)).fetchSemanticsNode().boundsInRoot
         val width = rule.onNode(hasScrollAction()).fetchSemanticsNode().boundsInRoot.right

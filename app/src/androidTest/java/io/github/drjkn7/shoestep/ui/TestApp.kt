@@ -1,5 +1,9 @@
 package io.github.drjkn7.shoestep.ui
 
+import androidx.compose.ui.test.junit4.ComposeTestRule
+import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
 import androidx.test.core.app.ApplicationProvider
 import io.github.drjkn7.shoestep.AppContainer
 import io.github.drjkn7.shoestep.core.Clock
@@ -67,4 +71,18 @@ class InMemorySettings(initialCurrency: String? = null, initialTheme: ThemeMode 
     override suspend fun setThemeMode(mode: ThemeMode) {
         theme.value = mode
     }
+}
+
+/**
+ * Waits until a node with [text] is shown. Screens load their data from the database in the
+ * background, which the test rule's idle wait does not cover, so a tap right after launch can come
+ * before the row exists.
+ */
+fun ComposeTestRule.waitForNode(text: String, timeoutMillis: Long = 5_000) =
+    waitUntil(timeoutMillis) { onAllNodesWithText(text).fetchSemanticsNodes().isNotEmpty() }
+
+/** Taps the node with [text] once it is shown (see [waitForNode]). */
+fun ComposeTestRule.clickWhenShown(text: String) {
+    waitForNode(text)
+    onNodeWithText(text).performClick()
 }
