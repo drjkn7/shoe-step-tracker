@@ -9,7 +9,7 @@ Out of scope (moved to M3): widget, inactivity detection and auto-pause, charger
 length, background Health Connect reads, WorkManager.
 
 - [x] Phase 0: Plan and paperwork (PR #17, merged)
-- [ ] Phase 1: Theme layer (tokens, Chakra Petch, depth, backdrop, theme setting; previews only) – in review
+- [ ] Phase 1: Theme layer (tokens, Chakra Petch, depth, backdrop, theme setting; previews only) – PR #18 in review
 - [ ] Phase 2: Components (restyle existing composables; previews at 1.0/2.0 font, light/night)
 - [ ] Phase 3: Restyle every screen + "Discard changes?" + Appearance card
 - [ ] Phase 4: Distance data (READ_DISTANCE, schema v1 → v2, reconciler reads distance, backfill)
@@ -122,6 +122,7 @@ What Phase 8 added:
 | 2026-10-22 | Token gaps in DESIGN.md filled: secondary and icon buttons use the `sheen` gradient (night table) instead of the light-only `button-secondary`; `card-register` has no night value, so night uses `card`; `tabbar` and `sheet` are not used (no tab bar, no bottom sheet). Contrast test (ContrastTest) checks every text/surface pair in both themes: night `danger` on the lightest sheen stop is 4.3:1, so danger text never goes on secondary buttons. |
 | 2026-10-22 | Theme setting stored in DataStore (`theme_mode`, unknown values → System) and applied live at the top of MainActivity and the Health Connect rationale screen; status bar icons follow the app theme. On Android 12+ the choice is also handed to `UiModeManager.setApplicationNightMode` (API 31, verified in the SDK source: persisted until changed or app data cleared; no permission) when the user changes it, so the launch window matches; tests pass a no-op so they never change the real app's setting. Launch window colour = backdrop top colour. |
 | 2026-10-22 | Chakra Petch bundled as 4 static weights in `res/font` (Regular, Medium, SemiBold, Bold), OFL text in `licenses/ChakraPetch-OFL.txt` and in the in-app licences screen. Files as supplied by the product owner (docs/Chakra_Petch, not committed); SHA-256: Regular 75a36533…0333, Medium 24b98ee7…f180, SemiBold e0e25888…e113, Bold fb428d38…1798. |
+| 2026-10-22 | Debug builds get application id suffix `.debug` (label "Shoe Step (test)"): the product owner's phone has the real v0.1.0 signed with the release key, which a debug-key build cannot replace, and uninstalling it would delete real data. Tests now install side by side. NFC alias names are taken from the code package (not the application id); the permission allowlist names AndroidX's receiver permission after each variant's application id. Release manifest and audit unchanged. Full on-device suite 168/168 on the Pixel 9 Pro (Android 17); real app checked unchanged afterwards (0.1.0, same signature, same install time). |
 | 2026-10-22 | Existing sessions get distance where Health Connect still allows the read. Whether the 30-day window is anchored to the first steps grant or the later distance grant is not stated in the docs; to be checked on the phone in Phase 4. |
 
 ## Open items carried to later phases

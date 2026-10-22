@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Debug builds install next to the real app (application id ends in ".debug"); a different
+         name keeps the two apart on the phone. -->
+    <string name="app_name" translatable="false">Shoe Step (test)</string>
+</resources>

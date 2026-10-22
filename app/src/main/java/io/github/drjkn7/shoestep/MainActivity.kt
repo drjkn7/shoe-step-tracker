@@ -110,7 +110,13 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    /** The NFC entry alias enabled on this Android version (see AndroidManifest.xml and values-v37). */
-    private fun tagEntry(): String =
-        if (resources.getBoolean(R.bool.nfc_entry_protected)) "$packageName.NfcTagEntry" else "$packageName.NfcTagEntryLegacy"
+    /**
+     * The NFC entry alias enabled on this Android version (see AndroidManifest.xml and values-v37).
+     * Alias names come from the code's package, not the application id (which ends in ".debug" in
+     * debug builds); MainActivity's name is kept by R8 because the manifest refers to it.
+     */
+    private fun tagEntry(): String {
+        val codePackage = MainActivity::class.java.name.substringBeforeLast('.')
+        return if (resources.getBoolean(R.bool.nfc_entry_protected)) "$codePackage.NfcTagEntry" else "$codePackage.NfcTagEntryLegacy"
+    }
 }
