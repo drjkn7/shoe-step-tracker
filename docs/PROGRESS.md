@@ -8,8 +8,8 @@ form; Settings → Appearance (Light / Dark / System); add a past session for a 
 Out of scope (moved to M3): widget, inactivity detection and auto-pause, charger prompt, maximum session
 length, background Health Connect reads, WorkManager.
 
-- [ ] Phase 0: Plan and paperwork (approved 2026-10-22; this docs PR)
-- [ ] Phase 1: Theme layer (tokens, Chakra Petch, depth, backdrop, theme setting; previews only)
+- [x] Phase 0: Plan and paperwork (PR #17, merged)
+- [ ] Phase 1: Theme layer (tokens, Chakra Petch, depth, backdrop, theme setting; previews only) – in review
 - [ ] Phase 2: Components (restyle existing composables; previews at 1.0/2.0 font, light/night)
 - [ ] Phase 3: Restyle every screen + "Discard changes?" + Appearance card
 - [ ] Phase 4: Distance data (READ_DISTANCE, schema v1 → v2, reconciler reads distance, backfill)
@@ -118,6 +118,10 @@ What Phase 8 added:
 | 2026-10-22 | Session notification follows design decision F2: a timer notification, no foreground service. Accepted limitation: on Android 14+ a non-foreground-service ongoing notification can be swiped away (official Android 14 behaviour change); the app posts it again on the next pause/resume or app open. After a phone restart it returns when the app is next opened (no boot receiver). |
 | 2026-10-22 | Add past session: one pair, a date, start and end; not in the future, end after start, no overlap with any session of any pair (including the running one). Health Connect's default read limit is "30 days prior to when any permission was first granted" (official read-data guide); the app does not know that date, so the form allows up to 30 days back from now, which is always readable. Shown in History as "Added later"; counts go through the normal reconciler (an added session whose segment ended over a day ago settles FINAL at the first read, so it never shows "About"). |
 | 2026-10-22 | Product owner: sessions marked "Added later" can be deleted (only those, with a confirmation). Normal sessions stay undeletable. Deletion goes through SessionManager. |
+| 2026-10-22 | Phase 1 (theme layer): tokens in `ui/theme` (Color, Type, Shape, Depth), read as `SilverTheme.colors / type / shapes / spacing`; light and night share token names. Material's colour scheme is filled from the tokens with `primary` = accent ink (readable as text in both themes); dynamic colour removed. Depth uses Compose UI 1.12's `dropShadow` / `innerShadow` (checked in the library and the official shadows guide). |
+| 2026-10-22 | Token gaps in DESIGN.md filled: secondary and icon buttons use the `sheen` gradient (night table) instead of the light-only `button-secondary`; `card-register` has no night value, so night uses `card`; `tabbar` and `sheet` are not used (no tab bar, no bottom sheet). Contrast test (ContrastTest) checks every text/surface pair in both themes: night `danger` on the lightest sheen stop is 4.3:1, so danger text never goes on secondary buttons. |
+| 2026-10-22 | Theme setting stored in DataStore (`theme_mode`, unknown values → System) and applied live at the top of MainActivity and the Health Connect rationale screen; status bar icons follow the app theme. On Android 12+ the choice is also handed to `UiModeManager.setApplicationNightMode` (API 31, verified in the SDK source: persisted until changed or app data cleared; no permission) when the user changes it, so the launch window matches; tests pass a no-op so they never change the real app's setting. Launch window colour = backdrop top colour. |
+| 2026-10-22 | Chakra Petch bundled as 4 static weights in `res/font` (Regular, Medium, SemiBold, Bold), OFL text in `licenses/ChakraPetch-OFL.txt` and in the in-app licences screen. Files as supplied by the product owner (docs/Chakra_Petch, not committed); SHA-256: Regular 75a36533…0333, Medium 24b98ee7…f180, SemiBold e0e25888…e113, Bold fb428d38…1798. |
 | 2026-10-22 | Existing sessions get distance where Health Connect still allows the read. Whether the 30-day window is anchored to the first steps grant or the later distance grant is not stated in the docs; to be checked on the phone in Phase 4. |
 
 ## Open items carried to later phases

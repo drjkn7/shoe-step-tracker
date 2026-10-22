@@ -17,6 +17,11 @@ interface SettingsStore {
     val defaultCurrency: Flow<String?>
 
     suspend fun setDefaultCurrency(code: String)
+
+    /** Light, dark or follow the phone (the default). */
+    val themeMode: Flow<ThemeMode>
+
+    suspend fun setThemeMode(mode: ThemeMode)
 }
 
 /** The real store: one Preferences DataStore file ("settings") per app, created once by AppContainer. */
@@ -34,8 +39,15 @@ class DataStoreSettings(context: Context) : SettingsStore {
         store.edit { it[CURRENCY] = code }
     }
 
+    override val themeMode: Flow<ThemeMode> = store.data.map { prefs -> ThemeMode.fromStored(prefs[THEME]) }
+
+    override suspend fun setThemeMode(mode: ThemeMode) {
+        store.edit { it[THEME] = mode.name }
+    }
+
     private companion object {
         const val FILE_NAME = "settings"
         val CURRENCY = stringPreferencesKey("default_currency")
+        val THEME = stringPreferencesKey("theme_mode")
     }
 }

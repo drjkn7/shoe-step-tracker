@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Dark window background in dark mode, so launch does not flash white. -->
-    <style name="Theme.ShoeStep" parent="android:Theme.Material.NoActionBar" />
+    <!-- Night: the night backdrop's top colour, so launch does not flash white. On Android 12+ the
+         app's own theme choice decides which of the two is used (UiModeManager.setApplicationNightMode). -->
+    <style name="Theme.ShoeStep" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">#FF2A3345</item>
+    </style>
 </resources>

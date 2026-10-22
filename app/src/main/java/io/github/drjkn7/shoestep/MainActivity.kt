@@ -3,20 +3,25 @@ package io.github.drjkn7.shoestep
 import android.app.PendingIntent
 import android.content.Intent
 import android.content.IntentFilter
+import android.graphics.Color
 import android.nfc.NfcAdapter
 import android.nfc.tech.Ndef
 import android.nfc.tech.NdefFormatable
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import io.github.drjkn7.shoestep.nfc.AndroidTags
 import io.github.drjkn7.shoestep.ui.navigation.AppNavHost
 import io.github.drjkn7.shoestep.ui.theme.ShoeStepTheme
+import io.github.drjkn7.shoestep.ui.theme.SilverTheme
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
@@ -31,7 +36,8 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         val container = container
         setContent {
-            ShoeStepTheme {
+            ShoeStepTheme(container.settings) {
+                SystemBarsFollowTheme()
                 AppNavHost(container)
             }
         }
@@ -88,6 +94,20 @@ class MainActivity : ComponentActivity() {
         if (intent?.component?.className != tagEntry()) return
         val tapped = AndroidTags.fromIntent(intent) ?: return
         lifecycleScope.launch { container.tagCoordinator.onTag(tapped) }
+    }
+
+    /**
+     * Status and navigation bar icons dark on the light theme and light on the night theme. Follows the
+     * app's theme, which can differ from the phone's (Settings → Appearance).
+     */
+    @Composable
+    private fun SystemBarsFollowTheme() {
+        val night = SilverTheme.colors.isNight
+        DisposableEffect(night) {
+            val style = SystemBarStyle.auto(Color.TRANSPARENT, Color.TRANSPARENT) { night }
+            enableEdgeToEdge(statusBarStyle = style, navigationBarStyle = style)
+            onDispose {}
+        }
     }
 
     /** The NFC entry alias enabled on this Android version (see AndroidManifest.xml and values-v37). */
