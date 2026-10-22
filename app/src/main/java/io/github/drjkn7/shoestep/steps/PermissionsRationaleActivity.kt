@@ -22,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import io.github.drjkn7.shoestep.R
+import io.github.drjkn7.shoestep.ShoeStepApp
 import io.github.drjkn7.shoestep.ui.theme.ShoeStepTheme
 
 /**
@@ -33,8 +34,10 @@ class PermissionsRationaleActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        // The theme setting is the only thing read: no intent extras, no user data.
+        val settings = (application as ShoeStepApp).container.settings
         setContent {
-            ShoeStepTheme {
+            ShoeStepTheme(settings) {
                 RationaleScreen(onClose = ::finish)
             }
         }

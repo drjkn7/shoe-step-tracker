@@ -58,8 +58,8 @@ Status: ☐ not run · ✅ passed · ❌ failed. Phase = when it first becomes t
 | T45 | Discard changes | Asked only after an edit; Keep editing keeps the form | 3 | ☐ |
 | T46 | Restyled screens | 200% font, TalkBack, RTL and contrast pass | 3, 8 | ☐ |
 | T47 | Upgrade from v0.1.0 | Installs over the top with the same key; nothing lost | 8 | ☐ |
-| T48 | Theme setting | Light, Dark and System apply at once; System follows the phone; choice survives a restart | 1, 3 | ☐ |
-| T49 | Night mode legibility | Every screen readable in night; contrast per DESIGN.md section 8; no light-only colours left | 3 | ☐ |
+| T48 | Theme setting | Light, Dark and System apply at once; System follows the phone; choice survives a restart | 1, 3 | ◐ live switch and System automated (ThemeScreensTest, ThemeModeTest); restart and Settings control in Phase 3 |
+| T49 | Night mode legibility | Every screen readable in night; contrast per DESIGN.md section 8; no light-only colours left | 3 | ◐ token contrast automated (ContrastTest); screens in Phase 3 |
 | T50 | Add past session | Saved for the chosen pair; "Added later" in History; steps and distance filled by the reconciler | 6 | ☐ |
 | T51 | Past session overlaps | Blocked with the other pair's name and times; nothing saved | 6 | ☐ |
 | T52 | Past session invalid times | Future, end before start, or older than Health Connect allows (30 days back): blocked with a clear reason | 6 | ☐ |

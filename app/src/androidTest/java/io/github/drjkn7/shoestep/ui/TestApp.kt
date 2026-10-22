@@ -6,11 +6,13 @@ import io.github.drjkn7.shoestep.core.Clock
 import io.github.drjkn7.shoestep.data.db.ShoeStepDatabase
 import io.github.drjkn7.shoestep.nfc.NfcState
 import io.github.drjkn7.shoestep.settings.SettingsStore
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
+import io.github.drjkn7.shoestep.settings.SystemNightMode
+import io.github.drjkn7.shoestep.settings.ThemeMode
 import io.github.drjkn7.shoestep.steps.StepsAccess
 import io.github.drjkn7.shoestep.steps.StepsRead
 import io.github.drjkn7.shoestep.steps.StepsSource
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import java.time.ZoneId
 
 /** Fixed "now" for UI tests: 17 Oct 2026, 12:00 UTC. */
@@ -47,14 +49,22 @@ fun testContainer(
     stepsSourceFactory = { stepsSource },
     nfcStateProvider = { nfcState },
     settingsFactory = { settings },
+    systemNightModeFactory = { SystemNightMode {} },
 )
 
 /** Settings that live only in memory, so UI tests never touch the real settings file. */
-class InMemorySettings(initialCurrency: String? = null) : SettingsStore {
+class InMemorySettings(initialCurrency: String? = null, initialTheme: ThemeMode = ThemeMode.SYSTEM) : SettingsStore {
     private val currency = MutableStateFlow(initialCurrency)
     override val defaultCurrency: Flow<String?> = currency
 
     override suspend fun setDefaultCurrency(code: String) {
         currency.value = code
+    }
+
+    private val theme = MutableStateFlow(initialTheme)
+    override val themeMode: Flow<ThemeMode> = theme
+
+    override suspend fun setThemeMode(mode: ThemeMode) {
+        theme.value = mode
     }
 }

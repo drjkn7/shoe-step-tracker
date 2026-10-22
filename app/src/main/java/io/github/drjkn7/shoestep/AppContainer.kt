@@ -7,8 +7,10 @@ import io.github.drjkn7.shoestep.core.SystemWallClock
 import io.github.drjkn7.shoestep.data.ShoeRepository
 import io.github.drjkn7.shoestep.data.db.ShoeStepDatabase
 import io.github.drjkn7.shoestep.export.CsvExportRepository
+import io.github.drjkn7.shoestep.settings.AndroidSystemNightMode
 import io.github.drjkn7.shoestep.settings.DataStoreSettings
 import io.github.drjkn7.shoestep.settings.SettingsStore
+import io.github.drjkn7.shoestep.settings.SystemNightMode
 import io.github.drjkn7.shoestep.nfc.NfcState
 import io.github.drjkn7.shoestep.nfc.RoomTagStore
 import io.github.drjkn7.shoestep.nfc.TagCoordinator
@@ -35,6 +37,8 @@ class AppContainer(
     private val nfcStateProvider: (Context) -> NfcState = ::deviceNfcState,
     /** Tests pass in-memory settings so they never touch the real settings file. */
     settingsFactory: (Context) -> SettingsStore = ::DataStoreSettings,
+    /** Tests pass a no-op: the real one changes the theme Android keeps for this app (the real app's too). */
+    systemNightModeFactory: (Context) -> SystemNightMode = ::AndroidSystemNightMode,
 ) {
     private val appContext = context.applicationContext
 
@@ -45,6 +49,9 @@ class AppContainer(
 
     /** One DataStore per file per process, so it is created exactly once here. */
     val settings: SettingsStore by lazy { settingsFactory(appContext) }
+
+    /** Tells Android the chosen theme; called only when the user changes it. */
+    val systemNightMode: SystemNightMode by lazy { systemNightModeFactory(appContext) }
 
     /** Builds the CSV exports from the database (the user picks where they are saved). */
     val exporter: CsvExportRepository by lazy { CsvExportRepository(database, appContext) }

@@ -53,6 +53,7 @@ fun LicencesScreen(onBack: () -> Unit) {
         Text(stringResource(R.string.licences_intro), style = MaterialTheme.typography.bodyMedium)
         LicenceBlock(R.string.licences_apache_title, R.string.licences_apache_parts, R.raw.licence_apache_2_0)
         LicenceBlock(R.string.licences_mit_title, R.string.licences_mit_parts, R.raw.licence_mit_checker_qual)
+        LicenceBlock(R.string.licences_ofl_title, R.string.licences_ofl_parts, R.raw.licence_ofl_chakra_petch)
     }
 }
 

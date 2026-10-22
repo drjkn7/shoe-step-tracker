@@ -242,6 +242,8 @@
     <string name="licences_mit_parts">• Checker Framework qualifiers (checker-qual)</string>
     <string name="licences_apache_title">Apache License 2.0</string>
     <string name="licences_mit_title">MIT License</string>
+    <string name="licences_ofl_parts">• Chakra Petch font by The Chakra Petch Project Authors</string>
+    <string name="licences_ofl_title">SIL Open Font License 1.1</string>
     <string name="licences_show_text">Show full text</string>
     <string name="licences_hide_text">Hide full text</string>
 </resources>
