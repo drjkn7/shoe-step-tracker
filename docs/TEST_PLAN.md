@@ -1,4 +1,6 @@
-# Test plan – Milestone 1
+# Test plan
+
+T01–T30 cover Milestone 1 (v0.1.0); T31–T54 are new in Milestone 2 (v0.2.0) and come after them.
 
 Status: ☐ not run · ✅ passed · ❌ failed. Phase = when it first becomes testable.
 
@@ -34,3 +36,32 @@ Status: ☐ not run · ✅ passed · ❌ failed. Phase = when it first becomes t
 | T28 | Archive / unarchive / delete | History kept on archive, removed on delete | 3 | ✅ (ShoeScreensTest + DatabaseTest) |
 | T29 | Same UUID on two shoes | Blocked | 6 | ✅ (DatabaseTest, TagDbTest, TagScreensTest) |
 | T30 | Android 9-13 without Health Connect | Onboarding explains and links to install | 5 | ✅ (real check on Android 13 emulator: "Get Health Connect" shown; opens Play Store or, without it, the web page) |
+
+## Milestone 2 (v0.2.0)
+
+| ID | Scenario | Expected | Phase | Status |
+|---|---|---|---|---|
+| T31 | Session with distance in Health Connect | Distance per session, totals and average correct | 4–5 | ☐ |
+| T32 | Switch km ↔ miles | Every screen updates; stored metres unchanged | 5 | ☐ |
+| T33 | Steps allowed, distance refused | Steps unaffected; distance "–"; "Show distance" card | 4–5 | ☐ |
+| T34 | No distance data for a session | "–", not 0; left out of totals; cost per km/mile shows a dash | 4–5 | ☐ |
+| T35 | Provisional distance | "About" for one day, may go up or down, then final | 4 | ☐ |
+| T36 | Phone + watch both write distance | Not counted twice (manual) | 4 | ☐ |
+| T37 | Database v1 → v2 | All shoes, sessions, segments and tags kept (MigrationTest + install over v0.1.0) | 4 | ☐ |
+| T38 | CSV export | distance_m columns present; injection protection intact | 5 | ☐ |
+| T39 | Cost per km/mile edge cases | Dash with no price or zero distance; 0 for free shoes | 5 | ☐ |
+| T40 | Notification permission (13+) | In-app ask, then system prompt; refusing leaves the app usable; no prompt below 13 | 7 | ☐ |
+| T41 | Notification lifecycle | Appears on start (button and tag); updates on pause/resume; removed on end, switch, archive, delete | 7 | ☐ |
+| T42 | Notification actions | Pause/Resume act at once; End opens the confirmation; stale or foreign session ids ignored | 7 | ☐ |
+| T43 | Notification setting off | No notification; turning it on shows one for a running session | 7 | ☐ |
+| T44 | Restart mid-session | Notification returns when the app is opened (manual) | 7 | ☐ |
+| T45 | Discard changes | Asked only after an edit; Keep editing keeps the form | 3 | ☐ |
+| T46 | Restyled screens | 200% font, TalkBack, RTL and contrast pass | 3, 8 | ☐ |
+| T47 | Upgrade from v0.1.0 | Installs over the top with the same key; nothing lost | 8 | ☐ |
+| T48 | Theme setting | Light, Dark and System apply at once; System follows the phone; choice survives a restart | 1, 3 | ☐ |
+| T49 | Night mode legibility | Every screen readable in night; contrast per DESIGN.md section 8; no light-only colours left | 3 | ☐ |
+| T50 | Add past session | Saved for the chosen pair; "Added later" in History; steps and distance filled by the reconciler | 6 | ☐ |
+| T51 | Past session overlaps | Blocked with the other pair's name and times; nothing saved | 6 | ☐ |
+| T52 | Past session invalid times | Future, end before start, or older than Health Connect allows (30 days back): blocked with a clear reason | 6 | ☐ |
+| T53 | Past session vs running session | Cannot overlap the session that is running now | 6 | ☐ |
+| T54 | Past session in totals and export | Counted in Stats, cost per step/km and CSV like any session; an "Added later" session can be deleted after a confirmation, normal sessions cannot | 6 | ☐ |
