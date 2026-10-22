@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -16,7 +15,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
@@ -25,7 +23,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SuggestionChip
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -36,12 +33,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -50,6 +49,11 @@ import io.github.drjkn7.shoestep.data.db.ShoeWithStats
 import io.github.drjkn7.shoestep.data.model.SessionState
 import io.github.drjkn7.shoestep.steps.HealthConnectStepsSource
 import io.github.drjkn7.shoestep.ui.common.ColourDot
+import io.github.drjkn7.shoestep.ui.common.SilverCard
+import io.github.drjkn7.shoestep.ui.common.StatusBadge
+import io.github.drjkn7.shoestep.ui.common.labelRes
+import io.github.drjkn7.shoestep.ui.theme.SilverSpacing
+import io.github.drjkn7.shoestep.ui.theme.SilverTheme
 import io.github.drjkn7.shoestep.ui.common.StepsLabel
 import io.github.drjkn7.shoestep.ui.common.labelledSteps
 import io.github.drjkn7.shoestep.ui.common.stepsCountText
@@ -158,47 +162,61 @@ fun HomeScreen(
     }
 }
 
+/** A pair on Home (PNG 01): colour circle, name and type; total steps with distance under; status badge. */
 @Composable
-private fun ShoeRow(item: ShoeWithStats, paused: Boolean, onClick: () -> Unit) {
+internal fun ShoeRow(item: ShoeWithStats, paused: Boolean, onClick: () -> Unit) {
+    val c = SilverTheme.colors
     val shoe = item.shoe
-    val subtitle = listOf(shoe.brand, shoe.model).filter { it.isNotEmpty() }.joinToString(" ")
     // "(counted later)" while any segment has no count yet, "About" while counts may still change.
     val stepsText = labelledSteps(
         stepsCountText(item.totalSteps),
         StepsLabel.of(item.hasPendingSteps, item.hasUnfinalSteps),
     )
-    Card(onClick = onClick, modifier = Modifier.fillMaxWidth()) {
-        Row(
-            Modifier.padding(16.dp).semantics(mergeDescendants = true) {},
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            ColourDot(shoe.accentColor, size = 20.dp)
-            Column(Modifier.weight(1f).padding(start = 16.dp)) {
-                Text(shoe.name, style = MaterialTheme.typography.titleMedium, maxLines = 2, overflow = TextOverflow.Ellipsis)
-                if (subtitle.isNotEmpty()) {
-                    Text(
-                        subtitle,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                }
-                Text(stepsText, style = MaterialTheme.typography.bodyMedium)
+    val nameAndType = @Composable { modifier: Modifier ->
+        Column(modifier) {
+            Text(shoe.name, style = SilverTheme.type.section.copy(fontSize = 18.sp), color = c.textPrimary, maxLines = 2, overflow = TextOverflow.Ellipsis)
+            Text(stringResource(shoe.type.labelRes()), style = SilverTheme.type.body, color = c.textMuted, maxLines = 2, overflow = TextOverflow.Ellipsis)
+            if (shoe.archived) {
+                Text(stringResource(R.string.home_archived_badge), style = SilverTheme.type.note, color = c.textMuted)
             }
+        }
+    }
+    val totals = @Composable { modifier: Modifier, align: Alignment.Horizontal ->
+        Column(modifier, horizontalAlignment = align, verticalArrangement = Arrangement.spacedBy(SilverSpacing.xs)) {
             if (item.isActive) {
-                val badge = if (paused) R.string.home_paused_badge else R.string.home_running_badge
-                SuggestionChip(onClick = onClick, label = { Text(stringResource(badge)) })
-            } else if (shoe.archived) {
-                Text(
-                    stringResource(R.string.home_archived_badge),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                StatusBadge(
+                    stringResource(if (paused) R.string.home_paused_badge else R.string.home_running_badge),
+                    running = !paused,
                 )
+            }
+            Text(stepsText, style = SilverTheme.type.button.copy(fontSize = 16.sp), color = c.accentInk)
+            // Total distance arrives in M2 Phase 5.
+            Text(stringResource(R.string.dash), style = SilverTheme.type.body.copy(fontWeight = FontWeight.SemiBold), color = c.textMuted)
+        }
+    }
+    SilverCard(onClick = onClick) {
+        if (LocalDensity.current.fontScale < LARGE_FONT_SCALE) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(SilverSpacing.m)) {
+                ColourDot(shoe.accentColor)
+                nameAndType(Modifier.weight(1f))
+                // Neither side may take more than half the row, so a long count never squeezes the name.
+                totals(Modifier.weight(1f, fill = false), Alignment.End)
+            }
+        } else {
+            // Large text: the totals go under the name instead of beside it.
+            Row(verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(SilverSpacing.m)) {
+                ColourDot(shoe.accentColor, Modifier.padding(top = SilverSpacing.xs))
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(SilverSpacing.s)) {
+                    nameAndType(Modifier)
+                    totals(Modifier, Alignment.Start)
+                }
             }
         }
     }
 }
+
+/** From this font size (Android's text-size setting) Home rows stack their totals under the name. */
+private const val LARGE_FONT_SCALE = 1.5f
 
 @Composable
 private fun EmptyMessage(title: String?, body: String) {

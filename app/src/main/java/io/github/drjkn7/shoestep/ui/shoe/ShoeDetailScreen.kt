@@ -15,8 +15,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -53,7 +51,17 @@ import io.github.drjkn7.shoestep.data.db.ShoeWithStats
 import io.github.drjkn7.shoestep.data.model.EndReason
 import io.github.drjkn7.shoestep.data.model.SessionState
 import io.github.drjkn7.shoestep.steps.SoFarSteps
+import io.github.drjkn7.shoestep.ui.common.CardLabel
 import io.github.drjkn7.shoestep.ui.common.ColourDot
+import io.github.drjkn7.shoestep.ui.common.HistoryRow
+import io.github.drjkn7.shoestep.ui.common.MenuEntry
+import io.github.drjkn7.shoestep.ui.common.SilverCard
+import io.github.drjkn7.shoestep.ui.common.SilverMenu
+import io.github.drjkn7.shoestep.ui.common.StatItem
+import io.github.drjkn7.shoestep.ui.common.StatsGrid
+import io.github.drjkn7.shoestep.ui.common.TextActionButton
+import io.github.drjkn7.shoestep.ui.theme.SilverSpacing
+import io.github.drjkn7.shoestep.ui.theme.SilverTheme
 import io.github.drjkn7.shoestep.ui.common.ConfirmDialog
 import io.github.drjkn7.shoestep.ui.common.Formatters
 import io.github.drjkn7.shoestep.ui.common.StepsLabel
@@ -117,28 +125,22 @@ fun ShoeDetailScreen(
                             IconButton(onClick = { menuOpen = true }) {
                                 Icon(painterResource(R.drawable.ic_more_vert), stringResource(R.string.action_more))
                             }
-                            DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
-                                val archived = loaded.shoe.shoe.archived
-                                DropdownMenuItem(
-                                    text = { Text(stringResource(if (archived) R.string.action_unarchive else R.string.action_archive)) },
-                                    leadingIcon = {
-                                        Icon(painterResource(if (archived) R.drawable.ic_unarchive else R.drawable.ic_archive), null)
-                                    },
-                                    onClick = {
+                            val archived = loaded.shoe.shoe.archived
+                            SilverMenu(
+                                expanded = menuOpen,
+                                onDismiss = { menuOpen = false },
+                                entries = listOf(
+                                    MenuEntry(stringResource(if (archived) R.string.action_unarchive else R.string.action_archive), onClick = {
                                         menuOpen = false
                                         // Archiving a pair with a session in progress ends it, so ask first.
                                         if (!archived && loaded.shoe.isActive) confirmArchive = true else viewModel.setArchived(!archived)
-                                    },
-                                )
-                                DropdownMenuItem(
-                                    text = { Text(stringResource(R.string.action_delete)) },
-                                    leadingIcon = { Icon(painterResource(R.drawable.ic_delete), null) },
-                                    onClick = {
+                                    }),
+                                    MenuEntry(stringResource(R.string.action_delete), danger = true, onClick = {
                                         menuOpen = false
                                         confirmDelete = true
-                                    },
-                                )
-                            }
+                                    }),
+                                ),
+                            )
                         }
                     }
                 },
@@ -306,39 +308,36 @@ private fun DetailContent(
             }
         }
 
-        Card(Modifier.fillMaxWidth()) {
-            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(stringResource(R.string.detail_stats_title), style = MaterialTheme.typography.titleMedium)
-                StatRow(
-                    stringResource(R.string.detail_total_steps),
-                    labelledSteps(
-                        Formatters.count(item.totalSteps, locale),
-                        StepsLabel.of(item.hasPendingSteps, item.hasUnfinalSteps),
+        SilverCard {
+            CardLabel(stringResource(R.string.detail_stats_title))
+            val stepsLabel = StepsLabel.of(item.hasPendingSteps, item.hasUnfinalSteps)
+            val (hours, minutes) = Formatters.hoursAndMinutes(item.activeMillis)
+            val cost = CostCalculator.cost(shoe.priceMinor, shoe.currencyCode, item.totalSteps)
+            // Distance figures show a dash until distance is read from Health Connect (M2 Phase 5).
+            StatsGrid(
+                listOf(
+                    StatItem(stringResource(R.string.detail_total_steps), labelledSteps(Formatters.count(item.totalSteps, locale), stepsLabel)),
+                    StatItem(stringResource(R.string.detail_total_distance), dash),
+                    StatItem(stringResource(R.string.detail_sessions), Formatters.count(item.sessionCount.toLong(), locale)),
+                    StatItem(
+                        stringResource(R.string.detail_walking_time),
+                        if (hours > 0) stringResource(R.string.duration_hours_minutes, hours, minutes)
+                        else stringResource(R.string.duration_minutes, minutes),
                     ),
-                )
-                StatRow(stringResource(R.string.detail_sessions), Formatters.count(item.sessionCount.toLong(), locale))
-                StatRow(
-                    stringResource(R.string.detail_average_steps),
-                    item.averageStepsPerSession?.let {
-                        labelledSteps(Formatters.count(it, locale), StepsLabel.of(item.hasPendingSteps, item.hasUnfinalSteps))
-                    } ?: dash,
-                )
-                val (hours, minutes) = Formatters.hoursAndMinutes(item.activeMillis)
-                StatRow(
-                    stringResource(R.string.detail_walking_time),
-                    if (hours > 0) stringResource(R.string.duration_hours_minutes, hours, minutes)
-                    else stringResource(R.string.duration_minutes, minutes),
-                )
-                StatRow(
-                    stringResource(R.string.detail_last_worn),
-                    item.lastUsedUtc?.let { Formatters.date(Formatters.localEpochDay(it), locale) } ?: dash,
-                )
-                val cost = CostCalculator.cost(shoe.priceMinor, shoe.currencyCode, item.totalSteps)
-                StatRow(
-                    stringResource(R.string.detail_cost_per_1000),
-                    Formatters.costPerThousand(cost, shoe.currencyCode, locale) ?: dash,
-                )
-            }
+                    StatItem(
+                        stringResource(R.string.detail_average_steps),
+                        item.averageStepsPerSession?.let { labelledSteps(Formatters.count(it, locale), stepsLabel) } ?: dash,
+                        extra = dash,
+                    ),
+                    StatItem(
+                        stringResource(R.string.detail_last_worn),
+                        item.lastUsedUtc?.let { Formatters.date(Formatters.localEpochDay(it), locale) } ?: dash,
+                    ),
+                    StatItem(stringResource(R.string.detail_cost_per_1000), Formatters.costPerThousand(cost, shoe.currencyCode, locale) ?: dash),
+                    StatItem(stringResource(R.string.detail_cost_per_km), dash),
+                ),
+                modifier = Modifier.padding(top = SilverSpacing.s),
+            )
         }
 
         // Archived pairs can't start a session (archiving ends any running one).
@@ -407,71 +406,46 @@ private fun TagCard(linked: Boolean, archived: Boolean, hasNfc: Boolean, onLink:
 @Composable
 private fun HistoryCard(history: List<SessionWithSteps>) {
     val locale = LocalConfiguration.current.locales[0]
+    val dash = stringResource(R.string.dash)
     // T26: a long-used pair can have thousands of sessions; build only the newest ones, a page at a time.
     var shown by rememberSaveable { mutableIntStateOf(HISTORY_PAGE_SIZE) }
-    Card(Modifier.fillMaxWidth()) {
-        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text(stringResource(R.string.history_title), style = MaterialTheme.typography.titleMedium)
-            if (history.isEmpty()) {
-                Text(stringResource(R.string.history_empty), style = MaterialTheme.typography.bodyMedium)
+    SilverCard {
+        CardLabel(stringResource(R.string.history_title), Modifier.padding(bottom = SilverSpacing.s))
+        if (history.isEmpty()) {
+            Text(stringResource(R.string.history_empty), style = SilverTheme.type.body, color = SilverTheme.colors.textMuted)
+        }
+        history.take(shown).forEach { row ->
+            val session = row.session
+            val ended = session.state == SessionState.ENDED
+            val (hours, minutes) = Formatters.hoursAndMinutes(row.activeMillis)
+            val duration = if (hours > 0) {
+                stringResource(R.string.duration_hours_minutes, hours, minutes)
+            } else {
+                stringResource(R.string.duration_minutes, minutes)
             }
-            history.take(shown).forEach { row ->
-                val session = row.session
-                val steps = labelledSteps(
-                    stepsCountText(row.totalSteps),
-                    StepsLabel.of(row.hasPendingSteps, row.hasUnfinalSteps),
-                )
-                val (hours, minutes) = Formatters.hoursAndMinutes(row.activeMillis)
-                val detail = when {
-                    session.state != SessionState.ENDED -> stringResource(R.string.history_in_progress)
-                    hours > 0 -> stringResource(R.string.duration_hours_minutes, hours, minutes)
-                    else -> stringResource(R.string.duration_minutes, minutes)
-                }
-                Column(Modifier.fillMaxWidth().semantics(mergeDescendants = true) {}) {
-                    Text(
-                        Formatters.dateTime(session.startUtc, session.zoneId, locale),
-                        style = MaterialTheme.typography.bodyLarge,
-                    )
-                    Text(
-                        stringResource(
-                            R.string.history_row,
-                            detail,
-                            steps,
-                        ),
-                        style = MaterialTheme.typography.bodyMedium,
-                    )
-                    if (session.endReason == EndReason.SWITCH) {
-                        Text(
-                            stringResource(R.string.history_switched),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                }
-            }
-            val remaining = history.size - shown
-            if (remaining > 0) {
-                OutlinedButton(onClick = { shown += HISTORY_PAGE_SIZE }, modifier = Modifier.fillMaxWidth()) {
-                    Text(
-                        pluralStringResource(
-                            R.plurals.history_show_older,
-                            remaining.coerceAtMost(HISTORY_PAGE_SIZE),
-                            remaining.coerceAtMost(HISTORY_PAGE_SIZE),
-                        ),
-                    )
-                }
-            }
+            HistoryRow(
+                title = stringResource(R.string.history_row, Formatters.dateTime(session.startUtc, session.zoneId, locale), duration),
+                note = if (session.endReason == EndReason.SWITCH) stringResource(R.string.history_switched) else null,
+                steps = if (ended) {
+                    labelledSteps(stepsCountText(row.totalSteps), StepsLabel.of(row.hasPendingSteps, row.hasUnfinalSteps))
+                } else {
+                    stringResource(R.string.history_in_progress)
+                },
+                // Distance per session arrives in M2 Phase 5.
+                distance = if (ended) dash else null,
+            )
+        }
+        val remaining = history.size - shown
+        if (remaining > 0) {
+            val page = remaining.coerceAtMost(HISTORY_PAGE_SIZE)
+            TextActionButton(
+                pluralStringResource(R.plurals.history_show_older, page, page),
+                onClick = { shown += HISTORY_PAGE_SIZE },
+                accent = true,
+            )
         }
     }
 }
 
 /** How many history rows are built at first and per "Show older sessions" tap. */
 private const val HISTORY_PAGE_SIZE = 50
-
-@Composable
-private fun StatRow(label: String, value: String) {
-    Row(Modifier.fillMaxWidth().semantics(mergeDescendants = true) {}) {
-        Text(label, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
-        Text(value, style = MaterialTheme.typography.bodyLarge)
-    }
-}

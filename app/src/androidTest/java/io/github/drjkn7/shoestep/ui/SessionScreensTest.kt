@@ -115,8 +115,8 @@ class SessionScreensTest {
         dialogButton(R.string.session_end).performClick()
         waitForText(str(R.string.session_start))
         assertNull(active())
-        // The history row ("0 min · …"), not the new Walking time stat.
-        rule.onNodeWithText(str(R.string.history_row, str(R.string.duration_minutes, 0), ""), substring = true)
+        // The history row ("…, 12:00 · 0 min", PNG 08), not the Walking time stat ("0 min").
+        rule.onNodeWithText(str(R.string.history_row, "", str(R.string.duration_minutes, 0)), substring = true)
             .performScrollTo().assertIsDisplayed()
     }
 

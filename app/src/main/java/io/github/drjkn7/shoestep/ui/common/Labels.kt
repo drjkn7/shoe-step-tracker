@@ -2,6 +2,7 @@ package io.github.drjkn7.shoestep.ui.common
 
 import androidx.annotation.StringRes
 import androidx.compose.ui.graphics.Color
+import io.github.drjkn7.shoestep.ui.theme.ShoeColors
 import io.github.drjkn7.shoestep.R
 import io.github.drjkn7.shoestep.data.model.ShoeType
 
@@ -21,14 +22,14 @@ fun ShoeType.labelRes(): Int = when (this) {
 data class AccentColour(val colour: Color, @StringRes val nameRes: Int)
 
 val ShoePalette: List<AccentColour> = listOf(
-    AccentColour(Color(0xFFE53935), R.string.colour_red),
-    AccentColour(Color(0xFFFB8C00), R.string.colour_orange),
-    AccentColour(Color(0xFFFFB300), R.string.colour_amber),
-    AccentColour(Color(0xFF43A047), R.string.colour_green),
-    AccentColour(Color(0xFF00897B), R.string.colour_teal),
-    AccentColour(Color(0xFF1E88E5), R.string.colour_blue),
-    AccentColour(Color(0xFF3949AB), R.string.colour_indigo),
-    AccentColour(Color(0xFFD81B60), R.string.colour_pink),
-)
+    R.string.colour_red,
+    R.string.colour_orange,
+    R.string.colour_amber,
+    R.string.colour_green,
+    R.string.colour_teal,
+    R.string.colour_blue,
+    R.string.colour_indigo,
+    R.string.colour_pink,
+).mapIndexed { index, name -> AccentColour(ShoeColors[index], name) }
 
 fun accentColour(index: Int): AccentColour = ShoePalette.getOrElse(index) { ShoePalette[0] }

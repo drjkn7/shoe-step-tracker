@@ -107,6 +107,8 @@
     <string name="detail_walking_time">Walking time</string>
     <string name="detail_last_worn">Last worn</string>
     <string name="detail_cost_per_1000">Cost per 1,000 steps</string>
+    <string name="detail_total_distance">Total distance</string>
+    <string name="detail_cost_per_km">Cost per km</string>
     <string name="detail_archived_note">This shoe is archived. Its history is kept.</string>
     <string name="detail_session_running">Session running since %1$s</string>
     <string name="detail_session_paused">Session paused</string>
@@ -143,6 +145,11 @@
 
     <!-- Step counting (Health Connect) -->
     <string name="session_card_steps_so_far">About %1$s so far</string>
+    <!-- Beside the large "About 3,214" on the session card (the number is shown separately). -->
+    <plurals name="session_card_steps_so_far_unit">
+        <item quantity="one">step so far</item>
+        <item quantity="other">steps so far</item>
+    </plurals>
     <string name="session_card_steps_later">Steps counted later</string>
     <string name="steps_access_title">Count your steps</string>
     <string name="steps_access_permission_body">Shoe Step Tracker reads your step count from Health Connect. Your steps stay on this phone. If nothing happens when you tap Allow, open Health Connect and allow Shoe Step Tracker there.</string>
@@ -175,6 +182,7 @@
     <string name="tag_archived_body">Unarchive this pair to use its tag again.</string>
     <string name="tag_linking_title">Link a tag to %1$s</string>
     <string name="tag_linking_body">Hold the top of your phone against the tag and keep it still for a moment.</string>
+    <string name="nfc_label" translatable="false">NFC</string>
     <string name="tag_lock">Lock the tag</string>
     <string name="tag_lock_warning">Locking is permanent: a locked tag can never be changed, erased or reused.</string>
     <string name="tag_linked_title">Tag linked</string>

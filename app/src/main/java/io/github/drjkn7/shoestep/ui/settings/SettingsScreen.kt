@@ -43,7 +43,7 @@ import io.github.drjkn7.shoestep.export.ExportKind
 import io.github.drjkn7.shoestep.steps.HealthConnectStepsSource
 import io.github.drjkn7.shoestep.steps.StepsAccess
 import io.github.drjkn7.shoestep.ui.home.StepsAccessCard
-import io.github.drjkn7.shoestep.ui.nfc.InfoDialog
+import io.github.drjkn7.shoestep.ui.common.InfoDialog
 import io.github.drjkn7.shoestep.ui.shoe.CurrencyPicker
 import io.github.drjkn7.shoestep.ui.shoe.currencyName
 

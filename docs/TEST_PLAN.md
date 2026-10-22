@@ -56,7 +56,7 @@ Status: ☐ not run · ✅ passed · ❌ failed. Phase = when it first becomes t
 | T43 | Notification setting off | No notification; turning it on shows one for a running session | 7 | ☐ |
 | T44 | Restart mid-session | Notification returns when the app is opened (manual) | 7 | ☐ |
 | T45 | Discard changes | Asked only after an edit; Keep editing keeps the form | 3 | ☐ |
-| T46 | Restyled screens | 200% font, TalkBack, RTL and contrast pass | 3, 8 | ☐ |
+| T46 | Restyled screens | 200% font, TalkBack, RTL and contrast pass | 3, 8 | ◐ components automated (ComponentGalleryTest: 48 dp and labels, light/night, 100% and 200%); screens in Phase 3 |
 | T47 | Upgrade from v0.1.0 | Installs over the top with the same key; nothing lost | 8 | ☐ |
 | T48 | Theme setting | Light, Dark and System apply at once; System follows the phone; choice survives a restart | 1, 3 | ◐ live switch and System automated (ThemeScreensTest, ThemeModeTest); restart and Settings control in Phase 3 |
 | T49 | Night mode legibility | Every screen readable in night; contrast per DESIGN.md section 8; no light-only colours left | 3 | ◐ token contrast automated (ContrastTest); screens in Phase 3 |
