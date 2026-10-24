@@ -12,6 +12,7 @@ import io.github.drjkn7.shoestep.nfc.NfcState
 import io.github.drjkn7.shoestep.settings.SettingsStore
 import io.github.drjkn7.shoestep.settings.SystemNightMode
 import io.github.drjkn7.shoestep.settings.ThemeMode
+import io.github.drjkn7.shoestep.steps.DistanceRead
 import io.github.drjkn7.shoestep.steps.StepsAccess
 import io.github.drjkn7.shoestep.steps.StepsRead
 import io.github.drjkn7.shoestep.steps.StepsSource
@@ -25,16 +26,24 @@ val TestClock = object : Clock {
     override fun zoneId(): ZoneId = ZoneId.of("UTC")
 }
 
-/** Stand-in for Health Connect in UI tests: [access] and [steps] are set by each test. */
+/** Stand-in for Health Connect in UI tests: [access], [steps] and the distance answers are set by each test. */
 class FakeStepsSource(
     @Volatile var access: StepsAccess = StepsAccess.READY,
     /** Returned for every read; null = no data. */
     @Volatile var steps: Long? = null,
+    @Volatile var distanceAllowed: Boolean = false,
+    /** Returned for every distance read; null = no data. */
+    @Volatile var meters: Double? = null,
 ) : StepsSource {
     override suspend fun access() = access
 
     override suspend fun read(startUtc: Long, endUtc: Long): StepsRead =
         if (access != StepsAccess.READY) StepsRead.Failed else steps?.let { StepsRead.Count(it) } ?: StepsRead.NoData
+
+    override suspend fun distanceAllowed() = distanceAllowed
+
+    override suspend fun readDistance(startUtc: Long, endUtc: Long): DistanceRead =
+        if (!distanceAllowed) DistanceRead.Failed else meters?.let { DistanceRead.Meters(it) } ?: DistanceRead.NoData
 }
 
 /**
