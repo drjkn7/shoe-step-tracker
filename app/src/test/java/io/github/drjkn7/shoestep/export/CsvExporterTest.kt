@@ -29,7 +29,7 @@ class CsvExporterTest {
     )
 
     private fun stats(shoe: ShoeEntity, pending: Boolean = false, unfinal: Boolean = false, lastUsed: Long? = t0) =
-        ShoeWithStats(shoe, 1_500, 2, 2, 95 * 60_000L, lastUsed, false, unfinal, pending)
+        ShoeWithStats(shoe, 1_500, null, 2, 2, 95 * 60_000L, lastUsed, false, unfinal, pending)
 
     private fun pairs(vararg rows: ShoeWithStats) = CsvExporter.pairs(
         rows.toList(),

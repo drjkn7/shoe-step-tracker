@@ -30,7 +30,7 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 
-/** RoomStepStore's SQL guard and the "not final yet" flags, on a real (in-memory) database. */
+/** RoomStepStore's SQL guards, the "not final yet" flags and distance totals, on a real (in-memory) database. */
 @RunWith(AndroidJUnit4::class)
 class StepsDbTest {
 
@@ -130,6 +130,8 @@ class StepsDbTest {
         val source = object : StepsSource {
             override suspend fun access() = StepsAccess.READY
             override suspend fun read(startUtc: Long, endUtc: Long) = StepsRead.Count(1_500)
+            override suspend fun distanceAllowed() = true
+            override suspend fun readDistance(startUtc: Long, endUtc: Long) = DistanceRead.Meters(1_125.5)
         }
         val reconciler = StepReconciler(store, source, clock)
 
@@ -139,13 +141,73 @@ class StepsDbTest {
         assertEquals(1_500L, reconciler.stepsSoFar(sessionId))
         manager.pause(sessionId)
 
-        assertEquals(1, reconciler.reconcile())
+        assertEquals(2, reconciler.reconcile())
         val saved = store.segments(sessionId).single()
         assertEquals(1_500L, saved.steps)
         assertEquals(PROVISIONAL, saved.stepsStatus)
+        assertEquals(1_125.5, saved.distanceMeters!!, 0.0)
+        assertEquals(PROVISIONAL, saved.distanceStatus)
 
         clock.now += StepReconciler.SETTLE_MILLIS
         reconciler.reconcile()
-        assertEquals(FINAL, store.segments(sessionId).single().stepsStatus)
+        store.segments(sessionId).single().let {
+            assertEquals(FINAL, it.stepsStatus)
+            assertEquals(FINAL, it.distanceStatus)
+        }
+        assertEquals(1_125.5, db.shoeDao().getWithStatsById("a")!!.totalDistanceMeters!!, 0.0)
+    }
+
+    // --- Distance (M2 Phase 4) ------------------------------------------------------------------
+
+    @Test fun newSegmentsStartWithDistancePending() = runTest {
+        SessionManager(RoomSessionStore(db), clock).start("a")
+        val open = db.sessionDao().getUnendedSessions().single().let { store.segments(it.id).single() }
+        assertNull(open.distanceMeters)
+        assertEquals(PENDING, open.distanceStatus)
+    }
+
+    @Test fun unresolvedDistanceListFollowsItsOwnStatus() = runTest {
+        segment("steps-final", 0, 1_000, 5, FINAL) // distance still PENDING
+        segment("open", 2_000, null)
+        sessions.insertSegment(SegmentEntity("dist-prov", "s1", 3_000, 4_000, 7, FINAL, 1, 300.0, PROVISIONAL, 1))
+        sessions.insertSegment(SegmentEntity("dist-final", "s1", 5_000, 6_000, null, PENDING, null, 1.0, FINAL, 1))
+
+        assertEquals(listOf("steps-final", "dist-prov"), store.unresolvedClosedDistanceSegments(10).map { it.id })
+        assertEquals(listOf("dist-final"), store.unresolvedClosedSegments(10).map { it.id })
+    }
+
+    @Test fun saveDistanceOnlyWritesWhileStillUnresolvedAndUnchanged() = runTest {
+        segment("g1", 0, 1_000, 40, FINAL)
+        assertTrue(store.saveDistance("g1", 1_000, 512.25, PROVISIONAL, 2_000))
+        get("g1").let {
+            assertEquals(512.25, it.distanceMeters!!, 0.0)
+            assertEquals(PROVISIONAL, it.distanceStatus)
+            assertEquals(2_000L, it.distanceReadUtc)
+            assertEquals("steps untouched", 40L, it.steps)
+            assertEquals(FINAL, it.stepsStatus)
+            assertNull(it.lastReadUtc)
+        }
+        assertFalse("end moved: stale read", store.saveDistance("g1", 999, 9.0, FINAL, 3_000))
+        assertTrue(store.saveDistance("g1", 1_000, 520.0, FINAL, 3_000))
+        assertFalse("final is never overwritten", store.saveDistance("g1", 1_000, 1.0, PROVISIONAL, 4_000))
+        assertEquals(520.0, get("g1").distanceMeters!!, 0.0)
+
+        segment("open", 4_000, null)
+        assertFalse("open segments are never written", store.saveDistance("open", 5_000, 7.0, FINAL, 6_000))
+    }
+
+    @Test fun distanceTotalsAreNullUntilKnownAndLeaveOutUnavailable() = runTest {
+        segment("g1", 0, 1_000)
+        segment("g2", 2_000, 3_000)
+        assertNull("no distance yet: shown as a dash, not 0", history().totalDistanceMeters)
+        assertNull(db.shoeDao().getWithStatsById("a")!!.totalDistanceMeters)
+
+        store.saveDistance("g1", 1_000, 1_000.5, PROVISIONAL, 5_000)
+        store.saveDistance("g2", 3_000, null, UNAVAILABLE, 5_000)
+        assertEquals(1_000.5, history().totalDistanceMeters!!, 0.0)
+        assertEquals(1_000.5, db.shoeDao().getWithStatsById("a")!!.totalDistanceMeters!!, 0.0)
+
+        store.saveDistance("g1", 1_000, 0.0, FINAL, 6_000)
+        assertEquals("a real zero is kept as zero", 0.0, history().totalDistanceMeters!!, 0.0)
     }
 }

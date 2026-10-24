@@ -12,15 +12,15 @@ length, background Health Connect reads, WorkManager.
 - [x] Phase 1: Theme layer (PR #18, merged)
 - [x] Phase 2: Components (PR #19, merged)
 - [x] Phase 3: Restyle every screen + "Discard changes?" + Appearance card (PR #25, merged; night mockups still to compare)
-- [ ] Phase 4: Distance data (READ_DISTANCE, schema v1 → v2, reconciler reads distance, backfill)
+- [ ] Phase 4: Distance data (READ_DISTANCE, schema v1 → v2, reconciler reads distance, backfill) — built on branch `m2-phase-4`, waiting for the phone check
 - [ ] Phase 5: Distance in the UI, units setting, cost per km/mile, CSV distance_m
 - [ ] Phase 6: Add past session (and deleting "Added later" sessions)
 - [ ] Phase 7: Session notification (POST_NOTIFICATIONS)
 - [ ] Phase 8: Hardening and release 0.2.0
 
-Next: Phase 4 (distance data: READ_DISTANCE, schema v1 → v2, reconciler reads distance, backfill). Give the
-plain-English Phase 4 plan first and wait for "approved". Still open from Phase 3: compare the dark screens with the
-night mockups once they are in docs/design (T49). CI ran 93/93 on-device tests for debug and staging on PR #25.
+Next: Phase 4 is built on branch `m2-phase-4` and waiting for the product owner's phone check and "go": in Health
+Connect allow distance for "Shoe Step (test)", then in the test app Settings → Test build use "Distance per pair" and
+"How far back can it read?" (answers the 30-day question). Still open from Phase 3: the night mockups (T49).
 
 Waiting on the product owner:
 - 7 of the 30 mockups are not in `docs/design/` (23 files there): Add past session, Add past session
@@ -138,6 +138,13 @@ What Phase 8 added:
 | 2026-10-24 | Appearance card sits second in Settings (after New pairs, before Units in Phase 5): "Theme" with Light / Dark / System. Choosing the current option again does nothing. Not mocked up; follows the Units card in PNG 21. |
 | 2026-10-24 | Test app only: Settings → Test build → "Add sample pairs" (src/debug, `SampleData`; release has a no-op). Adds five pairs (one archived) and past sessions through `ShoeRepository` and `SessionManager` (a second SessionManager with its clock moved back), then starts a session. Their step counts are real Health Connect reads for those times. |
 | 2026-10-24 | `DataStoreSettings` takes an optional file name and lifetime so the restart test (SettingsStoreTest) uses its own file and never the app's. |
+| 2026-10-24 | Phase 4 plan approved (run at high effort). Distance data only; nothing new on screen except the permission request and wording. |
+| 2026-10-24 | Checked against connect-client 1.1.0 itself and the official guides: `DistanceRecord.DISTANCE_TOTAL` (aggregate, `Length` in metres), permission `android.permission.health.READ_DISTANCE`. The "Read aggregated data" guide says steps and distance totals are de-duplicated across apps by the user's priority (T36). The "Read data" guide says the 30-day limit runs from "when any permission was first granted" (whether per permission is not stated: checked on the phone with the test app's "How far back can it read?"). |
+| 2026-10-24 | Schema v2: segments gain `distance_m` (REAL, metres, null = unknown), `distance_status` (same values as steps, default PENDING) and `distance_read_utc`, plus an index on `distance_status`. Migration 1 → 2 only adds columns; no destructive fallback. Existing segments start PENDING and are backfilled where Health Connect allows; older reads fail and settle UNAVAILABLE after 30 days. |
+| 2026-10-24 | Distance has its own status and is read independently of steps: refusing distance never holds steps back, and distance is read even without the steps permission. One rule set (`StepReconciler.rule`) serves both. Totals: `total_distance_m` per pair and per session is SQL SUM, null when nothing is known (shown "–", never 0). |
+| 2026-10-24 | Health Connect reads per run stay at 100 in total (the official rate-limit guide gives no numbers). With both allowed, steps get up to 50 and distance the rest, so a day of provisional step re-checks can't hold the distance backfill back. Health Connect errors (including rate limits) leave the value for the next run. |
+| 2026-10-24 | "Allow" now asks for steps and distance together. People who already allowed steps (everyone on v0.1.0) have no in-app way to allow distance until the "Show distance" card (PNG 03) in Phase 5; meanwhile Health Connect's own app permissions screen works. Wording updated from the mockups: Allow card (PNG 02), Settings step counting (PNG 21), "Why we read your activity" (PNG 22), privacy statement and PRIVACY.md (effective 0.2.0). |
+| 2026-10-24 | Test app only: Settings → Test build → "Distance per pair" (stored totals) and "How far back can it read?" (whether Health Connect answers or refuses steps and distance reads 29–40 days back; shows no values). |
 
 ## Open items carried to later phases
 - SessionDao/ActiveSessionDao write methods must be called only via SessionManager/RoomSessionStore (convention; not enforced by visibility).

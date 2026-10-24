@@ -97,6 +97,7 @@ class FakeSessionStore : SessionStore {
             SessionWithSteps(
                 session = s,
                 totalSteps = own.sumOf { it.steps ?: 0 },
+                totalDistanceMeters = own.mapNotNull { it.distanceMeters }.takeIf { it.isNotEmpty() }?.sum(),
                 activeMillis = own.sumOf { g -> g.endUtc?.let { maxOf(0, it - g.startUtc) } ?: 0 },
                 segmentCount = own.size,
                 hasUnfinalSteps = own.any {
