@@ -13,6 +13,7 @@ import androidx.compose.ui.test.FontScale
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasScrollToKeyAction
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createComposeRule
@@ -22,6 +23,7 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performScrollToKey
 import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.click
@@ -184,8 +186,10 @@ class RestyledScreensTest {
             waitForText(str(R.string.title_home))
             assertTappablesOk("$where Home")
 
+            // Home builds only the rows on screen; on a short screen (CI's Pixel 2) this one starts below it.
+            rule.onNode(hasScrollToKeyAction()).performScrollToKey(id)
             // Tap the left side: at 200% text the middle of the row can be under the floating "Add shoe".
-            rule.onAllNodesWithText("Trail Runner 2").onFirst().performScrollTo().performTouchInput { click(Offset(width * 0.2f, height / 2f)) }
+            rule.onAllNodesWithText("Trail Runner 2").onFirst().performTouchInput { click(Offset(width * 0.2f, height / 2f)) }
             waitForText(str(R.string.detail_stats_title))
             assertTappablesOk("$where pair page")
 
