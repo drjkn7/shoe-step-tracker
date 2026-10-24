@@ -57,6 +57,9 @@ data class SilverShadows(
 private val Ink = Color(0xFF1E2230)
 private val GlowPurple = Color(0xFF9A4BDB)
 
+/** Night only: the faint blue tight shadow under cards and pop-ups. */
+private val NavyGlow = Color(0xFF3D68FF)
+
 /** The accent gradient is the same in both themes. */
 private val Accent = listOf(Color(0xFF7942DE), Color(0xFFA03CD0), Color(0xFFC92E87))
 
@@ -96,24 +99,25 @@ val LightSilverColors = SilverColors(
     ),
 )
 
+/** Night "Balanced": steel navy with a darker navy tint (approved 2026-10-24 on the comparison canvas). */
 val NightSilverColors = SilverColors(
     isNight = true,
     backdrop = listOf(
-        0f to Color(0xFF2A3345),
-        0.08f to Color(0xFF222A38),
-        0.15f to Color(0xFF1C2330),
-        1f to Color(0xFF0B1018),
+        0f to Color(0xFF1A253D),
+        0.08f to Color(0xFF161F36),
+        0.15f to Color(0xFF121A2F),
+        1f to Color(0xFF050914),
     ),
-    card = Color(0xFF262D3A),
-    cardRegister = Color(0xFF262D3A),
-    sheen = listOf(Color(0xFF3B4456), Color(0xFF2C3341), Color(0xFF373F50)),
-    inset = Color(0xFF1A202B),
-    dialog = listOf(Color(0xFF323A49), Color(0xFF272E3B)),
-    edgeHighlight = Color.White.copy(alpha = 0.08f),
-    divider = Color.White.copy(alpha = 0.08f),
-    scrim = Color.Black.copy(alpha = 0.60f),
-    textPrimary = Color(0xFFE8ECF4),
-    textMuted = Color(0xFFA9B2C4),
+    card = Color(0xFF151F34),
+    cardRegister = Color(0xFF151F34),
+    sheen = listOf(Color(0xFF2B3650), Color(0xFF20293F), Color(0xFF28324A)),
+    inset = Color(0xFF0D1322),
+    dialog = listOf(Color(0xFF212B42), Color(0xFF192136)),
+    edgeHighlight = Color.White.copy(alpha = 0.10f),
+    divider = Color(0xFFC8D7FF).copy(alpha = 0.09f),
+    scrim = Color(0xFF020610).copy(alpha = 0.62f),
+    textPrimary = Color(0xFFE8EDF6),
+    textMuted = Color(0xFFA7B3CA),
     textOnAccent = Color.White,
     accentInk = Color(0xFFC4A6FF),
     danger = Color(0xFFFF8A95),
@@ -121,13 +125,13 @@ val NightSilverColors = SilverColors(
     accent = Accent,
     shadows = SilverShadows(
         raisedKey = Color.Black.copy(alpha = 0.45f),
-        raisedAmbient = Color.Black.copy(alpha = 0.40f),
-        raisedHighlight = Color.White.copy(alpha = 0.08f),
+        raisedAmbient = NavyGlow.copy(alpha = 0.18f),
+        raisedHighlight = Color.White.copy(alpha = 0.10f),
         floatingKey = Color.Black.copy(alpha = 0.55f),
-        floatingAmbient = Color.Black.copy(alpha = 0.40f),
-        floatingHighlight = Color.White.copy(alpha = 0.10f),
+        floatingAmbient = NavyGlow.copy(alpha = 0.18f),
+        floatingHighlight = Color.White.copy(alpha = 0.12f),
         pressedDark = Color.Black.copy(alpha = 0.55f),
-        pressedLight = Color.White.copy(alpha = 0.06f),
+        pressedLight = Color(0xFF8CAAFF).copy(alpha = 0.08f),
         accentGlow = GlowPurple.copy(alpha = 0.35f),
     ),
 )

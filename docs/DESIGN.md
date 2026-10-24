@@ -62,25 +62,25 @@ Text must scale with the system font size (use `sp`). Test at 200%.
 ### Accent gradient (primary buttons, Add shoe, Running badge, selected chips)
 Horizontal: `#7942DE` → `#A03CD0` → `#C92E87`. Glow under primary buttons: 0 / 7 / blur 20, `#9A4BDB` at 30%.
 
-### Night palette (M2)
+### Night palette (M2, "Balanced": steel navy with a darker navy tint, approved 24 Oct 2026)
 | Token | Light | Night |
 | --- | --- | --- |
-| `bg` | see above | vertical: 0% `#2A3345` → 8% `#222A38` → 15% `#1C2330` → 100% `#0B1018` |
-| `card` | `#DEE2E9` | `#262D3A` |
-| `sheen` (secondary buttons, icon buttons) | `#E5EBF6` → `#C9D0DC` → `#DCE3F0` | `#3B4456` → `#2C3341` → `#373F50` |
-| `inset` | `#BDC3CE` | `#1A202B` |
-| `dialog` | `#E5E8ED` → `#D1D6DE` | `#323A49` → `#272E3B` |
-| `edge-highlight` | white 70% | white 8% |
-| `divider` | `#1E2230` at 10% | white 8% |
-| `scrim` | `#1E2230` at 42% | black 60% |
-| `text-primary` | `#1E2230` | `#E8ECF4` |
-| `text-muted` | `#3F4658` | `#A9B2C4` |
+| `bg` | see above | vertical: 0% `#1A253D` → 8% `#161F36` → 15% `#121A2F` → 100% `#050914` |
+| `card` | `#DEE2E9` | `#151F34` |
+| `sheen` (secondary buttons, icon buttons) | `#E5EBF6` → `#C9D0DC` → `#DCE3F0` | `#2B3650` → `#20293F` → `#28324A` |
+| `inset` | `#BDC3CE` | `#0D1322` |
+| `dialog` | `#E5E8ED` → `#D1D6DE` | `#212B42` → `#192136` |
+| `edge-highlight` | white 70% | white 10% |
+| `divider` | `#1E2230` at 10% | `#C8D7FF` at 9% |
+| `scrim` | `#1E2230` at 42% | `#020610` at 62% |
+| `text-primary` | `#1E2230` | `#E8EDF6` |
+| `text-muted` | `#3F4658` | `#A7B3CA` |
 | `accent-ink` | `#59319A` | `#C4A6FF` |
 | `danger` (text) | `#A02334` | `#FF8A95` |
 | `danger-fill` (Delete button) | `#A02334` | `#C2394B` |
 | Accent gradient, `text-on-accent`, shoe colours | unchanged | unchanged |
 
-Night depth: Raised = drop 0/6/blur 16 black 45% + 0/1/blur 2 black 40% + inner top highlight white 8%. Floating = drop 0/16/blur 36 black 55% + inner highlight white 10%. Pressed = inner 0/2/blur 5 black 55% + inner 0/−1/blur 1 white 6%. Accent glow 35%.
+Night depth: Raised = drop 0/6/blur 16 black 45% + 0/1/blur 2 `#3D68FF` 18% (a faint blue edge) + inner top highlight white 10%. Floating = drop 0/16/blur 36 black 55% + 0/2/blur 4 `#3D68FF` 18% + inner highlight white 12%. Pressed = inner 0/2/blur 5 black 55% + inner 0/−1/blur 1 `#8CAAFF` 8%. Accent glow 35%. Cards have no hairline border (the comparison canvas had one at 8%; left out as barely visible).
 
 ### Shoe colours (user-assigned per pair)
 Red `#FF6B6B`, Orange `#FF9F43`, Amber `#F7C548`, Green `#67B88D`, Teal `#2EC4B6`, Blue `#46A9E8`, Indigo `#5A67D8`, Pink `#EC4899`. Markers are **24 px circles**. Never rely on colour alone: the shoe name is always shown.
@@ -166,13 +166,13 @@ Mockups: the "Shoe Step Mockups" artifact, with 30 frames and the PNGs in `docs/
 | old danger `#B72E40` on sheet | 4.1 | **fail** → use `#A02334` (≈5.2) |
 | text-muted on inset | 5.3 | pass |
 | white on `bg` bottom `#52749E` | 4.8 | pass (but no text should sit there) |
-| Night: text-primary on card | 11.7 | pass |
-| Night: text-muted on card | 6.5 | pass |
-| Night: accent-ink on card | 6.8 | pass |
-| Night: danger on card / on dialog | 6.1 / 5.1 | pass |
-| Night: text-muted on inset | 7.7 | pass |
+| Night: text-primary on card | 14.0 | pass |
+| Night: text-muted on card | 7.8 | pass |
+| Night: accent-ink on card | 8.0 | pass |
+| Night: danger on card / on dialog | 7.3 / 6.3 | pass |
+| Night: text-muted on inset | 8.8 | pass |
 | Night: white on danger-fill | 5.3 | pass |
-| Night: text-muted on `bg` top / bottom | 5.9 / 8.9 | pass |
+| Night: text-muted on `bg` top / bottom | 7.2 / 9.4 | pass |
 
 Rules that follow: put text on cards or sheets, not directly on the lower half of the backdrop; where text must sit on the backdrop (headings and the pair header near the top), keep it in the top third. Meaning is never carried by colour alone. Support 200% font scale and TalkBack (content descriptions on icon buttons, badges and colour circles). Add a "reduce shadows/effects" switch only if profiling shows jank.
 

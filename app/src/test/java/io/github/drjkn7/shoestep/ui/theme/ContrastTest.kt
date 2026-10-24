@@ -45,8 +45,8 @@ class ContrastTest {
             assertReadable("$theme accent-ink on $surface", c.accentInk, bg)
             assertReadable("$theme danger on $surface", c.danger, bg)
         }
-        // Secondary buttons. Danger text is not used on them: night danger on the lightest sheen stop
-        // is only 4.3:1, so destructive actions are text buttons on a card or the filled Delete button.
+        // Secondary buttons. Danger text is not used on them (it was 4.3:1 on the old night sheen),
+        // so destructive actions stay text buttons on a card or the filled Delete button.
         c.sheen.forEachIndexed { i, bg ->
             assertReadable("$theme text-primary on sheen stop $i", c.textPrimary, bg)
             assertReadable("$theme accent-ink on sheen stop $i", c.accentInk, bg)
