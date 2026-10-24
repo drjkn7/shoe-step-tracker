@@ -1,6 +1,7 @@
 package io.github.drjkn7.shoestep.ui.common
 
 import io.github.drjkn7.shoestep.core.CostCalculator
+import io.github.drjkn7.shoestep.settings.DistanceUnit
 import io.github.drjkn7.shoestep.ui.shoe.formatPriceForEditing
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -14,6 +15,23 @@ class FormattersTest {
     @Test fun countUsesLocaleGrouping() {
         assertEquals("1,234,567", Formatters.count(1_234_567, Locale.US))
         assertEquals("1.234.567", Formatters.count(1_234_567, Locale.GERMANY))
+    }
+
+    @Test fun distanceHasOneDecimalAndLocaleSeparators() {
+        assertEquals("2.4", Formatters.distance(2_414.0, DistanceUnit.KILOMETRES, Locale.US))
+        assertEquals("1.5", Formatters.distance(2_414.0, DistanceUnit.MILES, Locale.US))
+        assertEquals("1,234.5", Formatters.distance(1_234_500.0, DistanceUnit.KILOMETRES, Locale.US))
+        assertEquals("1.234,5", Formatters.distance(1_234_500.0, DistanceUnit.KILOMETRES, Locale.GERMANY))
+        assertEquals("0.1", Formatters.distance(50.0, DistanceUnit.KILOMETRES, Locale.US)) // rounds half up
+        assertEquals("0.0", Formatters.distance(0.0, DistanceUnit.KILOMETRES, Locale.US))
+        assertEquals("0.0", Formatters.distance(-5.0, DistanceUnit.KILOMETRES, Locale.US))
+        assertEquals("0.0", Formatters.distance(Double.NaN, DistanceUnit.MILES, Locale.US))
+    }
+
+    @Test fun costPerDistanceShowsUpToTwoExtraDecimalsOrNothing() {
+        assertEquals("€0.30", Formatters.costPerDistance(java.math.BigDecimal("0.3000"), "EUR", Locale.UK))
+        assertEquals("€0.4828", Formatters.costPerDistance(java.math.BigDecimal("0.4828"), "EUR", Locale.UK))
+        assertNull(Formatters.costPerDistance(null, "EUR", Locale.UK))
     }
 
     @Test fun dateUsesLocaleFormat() {

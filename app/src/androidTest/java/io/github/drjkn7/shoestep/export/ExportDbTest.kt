@@ -39,7 +39,9 @@ class ExportDbTest {
         db.shoeDao().insert(shoe("a", "=cmd|' /C calc'!A0", archived = false))
         db.shoeDao().insert(shoe("b", "Old boots", archived = true))
         db.sessionDao().insertSession(SessionEntity("s1", "a", 0, 1_800_000, "UTC", SessionState.ENDED, EndReason.USER))
-        db.sessionDao().insertSegment(SegmentEntity("g1", "s1", 0, 1_800_000, 2_345, StepsStatus.FINAL, 1))
+        db.sessionDao().insertSegment(
+            SegmentEntity("g1", "s1", 0, 1_800_000, 2_345, StepsStatus.FINAL, 1, distanceMeters = 1_609.5, distanceStatus = StepsStatus.FINAL),
+        )
     }
 
     @After fun tearDown() = db.close()
@@ -64,14 +66,17 @@ class ExportDbTest {
         val lines = export(ExportKind.PAIRS).split("\r\n")
         assertEquals(4, lines.size) // header, 2 pairs, final empty line
         assertTrue(lines[1].startsWith("\"'=cmd|' /C calc'!A0\",\"\",\"\",\"Hiking\",\"99.99\",\"EUR\",,\"Teal\",\"no\",1,2345,\"final\",30,"))
+        // T38: distance in whole metres from the same SQL as the screens; none known → empty cell.
+        assertTrue(lines[1].endsWith(",1610,\"final\""))
         assertTrue(lines[2].startsWith("\"Old boots\""))
         assertTrue(lines[2].contains("\"yes\",0,0,\"final\",0,"))
+        assertTrue(lines[2].endsWith(",,\"final\""))
     }
 
     @Test fun sessionsFileHasOneRowPerSession() = runTest {
         val lines = export(ExportKind.SESSIONS).split("\r\n")
         assertEquals(
-            "\"'=cmd|' /C calc'!A0\",\"1970-01-01 00:00\",\"1970-01-01 00:30\",\"UTC\",\"ended\",30,2345,\"final\"",
+            "\"'=cmd|' /C calc'!A0\",\"1970-01-01 00:00\",\"1970-01-01 00:30\",\"UTC\",\"ended\",30,2345,\"final\",1610,\"final\"",
             lines[1],
         )
         assertEquals(3, lines.size)
