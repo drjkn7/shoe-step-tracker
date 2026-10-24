@@ -12,15 +12,16 @@ length, background Health Connect reads, WorkManager.
 - [x] Phase 1: Theme layer (PR #18, merged)
 - [x] Phase 2: Components (PR #19, merged)
 - [x] Phase 3: Restyle every screen + "Discard changes?" + Appearance card (PR #25, merged; night mockups still to compare)
-- [ ] Phase 4: Distance data (READ_DISTANCE, schema v1 → v2, reconciler reads distance, backfill) — built on branch `m2-phase-4`, waiting for the phone check
+- [x] Phase 4: Distance data (READ_DISTANCE, schema v1 → v2, reconciler reads distance, backfill) (PR #27, merged)
 - [ ] Phase 5: Distance in the UI, units setting, cost per km/mile, CSV distance_m
 - [ ] Phase 6: Add past session (and deleting "Added later" sessions)
 - [ ] Phase 7: Session notification (POST_NOTIFICATIONS)
 - [ ] Phase 8: Hardening and release 0.2.0
 
-Next: Phase 4 is built on branch `m2-phase-4` and waiting for the product owner's phone check and "go": in Health
-Connect allow distance for "Shoe Step (test)", then in the test app Settings → Test build use "Distance per pair" and
-"How far back can it read?" (answers the 30-day question). Still open from Phase 3: the night mockups (T49).
+Next: Phase 5 (distance in the UI, units setting, cost per km/mile, CSV distance_m, "Show distance" card for people
+who already allowed steps). Give the plain-English Phase 5 plan first and wait for "approved". Still open: the 30-day
+check (test app → Settings → Test build → "How far back can it read?" after allowing distance in Health Connect) and
+the night mockups (T49). CI ran 97/97 on-device tests for debug and staging on PR #27, MigrationTest included.
 
 Waiting on the product owner:
 - 7 of the 30 mockups are not in `docs/design/` (23 files there): Add past session, Add past session
