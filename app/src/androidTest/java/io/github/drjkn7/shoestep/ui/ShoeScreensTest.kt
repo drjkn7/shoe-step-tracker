@@ -71,7 +71,14 @@ class ShoeScreensTest {
     private fun field(label: Int): SemanticsNodeInteraction =
         rule.onNode(hasSetTextAction() and hasText(str(label), substring = true))
 
-    private fun clickSave() = rule.onNodeWithText(str(R.string.action_save)).performScrollTo().performClick()
+    /** The form has Save in the top bar and again under the fields (PNG 05); the top one is always on screen. */
+    private fun clickSave() = rule.onAllNodesWithText(str(R.string.action_save)).onFirst().performClick()
+
+    /** Edit is in the pair page's ⋮ menu (PNG 11). */
+    private fun openEdit() {
+        rule.onNodeWithContentDescription(str(R.string.action_more)).performClick()
+        rule.onNodeWithText(str(R.string.action_edit)).performClick()
+    }
 
     // --- Home -------------------------------------------------------------------------------
 
@@ -86,7 +93,7 @@ class ShoeScreensTest {
 
     @Test fun addShoeShowsValidationErrorsThenSaves() {
         launch()
-        rule.onNodeWithContentDescription(str(R.string.nav_add_shoe)).performClick()
+        rule.onNodeWithText(str(R.string.nav_add_shoe)).performClick()
 
         // Empty name: tapping Save shows a popup describing the problem, visible wherever the form
         // is scrolled (product owner found the inline error was off-screen on a Pixel 9 Pro).
@@ -139,7 +146,7 @@ class ShoeScreensTest {
         addShoeDirectly("Old name")
         launch()
         rule.clickWhenShown("Old name")
-        rule.onNodeWithContentDescription(str(R.string.action_edit)).performClick()
+        openEdit()
         rule.waitUntil(5_000) { rule.onAllNodesWithText("Old name").fetchSemanticsNodes().isNotEmpty() }
 
         field(R.string.field_name).performTextReplacement("New name")
@@ -206,7 +213,7 @@ class ShoeScreensTest {
         assertIconButtons()
         rule.clickWhenShown("Labelled")
         assertIconButtons()
-        rule.onNodeWithContentDescription(str(R.string.action_edit)).performClick()
+        openEdit()
         assertIconButtons()
     }
 
@@ -240,7 +247,7 @@ class ShoeScreensTest {
 
     @Test fun addFormIsUsableAt200PercentFont() {
         launch(fontScale = 2f)
-        rule.onNodeWithContentDescription(str(R.string.nav_add_shoe)).performClick()
+        rule.onNodeWithText(str(R.string.nav_add_shoe)).performClick()
         field(R.string.field_name).performTextReplacement("Big text")
         clickSave()
         rule.waitUntil(5_000) { rule.onAllNodesWithText(str(R.string.detail_stats_title)).fetchSemanticsNodes().isNotEmpty() }

@@ -34,9 +34,9 @@ class NavigationTest {
         rule.onNodeWithText(str(R.string.settings_new_pairs)).assertIsDisplayed()
         rule.onNodeWithContentDescription(str(R.string.nav_back)).performClick()
 
-        rule.onNodeWithContentDescription(str(R.string.nav_add_shoe)).performClick()
+        rule.onNodeWithText(str(R.string.nav_add_shoe)).performClick()
         rule.onNodeWithText(str(R.string.title_add_shoe)).assertIsDisplayed()
-        rule.onNodeWithContentDescription(str(R.string.nav_back)).performClick()
+        rule.onNodeWithContentDescription(str(R.string.nav_close)).performClick()
 
         rule.onNodeWithText(str(R.string.title_home)).assertIsDisplayed()
         container.database.close()

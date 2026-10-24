@@ -18,10 +18,10 @@ length, background Health Connect reads, WorkManager.
 - [ ] Phase 7: Session notification (POST_NOTIFICATIONS)
 - [ ] Phase 8: Hardening and release 0.2.0
 
-Next: Phase 3 (restyle every screen, "Discard changes?", Appearance card). Product owner asked to start it on
-2026-10-23: give the plain-English Phase 3 plan first, including how the restyled screens are checked on the
-phone (test app "Shoe Step (test)" with sample pairs, or a build the product owner signs with their own key to
-see real data).
+Next: Phase 3 is built on branch `m2-phase-3` (plan approved 2026-10-24) and waiting for the product owner's check
+on the phone and "go". To check: install the test app, Settings → Test build → "Add sample pairs", then compare
+Home, a pair's page, the form (and "Discard changes?"), Settings and the privacy pages with the mockups in light
+and dark. Night mockups are still missing (see below); Phase 3 is not finished until they are compared.
 
 Waiting on the product owner:
 - 7 of the 30 mockups are not in `docs/design/` (23 files there): Add past session, Add past session
@@ -133,6 +133,12 @@ What Phase 8 added:
 | 2026-10-22 | Colour swatches keep 48 dp touch targets: one row of eight when the form is wide enough (8 × 48 dp), otherwise two rows of four. The mockup's single row would need targets of about 39 dp on a phone. Shoe colours now use the DESIGN.md palette (same order, so stored pairs keep their colour name). |
 | 2026-10-22 | Large text (font scale ≥ 1.5): Home rows put the totals under the name instead of beside it (at 200% the count otherwise squeezed the name to one letter per line). History rows follow PNG 08: "date, time · duration" on the left, steps and distance on the right; one test now looks for " · 0 min" instead of "0 min · " (the row's wording changed with the design, not a Material detail). Menu entries are text only (PNG 11); the unused archive/delete/unarchive icons were removed. |
 | 2026-10-22 | Existing sessions get distance where Health Connect still allows the read. Whether the 30-day window is anchored to the first steps grant or the later distance grant is not stated in the docs; to be checked on the phone in Phase 4. |
+| 2026-10-24 | Phase 3 plan approved: restyle every screen, "Discard changes?", Appearance card; checked on the phone in the test app with sample pairs. |
+| 2026-10-24 | Phase 3 (screens): every screen uses `SilverScreen` (backdrop edge to edge, round Back/Close/action buttons, small title) and `ScreenColumn`. Home: "My shoes" heading, everything scrolls under the gear, "Show archived" is a switch card under the list, "Add shoe" floats bottom end. Pair page: Edit moved into the ⋮ menu (Edit, Archive, Delete, PNG 11); this pair's session is a card titled "Session running since …" with the live count; another pair's session shows a card with Start (which asks to switch). Form: X closes, Save in the top bar and under the fields (PNG 05). Unmocked screens (privacy, licences, currency list, date picker) use the same cards and pop-up colours. The Health Connect explanation page follows PNG 22 (text stays steps-only until Phase 4). |
+| 2026-10-24 | "Discard changes?" compares the form with what it started from (the saved pair, or a blank form with the default currency), so undoing an edit by hand doesn't ask. Both snapshots survive the app being closed in the background. The phone's Back asks too; the first Back after typing only closes the keyboard (Android behaviour). |
+| 2026-10-24 | Appearance card sits second in Settings (after New pairs, before Units in Phase 5): "Theme" with Light / Dark / System. Choosing the current option again does nothing. Not mocked up; follows the Units card in PNG 21. |
+| 2026-10-24 | Test app only: Settings → Test build → "Add sample pairs" (src/debug, `SampleData`; release has a no-op). Adds five pairs (one archived) and past sessions through `ShoeRepository` and `SessionManager` (a second SessionManager with its clock moved back), then starts a session. Their step counts are real Health Connect reads for those times. |
+| 2026-10-24 | `DataStoreSettings` takes an optional file name and lifetime so the restart test (SettingsStoreTest) uses its own file and never the app's. |
 
 ## Open items carried to later phases
 - SessionDao/ActiveSessionDao write methods must be called only via SessionManager/RoomSessionStore (convention; not enforced by visibility).

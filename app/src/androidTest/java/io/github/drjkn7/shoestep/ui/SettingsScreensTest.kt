@@ -59,7 +59,7 @@ class SettingsScreensTest {
         waitForText(str(R.string.settings_currency_value, "JPY", ""))
 
         rule.onNodeWithContentDescription(str(R.string.nav_back)).performClick()
-        rule.onNodeWithContentDescription(str(R.string.nav_add_shoe)).performClick()
+        rule.onNodeWithText(str(R.string.nav_add_shoe)).performClick()
         waitForText("JPY")
     }
 
