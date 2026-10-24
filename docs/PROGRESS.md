@@ -11,17 +11,16 @@ length, background Health Connect reads, WorkManager.
 - [x] Phase 0: Plan and paperwork (PR #17, merged)
 - [x] Phase 1: Theme layer (PR #18, merged)
 - [x] Phase 2: Components (PR #19, merged)
-- [ ] Phase 3: Restyle every screen + "Discard changes?" + Appearance card
+- [x] Phase 3: Restyle every screen + "Discard changes?" + Appearance card (PR #25, merged; night mockups still to compare)
 - [ ] Phase 4: Distance data (READ_DISTANCE, schema v1 → v2, reconciler reads distance, backfill)
 - [ ] Phase 5: Distance in the UI, units setting, cost per km/mile, CSV distance_m
 - [ ] Phase 6: Add past session (and deleting "Added later" sessions)
 - [ ] Phase 7: Session notification (POST_NOTIFICATIONS)
 - [ ] Phase 8: Hardening and release 0.2.0
 
-Next: Phase 3 is built on branch `m2-phase-3` (plan approved 2026-10-24) and waiting for the product owner's check
-on the phone and "go". To check: install the test app, Settings → Test build → "Add sample pairs", then compare
-Home, a pair's page, the form (and "Discard changes?"), Settings and the privacy pages with the mockups in light
-and dark. Night mockups are still missing (see below); Phase 3 is not finished until they are compared.
+Next: Phase 4 (distance data: READ_DISTANCE, schema v1 → v2, reconciler reads distance, backfill). Give the
+plain-English Phase 4 plan first and wait for "approved". Still open from Phase 3: compare the dark screens with the
+night mockups once they are in docs/design (T49). CI ran 93/93 on-device tests for debug and staging on PR #25.
 
 Waiting on the product owner:
 - 7 of the 30 mockups are not in `docs/design/` (23 files there): Add past session, Add past session
