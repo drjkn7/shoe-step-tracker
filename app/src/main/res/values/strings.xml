@@ -158,7 +158,7 @@
     </plurals>
     <string name="session_card_steps_later">Steps counted later</string>
     <string name="steps_access_title">Count your steps</string>
-    <string name="steps_access_permission_body">Shoe Step Tracker reads your step count from Health Connect. Your steps stay on this phone. If nothing happens when you tap Allow, open Health Connect and allow Shoe Step Tracker there.</string>
+    <string name="steps_access_permission_body">Shoe Step Tracker reads your steps and distance from Health Connect. They stay on this phone. If nothing happens when you tap Allow, open Health Connect and allow Shoe Step Tracker there.</string>
     <string name="steps_access_allow">Allow</string>
     <string name="steps_access_install_body">Step counting needs the Health Connect app. Sessions are still saved, and their steps are counted once it is installed.</string>
     <string name="steps_access_install">Get Health Connect</string>
@@ -202,11 +202,11 @@
     <string name="tag_problem_cant_use">This tag can\'t be used. Try another tag.</string>
 
     <!-- Health Connect privacy rationale -->
-    <string name="rationale_title">Why we read your steps</string>
-    <string name="rationale_what">Shoe Step Tracker reads only one thing from Health Connect: your step count. It never reads other health data and never writes anything to Health Connect.</string>
-    <string name="rationale_why">It uses the steps taken while a session is running to show how far each pair of shoes has walked and what each pair costs per step.</string>
-    <string name="rationale_stays">Your steps stay on this phone. The app has no internet access, no accounts and no ads, and it doesn\'t share your data with anyone.</string>
-    <string name="rationale_control">You can stop step reading at any time in Health Connect. Sessions are still saved, but their steps won\'t be counted.</string>
+    <string name="rationale_title">Why we read your activity</string>
+    <string name="rationale_what">Shoe Step Tracker reads only two things from Health Connect: your step count and the distance you walked. It never reads other health data and never writes anything to Health Connect.</string>
+    <string name="rationale_why">It uses the steps and distance from while a session is running to show how far each pair of shoes has walked and what each pair costs per step and per km or mile.</string>
+    <string name="rationale_stays">This data stays on this phone. The app has no internet access, no accounts and no ads, and it doesn\'t share your data with anyone.</string>
+    <string name="rationale_control">You can stop this at any time in Health Connect. Sessions are still saved, but their steps or distance won\'t be counted.</string>
     <string name="rationale_close">Close</string>
     <string name="duration_hours_minutes">%1$d h %2$d min</string>
     <string name="duration_minutes">%1$d min</string>
@@ -231,7 +231,7 @@
     <string name="settings_currency_value">%1$s – %2$s</string>
     <string name="settings_currency_not_set">%1$s – %2$s (from your region)</string>
     <string name="settings_steps">Step counting</string>
-    <string name="settings_steps_ready">Steps are read from Health Connect. You can stop this at any time there.</string>
+    <string name="settings_steps_ready">Steps and distance are read from Health Connect. You can stop this at any time there.</string>
     <string name="settings_manage_health_connect">Open Health Connect</string>
     <string name="settings_your_data">Your data</string>
     <string name="settings_export_body">Save your pairs or your sessions as a spreadsheet (CSV) file, in a place you choose. This is the only way data leaves the app.</string>
@@ -247,13 +247,13 @@
     <!-- Privacy statement (same as PRIVACY.md) -->
     <string name="privacy_short">Your data never leaves your phone. The app cannot connect to the internet.</string>
     <string name="privacy_reads_title">What the app reads</string>
-    <string name="privacy_reads">• Step counts from Health Connect, only for the times of your own sessions. It reads no other health data and never writes to Health Connect.\n• NFC tags that you tap, to recognise which pair you are wearing. It only reads a random code it wrote to the tag itself and ignores everything else.</string>
+    <string name="privacy_reads">• Step counts and walking distance from Health Connect, only for the times of your own sessions. It reads no other health data and never writes to Health Connect.\n• NFC tags that you tap, to recognise which pair you are wearing. It only reads a random code it wrote to the tag itself and ignores everything else.</string>
     <string name="privacy_stores_title">What the app stores</string>
-    <string name="privacy_stores">On your phone only, in the app\'s private storage: your pairs (name, brand, model, type, price, purchase date, colour), your sessions (start and end times, time zone, step counts) and your settings (such as the default currency). The app does not collect your location, contacts, photos or any identifier of you or your phone.</string>
+    <string name="privacy_stores">On your phone only, in the app\'s private storage: your pairs (name, brand, model, type, price, purchase date, colour), your sessions (start and end times, time zone, step counts and distances) and your settings (such as the default currency). The app does not collect your location, contacts, photos or any identifier of you or your phone.</string>
     <string name="privacy_shares_title">What the app shares</string>
     <string name="privacy_shares">Nothing. The app has no internet permission, no accounts, no analytics, no advertising and no tracking libraries. Its data is left out of Android cloud backups and device transfers. The only way data leaves the app is when you export a CSV file to a place you pick.</string>
     <string name="privacy_delete_title">Deleting your data</string>
-    <string name="privacy_delete">Delete a pair to remove it and its sessions, or uninstall the app to remove everything. You can stop step reading at any time in Health Connect.</string>
+    <string name="privacy_delete">Delete a pair to remove it and its sessions, or uninstall the app to remove everything. You can stop step and distance reading at any time in Health Connect.</string>
 
     <!-- Open-source licences -->
     <string name="licences_intro">Shoe Step Tracker is open source under the Apache License 2.0. It is built with these open-source parts:</string>

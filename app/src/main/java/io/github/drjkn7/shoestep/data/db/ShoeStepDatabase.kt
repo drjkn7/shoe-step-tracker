@@ -10,7 +10,7 @@ import androidx.sqlite.execSQL
 
 @Database(
     entities = [ShoeEntity::class, SessionEntity::class, SegmentEntity::class, ActiveSessionEntity::class],
-    version = 1,
+    version = 2,
     exportSchema = true,
 )
 abstract class ShoeStepDatabase : RoomDatabase() {
@@ -34,8 +34,9 @@ abstract class ShoeStepDatabase : RoomDatabase() {
                 .configure()
                 .build()
 
+        // No fallbackToDestructiveMigration: a missing migration must never wipe the user's data.
         private fun RoomDatabase.Builder<ShoeStepDatabase>.configure() =
-            setDriver(AndroidSQLiteDriver()).addCallback(SingleActiveRowGuard)
+            setDriver(AndroidSQLiteDriver()).addMigrations(*ALL_MIGRATIONS).addCallback(SingleActiveRowGuard)
     }
 }
 

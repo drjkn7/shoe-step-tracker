@@ -4,7 +4,7 @@ import io.github.drjkn7.shoestep.data.db.SegmentEntity
 import io.github.drjkn7.shoestep.data.db.ShoeStepDatabase
 import io.github.drjkn7.shoestep.data.model.StepsStatus
 
-/** The storage StepReconciler needs; a small interface so the rules can be unit-tested on the JVM. */
+/** The storage StepReconciler needs (steps and distance); a small interface so the rules can be unit-tested on the JVM. */
 interface StepStore {
     /** Closed PENDING (first) or PROVISIONAL segments, oldest first within each, at most [limit]. */
     suspend fun unresolvedClosedSegments(limit: Int): List<SegmentEntity>
@@ -19,6 +19,18 @@ interface StepStore {
         segmentId: String,
         expectedEndUtc: Long,
         steps: Long?,
+        status: StepsStatus,
+        readAtUtc: Long,
+    ): Boolean
+
+    /** Closed segments whose distance is PENDING (first) or PROVISIONAL, oldest first within each, at most [limit]. */
+    suspend fun unresolvedClosedDistanceSegments(limit: Int): List<SegmentEntity>
+
+    /** Like [saveSteps], for distance: saved only if the segment is unchanged and its distance not settled. */
+    suspend fun saveDistance(
+        segmentId: String,
+        expectedEndUtc: Long,
+        meters: Double?,
         status: StepsStatus,
         readAtUtc: Long,
     ): Boolean
@@ -38,4 +50,14 @@ class RoomStepStore(db: ShoeStepDatabase) : StepStore {
         status: StepsStatus,
         readAtUtc: Long,
     ): Boolean = dao.saveSteps(segmentId, expectedEndUtc, steps, status, readAtUtc) == 1
+
+    override suspend fun unresolvedClosedDistanceSegments(limit: Int) = dao.getUnresolvedClosedDistanceSegments(limit)
+
+    override suspend fun saveDistance(
+        segmentId: String,
+        expectedEndUtc: Long,
+        meters: Double?,
+        status: StepsStatus,
+        readAtUtc: Long,
+    ): Boolean = dao.saveDistance(segmentId, expectedEndUtc, meters, status, readAtUtc) == 1
 }

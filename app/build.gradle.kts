@@ -129,6 +129,8 @@ dependencies {
 fun manifestPermissionAllowlist(appId: String) = setOf(
     "android.permission.NFC",
     "android.permission.health.READ_STEPS",
+    // M2 Phase 4, approved by the product owner on 2026-10-22.
+    "android.permission.health.READ_DISTANCE",
     // Signature-level permission AndroidX Core declares for the app's own receivers (named after the
     // application id, so the debug build's carries ".debug").
     "$appId.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION",

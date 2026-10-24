@@ -14,6 +14,8 @@ private const val SHOE_STATS_COLUMNS = """
     s.*,
     COALESCE((SELECT SUM(g.steps) FROM segments g JOIN sessions x ON g.session_id = x.id
               WHERE x.shoe_id = s.id), 0) AS total_steps,
+    (SELECT SUM(g.distance_m) FROM segments g JOIN sessions x ON g.session_id = x.id
+     WHERE x.shoe_id = s.id) AS total_distance_m,
     (SELECT COUNT(*) FROM sessions x WHERE x.shoe_id = s.id) AS session_count,
     (SELECT COUNT(*) FROM sessions x WHERE x.shoe_id = s.id AND x.state = 'ENDED') AS ended_session_count,
     COALESCE((SELECT SUM(MAX(0, g.end_utc - g.start_utc)) FROM segments g JOIN sessions x ON g.session_id = x.id
@@ -102,6 +104,7 @@ interface SessionDao {
         """
         SELECT x.*,
             COALESCE((SELECT SUM(g.steps) FROM segments g WHERE g.session_id = x.id), 0) AS total_steps,
+            (SELECT SUM(g.distance_m) FROM segments g WHERE g.session_id = x.id) AS total_distance_m,
             COALESCE((SELECT SUM(MAX(0, g.end_utc - g.start_utc)) FROM segments g
                       WHERE g.session_id = x.id AND g.end_utc IS NOT NULL), 0) AS active_millis,
             (SELECT COUNT(*) FROM segments g WHERE g.session_id = x.id) AS segment_count,
@@ -133,8 +136,8 @@ interface SessionDao {
 }
 
 /**
- * Step counts of segments. Only StepReconciler (via RoomStepStore) writes here; SessionManager
- * creates segments as PENDING and never touches steps afterwards.
+ * Step counts and distances of segments. Only StepReconciler (via RoomStepStore) writes here; SessionManager
+ * creates segments as PENDING and never touches steps or distance afterwards.
  */
 @Dao
 interface StepsDao {
@@ -164,6 +167,24 @@ interface StepsDao {
         """,
     )
     suspend fun saveSteps(segmentId: String, expectedEndUtc: Long, steps: Long?, status: StepsStatus, readAtUtc: Long): Int
+
+    /** Like [getUnresolvedClosedSegments], for distance (its own status, separate from steps). */
+    @Query(
+        """
+        SELECT * FROM segments WHERE end_utc IS NOT NULL AND distance_status IN ('PENDING', 'PROVISIONAL')
+        ORDER BY CASE distance_status WHEN 'PENDING' THEN 0 ELSE 1 END, end_utc, id LIMIT :limit
+        """,
+    )
+    suspend fun getUnresolvedClosedDistanceSegments(limit: Int): List<SegmentEntity>
+
+    /** Like [saveSteps], for distance: saved only if the segment is unchanged and not settled yet. */
+    @Query(
+        """
+        UPDATE segments SET distance_m = :meters, distance_status = :status, distance_read_utc = :readAtUtc
+        WHERE id = :segmentId AND end_utc = :expectedEndUtc AND distance_status IN ('PENDING', 'PROVISIONAL')
+        """,
+    )
+    suspend fun saveDistance(segmentId: String, expectedEndUtc: Long, meters: Double?, status: StepsStatus, readAtUtc: Long): Int
 }
 
 @Dao

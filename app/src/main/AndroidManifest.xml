@@ -2,8 +2,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <!-- SEC-01/SEC-04: no INTERNET or other permissions. NFC (Phase 6) and Health Connect
-         READ_STEPS (Phase 5) are the only ones allowed; verifyNoInternetPermission enforces it. -->
+         READ_STEPS (M1) and READ_DISTANCE (M2) are the only ones allowed; verifyNoInternetPermission
+         enforces it. -->
     <uses-permission android:name="android.permission.health.READ_STEPS" />
+    <uses-permission android:name="android.permission.health.READ_DISTANCE" />
     <uses-permission android:name="android.permission.NFC" />
     <!-- Tags are a shortcut; the app works without NFC (manual buttons), so it isn't required. -->
     <uses-feature android:name="android.hardware.nfc" android:required="false" />

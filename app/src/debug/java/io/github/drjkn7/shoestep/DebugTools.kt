@@ -38,7 +38,7 @@ object DebugTools {
         )
     }
 
-    /** Last card in Settings, test app only: adds [SampleData]. English only; never shipped. */
+    /** Last card in Settings, test app only: [SampleData] and [DistanceChecks]. English only; never shipped. */
     @Composable
     fun SettingsExtras() {
         val container = LocalAppContainer.current
@@ -62,6 +62,31 @@ object DebugTools {
                             SampleData.Outcome.ADDED -> "Sample pairs added. Go back to Home to see them."
                             SampleData.Outcome.SESSION_ACTIVE -> "End the current session first, then try again."
                         }
+                        busy = false
+                    }
+                },
+                modifier = Modifier.fillMaxWidth().padding(top = SilverSpacing.s),
+            )
+            // M2 Phase 4 checks (DistanceChecks): distance isn't on screen until Phase 5.
+            SecondaryButton(
+                "Distance per pair",
+                enabled = !busy,
+                onClick = {
+                    busy = true
+                    scope.launch {
+                        message = DistanceChecks.totals(container)
+                        busy = false
+                    }
+                },
+                modifier = Modifier.fillMaxWidth().padding(top = SilverSpacing.s),
+            )
+            SecondaryButton(
+                "How far back can it read?",
+                enabled = !busy,
+                onClick = {
+                    busy = true
+                    scope.launch {
+                        message = DistanceChecks.howFarBack(container)
                         busy = false
                     }
                 },

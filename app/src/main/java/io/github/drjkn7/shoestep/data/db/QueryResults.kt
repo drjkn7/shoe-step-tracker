@@ -8,6 +8,8 @@ data class ShoeWithStats(
     @Embedded val shoe: ShoeEntity,
     /** Sum of known segment steps (unknown/pending segments count as 0 until resolved). */
     @ColumnInfo(name = "total_steps") val totalSteps: Long,
+    /** Sum of known segment distances in metres; null while none is known (shown as "–", never 0). */
+    @ColumnInfo(name = "total_distance_m") val totalDistanceMeters: Double?,
     @ColumnInfo(name = "session_count") val sessionCount: Int,
     @ColumnInfo(name = "ended_session_count") val endedSessionCount: Int,
     /** Sum of closed segment durations; negative durations (clock changes) count as 0. */
@@ -35,6 +37,8 @@ data class ActiveSessionWithShoe(
 data class SessionWithSteps(
     @Embedded val session: SessionEntity,
     @ColumnInfo(name = "total_steps") val totalSteps: Long,
+    /** Metres; null while no segment of this session has a distance yet. */
+    @ColumnInfo(name = "total_distance_m") val totalDistanceMeters: Double?,
     @ColumnInfo(name = "active_millis") val activeMillis: Long,
     @ColumnInfo(name = "segment_count") val segmentCount: Int,
     /** True while any closed segment is PENDING or PROVISIONAL (UI shows "about"). */
