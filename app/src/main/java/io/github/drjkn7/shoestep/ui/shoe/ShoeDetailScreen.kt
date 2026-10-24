@@ -7,22 +7,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -30,16 +17,16 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -53,26 +40,32 @@ import io.github.drjkn7.shoestep.data.model.SessionState
 import io.github.drjkn7.shoestep.steps.SoFarSteps
 import io.github.drjkn7.shoestep.ui.common.CardLabel
 import io.github.drjkn7.shoestep.ui.common.ColourDot
-import io.github.drjkn7.shoestep.ui.common.HistoryRow
-import io.github.drjkn7.shoestep.ui.common.MenuEntry
-import io.github.drjkn7.shoestep.ui.common.SilverCard
-import io.github.drjkn7.shoestep.ui.common.SilverMenu
-import io.github.drjkn7.shoestep.ui.common.StatItem
-import io.github.drjkn7.shoestep.ui.common.StatsGrid
-import io.github.drjkn7.shoestep.ui.common.TextActionButton
-import io.github.drjkn7.shoestep.ui.theme.SilverSpacing
-import io.github.drjkn7.shoestep.ui.theme.SilverTheme
 import io.github.drjkn7.shoestep.ui.common.ConfirmDialog
 import io.github.drjkn7.shoestep.ui.common.Formatters
+import io.github.drjkn7.shoestep.ui.common.HistoryRow
+import io.github.drjkn7.shoestep.ui.common.IconCircleButton
+import io.github.drjkn7.shoestep.ui.common.MenuEntry
+import io.github.drjkn7.shoestep.ui.common.NavIcon
+import io.github.drjkn7.shoestep.ui.common.ScreenColumn
+import io.github.drjkn7.shoestep.ui.common.ScreenLoading
+import io.github.drjkn7.shoestep.ui.common.SecondaryButton
+import io.github.drjkn7.shoestep.ui.common.SilverCard
+import io.github.drjkn7.shoestep.ui.common.SilverMenu
+import io.github.drjkn7.shoestep.ui.common.SilverScreen
+import io.github.drjkn7.shoestep.ui.common.StatItem
+import io.github.drjkn7.shoestep.ui.common.StatsGrid
 import io.github.drjkn7.shoestep.ui.common.StepsLabel
+import io.github.drjkn7.shoestep.ui.common.TextActionButton
 import io.github.drjkn7.shoestep.ui.common.labelRes
 import io.github.drjkn7.shoestep.ui.common.labelledSteps
 import io.github.drjkn7.shoestep.ui.common.stepsCountText
 import io.github.drjkn7.shoestep.ui.session.EndSessionDialog
 import io.github.drjkn7.shoestep.ui.session.SessionButtons
+import io.github.drjkn7.shoestep.ui.session.SoFarCount
 import io.github.drjkn7.shoestep.ui.session.SwitchSessionDialog
+import io.github.drjkn7.shoestep.ui.theme.SilverSpacing
+import io.github.drjkn7.shoestep.ui.theme.SilverTheme
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ShoeDetailScreen(
     viewModel: ShoeDetailViewModel,
@@ -101,58 +94,43 @@ fun ShoeDetailScreen(
     LaunchedEffect(deleted) { if (deleted) onBack() }
 
     val loaded = state as? DetailState.Loaded
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        loaded?.shoe?.shoe?.name ?: stringResource(R.string.title_shoe_detail),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
+    SilverScreen(
+        title = stringResource(R.string.title_shoe_detail),
+        navIcon = NavIcon.BACK,
+        onNavigate = onBack,
+        actions = {
+            if (loaded != null) {
+                Box {
+                    IconCircleButton(painterResource(R.drawable.ic_more_vert), stringResource(R.string.action_more), onClick = { menuOpen = true })
+                    val archived = loaded.shoe.shoe.archived
+                    // PNG 11: Edit, Archive (or Unarchive), Delete.
+                    SilverMenu(
+                        expanded = menuOpen,
+                        onDismiss = { menuOpen = false },
+                        entries = listOf(
+                            MenuEntry(stringResource(R.string.action_edit), onClick = {
+                                menuOpen = false
+                                onEdit()
+                            }),
+                            MenuEntry(stringResource(if (archived) R.string.action_unarchive else R.string.action_archive), onClick = {
+                                menuOpen = false
+                                // Archiving a pair with a session in progress ends it, so ask first.
+                                if (!archived && loaded.shoe.isActive) confirmArchive = true else viewModel.setArchived(!archived)
+                            }),
+                            MenuEntry(stringResource(R.string.action_delete), danger = true, onClick = {
+                                menuOpen = false
+                                confirmDelete = true
+                            }),
+                        ),
                     )
-                },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(painterResource(R.drawable.ic_arrow_back), stringResource(R.string.nav_back))
-                    }
-                },
-                actions = {
-                    if (loaded != null) {
-                        IconButton(onClick = onEdit) {
-                            Icon(painterResource(R.drawable.ic_edit), stringResource(R.string.action_edit))
-                        }
-                        Box {
-                            IconButton(onClick = { menuOpen = true }) {
-                                Icon(painterResource(R.drawable.ic_more_vert), stringResource(R.string.action_more))
-                            }
-                            val archived = loaded.shoe.shoe.archived
-                            SilverMenu(
-                                expanded = menuOpen,
-                                onDismiss = { menuOpen = false },
-                                entries = listOf(
-                                    MenuEntry(stringResource(if (archived) R.string.action_unarchive else R.string.action_archive), onClick = {
-                                        menuOpen = false
-                                        // Archiving a pair with a session in progress ends it, so ask first.
-                                        if (!archived && loaded.shoe.isActive) confirmArchive = true else viewModel.setArchived(!archived)
-                                    }),
-                                    MenuEntry(stringResource(R.string.action_delete), danger = true, onClick = {
-                                        menuOpen = false
-                                        confirmDelete = true
-                                    }),
-                                ),
-                            )
-                        }
-                    }
-                },
-            )
-        },
-    ) { padding ->
-        when (val s = state) {
-            DetailState.Loading -> Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
+                }
             }
-            DetailState.NotFound -> Box(Modifier.fillMaxSize().padding(padding).padding(24.dp)) {
-                Text(stringResource(R.string.form_not_found), style = MaterialTheme.typography.bodyLarge)
+        },
+    ) {
+        when (val s = state) {
+            DetailState.Loading -> ScreenLoading()
+            DetailState.NotFound -> ScreenColumn {
+                SilverCard { Text(stringResource(R.string.form_not_found), style = SilverTheme.type.body, color = SilverTheme.colors.textPrimary) }
             }
             is DetailState.Loaded -> DetailContent(
                 item = s.shoe,
@@ -172,7 +150,6 @@ fun ShoeDetailScreen(
                         onUnlink = { confirmUnlink = true },
                     )
                 },
-                modifier = Modifier.padding(padding),
             )
         }
     }
@@ -268,45 +245,12 @@ private fun DetailContent(
     onResume: (String) -> Unit,
     onEnd: (String) -> Unit,
     tagCard: @Composable () -> Unit,
-    modifier: Modifier,
 ) {
     val locale = LocalConfiguration.current.locales[0]
     val shoe = item.shoe
     val dash = stringResource(R.string.dash)
-    Column(
-        modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
-    ) {
-        Card(Modifier.fillMaxWidth()) {
-            Column(Modifier.padding(16.dp).semantics(mergeDescendants = true) {}, verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    ColourDot(shoe.accentColor, size = 24.dp)
-                    Text(
-                        shoe.name,
-                        style = MaterialTheme.typography.headlineSmall,
-                        modifier = Modifier.padding(start = 12.dp),
-                    )
-                }
-                val subtitle = listOf(shoe.brand, shoe.model).filter { it.isNotEmpty() }.joinToString(" ")
-                if (subtitle.isNotEmpty()) Text(subtitle, style = MaterialTheme.typography.bodyLarge)
-                Text(stringResource(shoe.type.labelRes()), style = MaterialTheme.typography.bodyMedium)
-                Text(
-                    shoe.priceMinor?.let { Formatters.price(it, shoe.currencyCode, locale) }
-                        ?: stringResource(R.string.detail_no_price),
-                    style = MaterialTheme.typography.bodyMedium,
-                )
-                shoe.purchaseEpochDay?.let {
-                    Text(stringResource(R.string.detail_purchased, Formatters.date(it, locale)), style = MaterialTheme.typography.bodyMedium)
-                }
-                if (shoe.archived) {
-                    Text(
-                        stringResource(R.string.detail_archived_note),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-            }
-        }
+    ScreenColumn {
+        PairHeader(item)
 
         SilverCard {
             CardLabel(stringResource(R.string.detail_stats_title))
@@ -343,31 +287,37 @@ private fun DetailContent(
         // Archived pairs can't start a session (archiving ends any running one).
         if (!shoe.archived) {
             val mine = active?.session?.takeIf { it.shoeId == shoe.id }
-            val status = when {
-                mine?.state == SessionState.RUNNING ->
-                    stringResource(R.string.detail_session_running, Formatters.time(mine.startUtc, mine.zoneId, locale))
-                mine?.state == SessionState.PAUSED -> stringResource(R.string.detail_session_paused)
-                active != null -> stringResource(R.string.detail_other_active, active.shoeName)
-                else -> null
-            }
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                if (status != null) Text(status, style = MaterialTheme.typography.bodyLarge)
-                if (mine != null) {
-                    val soFar = when (stepsSoFar) {
-                        is SoFarSteps.Count ->
-                            stringResource(R.string.session_card_steps_so_far, stepsCountText(stepsSoFar.steps))
-                        SoFarSteps.Later -> stringResource(R.string.session_card_steps_later)
-                        null -> null
-                    }
-                    soFar?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
-                }
+            val buttons = @Composable { modifier: Modifier ->
                 SessionButtons(
                     state = mine?.state,
                     onStart = onStart,
                     onPause = { mine?.let { onPause(it.id) } },
                     onResume = { mine?.let { onResume(it.id) } },
                     onEnd = { mine?.let { onEnd(it.id) } },
+                    modifier = modifier,
                 )
+            }
+            when {
+                // PNGs 09 and 10: this pair's session, with its live count.
+                mine != null -> SilverCard {
+                    CardLabel(
+                        if (mine.state == SessionState.PAUSED) stringResource(R.string.detail_session_paused)
+                        else stringResource(R.string.detail_session_running, Formatters.time(mine.startUtc, mine.zoneId, locale)),
+                    )
+                    SoFarCount(stepsSoFar)
+                    buttons(Modifier.padding(top = SilverSpacing.s))
+                }
+                // Another pair is out: Start asks whether to switch.
+                active != null -> SilverCard {
+                    Text(
+                        stringResource(R.string.detail_other_active, active.shoeName),
+                        style = SilverTheme.type.body.copy(fontSize = SilverTheme.type.button.fontSize),
+                        color = SilverTheme.colors.textPrimary,
+                    )
+                    buttons(Modifier.padding(top = SilverSpacing.s))
+                }
+                // PNG 08: just the Start button.
+                else -> buttons(Modifier)
             }
         }
 
@@ -377,31 +327,75 @@ private fun DetailContent(
     }
 }
 
-/** The pair's NFC tag: linked or not, with Link / Replace / Unlink (not for archived pairs). */
+/**
+ * The pair's name on the backdrop (PNG 08): colour circle and name, then "type · brand model" and
+ * "price · Purchased date". Read out as one item, with the name as the page heading.
+ */
 @Composable
-private fun TagCard(linked: Boolean, archived: Boolean, hasNfc: Boolean, onLink: () -> Unit, onUnlink: () -> Unit) {
-    Card(Modifier.fillMaxWidth()) {
-        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text(stringResource(R.string.tag_card_title), style = MaterialTheme.typography.titleMedium)
-            val status = when {
-                linked -> R.string.tag_linked
-                !hasNfc -> R.string.tag_no_nfc
-                else -> R.string.tag_not_linked
-            }
-            Text(stringResource(status), style = MaterialTheme.typography.bodyMedium)
-            if (hasNfc && !archived) {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    if (linked) {
-                        OutlinedButton(onClick = onLink, modifier = Modifier.weight(1f)) { Text(stringResource(R.string.tag_replace)) }
-                        OutlinedButton(onClick = onUnlink, modifier = Modifier.weight(1f)) { Text(stringResource(R.string.tag_unlink)) }
-                    } else {
-                        Button(onClick = onLink, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.tag_link)) }
-                    }
-                }
+private fun PairHeader(item: ShoeWithStats) {
+    val c = SilverTheme.colors
+    val locale = LocalConfiguration.current.locales[0]
+    val shoe = item.shoe
+    val subtitleStyle = SilverTheme.type.body.copy(fontSize = SilverTheme.type.button.fontSize)
+    Row(
+        Modifier.fillMaxWidth().padding(bottom = SilverSpacing.s).semantics(mergeDescendants = true) {},
+        horizontalArrangement = Arrangement.spacedBy(SilverSpacing.m),
+    ) {
+        ColourDot(shoe.accentColor, Modifier.padding(top = 6.dp), size = 28.dp)
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(SilverSpacing.xs)) {
+            Text(
+                shoe.name,
+                style = SilverTheme.type.display.copy(fontSize = 32.sp, lineHeight = 38.sp, letterSpacing = (-1).sp),
+                color = c.textPrimary,
+                modifier = Modifier.semantics { heading() },
+            )
+            val brandModel = listOf(shoe.brand, shoe.model).filter { it.isNotEmpty() }.joinToString(" ")
+            Text(
+                listOf(stringResource(shoe.type.labelRes()), brandModel).filter { it.isNotEmpty() }.joinToString(SEPARATOR),
+                style = subtitleStyle,
+                color = c.textMuted,
+            )
+            Text(
+                listOfNotNull(
+                    shoe.priceMinor?.let { Formatters.price(it, shoe.currencyCode, locale) } ?: stringResource(R.string.detail_no_price),
+                    shoe.purchaseEpochDay?.let { stringResource(R.string.detail_purchased, Formatters.date(it, locale)) },
+                ).joinToString(SEPARATOR),
+                style = subtitleStyle,
+                color = c.textMuted,
+            )
+            if (shoe.archived) {
+                Text(stringResource(R.string.detail_archived_note), style = subtitleStyle, color = c.textPrimary)
             }
         }
     }
 }
+
+/** The pair's NFC tag (PNG 08): linked or not, with Link / Replace / Unlink (not for archived pairs). */
+@Composable
+private fun TagCard(linked: Boolean, archived: Boolean, hasNfc: Boolean, onLink: () -> Unit, onUnlink: () -> Unit) {
+    SilverCard {
+        CardLabel(stringResource(R.string.tag_card_title))
+        val status = when {
+            linked -> R.string.tag_linked
+            !hasNfc -> R.string.tag_no_nfc
+            else -> R.string.tag_not_linked
+        }
+        Text(stringResource(status), style = SilverTheme.type.body.copy(fontSize = SilverTheme.type.button.fontSize), color = SilverTheme.colors.textPrimary)
+        if (hasNfc && !archived) {
+            if (linked) {
+                Row(Modifier.fillMaxWidth().padding(top = SilverSpacing.s), horizontalArrangement = Arrangement.spacedBy(SilverSpacing.m)) {
+                    SecondaryButton(stringResource(R.string.tag_replace), onLink, Modifier.weight(1f))
+                    TextActionButton(stringResource(R.string.tag_unlink), onUnlink, Modifier.weight(1f), danger = true)
+                }
+            } else {
+                SecondaryButton(stringResource(R.string.tag_link), onLink, Modifier.fillMaxWidth().padding(top = SilverSpacing.s))
+            }
+        }
+    }
+}
+
+/** Joins the parts of the header lines: "Trail running · Saucony Peregrine 15". */
+private const val SEPARATOR = " · "
 
 @Composable
 private fun HistoryCard(history: List<SessionWithSteps>) {

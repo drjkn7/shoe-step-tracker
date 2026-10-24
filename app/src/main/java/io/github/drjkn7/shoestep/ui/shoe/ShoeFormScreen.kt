@@ -1,37 +1,33 @@
 package io.github.drjkn7.shoestep.ui.shoe
 
+import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDefaults
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.ListItem
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SelectableDates
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -42,43 +38,48 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import io.github.drjkn7.shoestep.R
-import io.github.drjkn7.shoestep.ui.common.CardLabel
-import io.github.drjkn7.shoestep.ui.common.DialogAction
-import io.github.drjkn7.shoestep.ui.common.DialogText
-import io.github.drjkn7.shoestep.ui.common.InfoDialog
-import io.github.drjkn7.shoestep.ui.common.PickerField
-import io.github.drjkn7.shoestep.ui.common.PrimaryButton
-import io.github.drjkn7.shoestep.ui.common.SilverChip
-import io.github.drjkn7.shoestep.ui.common.SilverDialog
-import io.github.drjkn7.shoestep.ui.common.SilverTextField
-import io.github.drjkn7.shoestep.ui.theme.SilverShapes
-import io.github.drjkn7.shoestep.ui.theme.SilverSpacing
-import io.github.drjkn7.shoestep.ui.theme.SilverTheme
-import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.foundation.selection.selectableGroup
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.ui.graphics.Color
 import io.github.drjkn7.shoestep.core.Money
 import io.github.drjkn7.shoestep.data.FieldError
 import io.github.drjkn7.shoestep.data.ShoeField
 import io.github.drjkn7.shoestep.data.ShoeValidator
 import io.github.drjkn7.shoestep.data.model.ShoeType
+import io.github.drjkn7.shoestep.ui.common.CardLabel
+import io.github.drjkn7.shoestep.ui.common.DialogAction
+import io.github.drjkn7.shoestep.ui.common.DialogText
+import io.github.drjkn7.shoestep.ui.common.FilterTouchesWhenObscured
 import io.github.drjkn7.shoestep.ui.common.Formatters
+import io.github.drjkn7.shoestep.ui.common.InfoDialog
+import io.github.drjkn7.shoestep.ui.common.NavIcon
+import io.github.drjkn7.shoestep.ui.common.PickerField
+import io.github.drjkn7.shoestep.ui.common.PrimaryButton
+import io.github.drjkn7.shoestep.ui.common.ScreenColumn
+import io.github.drjkn7.shoestep.ui.common.ScreenLoading
 import io.github.drjkn7.shoestep.ui.common.ShoePalette
+import io.github.drjkn7.shoestep.ui.common.SilverCard
+import io.github.drjkn7.shoestep.ui.common.SilverChip
+import io.github.drjkn7.shoestep.ui.common.SilverDialog
+import io.github.drjkn7.shoestep.ui.common.SilverScreen
+import io.github.drjkn7.shoestep.ui.common.SilverTextField
+import io.github.drjkn7.shoestep.ui.common.TextActionButton
 import io.github.drjkn7.shoestep.ui.common.labelRes
+import io.github.drjkn7.shoestep.ui.theme.SilverShapes
+import io.github.drjkn7.shoestep.ui.theme.SilverSpacing
+import io.github.drjkn7.shoestep.ui.theme.SilverTheme
 import java.time.LocalDate
 import java.util.Currency
 import java.util.Locale
@@ -94,35 +95,53 @@ fun ShoeFormScreen(
 ) {
     val status = viewModel.status
     LaunchedEffect(status) { if (status is FormStatus.Saved) onSaved(status.shoeId) }
+    var askDiscard by rememberSaveable { mutableStateOf(false) }
+    // T45: leaving with unsaved changes asks first; an untouched form just closes.
+    val guarded = viewModel.hasChanges && status == FormStatus.Editing
+    val close = { if (guarded) askDiscard = true else onBack() }
+    BackHandler(enabled = guarded) { askDiscard = true }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(stringResource(if (viewModel.shoeId == null) R.string.title_add_shoe else R.string.title_edit_shoe)) },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(painterResource(R.drawable.ic_arrow_back), stringResource(R.string.nav_back))
-                    }
-                },
-            )
-        },
-    ) { padding ->
-        when (status) {
-            FormStatus.Loading -> Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
+    SilverScreen(
+        title = stringResource(if (viewModel.shoeId == null) R.string.title_add_shoe else R.string.title_edit_shoe),
+        navIcon = NavIcon.CLOSE,
+        onNavigate = close,
+        actions = {
+            if (status == FormStatus.Editing || status == FormStatus.Saving) {
+                PrimaryButton(stringResource(R.string.action_save), viewModel::save, enabled = status == FormStatus.Editing)
             }
-            FormStatus.NotFound -> Text(
-                stringResource(R.string.form_not_found),
-                modifier = Modifier.padding(padding).padding(24.dp),
-                style = MaterialTheme.typography.bodyLarge,
-            )
+        },
+    ) {
+        when (status) {
+            FormStatus.Loading -> ScreenLoading()
+            FormStatus.NotFound -> ScreenColumn {
+                SilverCard { Text(stringResource(R.string.form_not_found), style = SilverTheme.type.body, color = SilverTheme.colors.textPrimary) }
+            }
             else -> FormContent(
                 form = viewModel.form,
                 errors = viewModel.errors,
                 saving = status == FormStatus.Saving,
                 onChange = viewModel::update,
                 onSave = viewModel::save,
-                modifier = Modifier.padding(padding),
+            )
+        }
+    }
+
+    if (askDiscard) {
+        // PNG 07. Editing names the pair as it was saved, not as half-typed.
+        SilverDialog(
+            title = stringResource(R.string.discard_title),
+            onDismiss = { askDiscard = false },
+            actions = listOf(
+                DialogAction(stringResource(R.string.discard_keep), DialogAction.Kind.TEXT, onClick = { askDiscard = false }),
+                DialogAction(stringResource(R.string.discard_confirm), DialogAction.Kind.DANGER, onClick = {
+                    askDiscard = false
+                    onBack()
+                }),
+            ),
+        ) {
+            DialogText(
+                if (viewModel.shoeId == null) stringResource(R.string.discard_body_add)
+                else stringResource(R.string.discard_body_edit, viewModel.savedName),
             )
         }
     }
@@ -148,102 +167,99 @@ private fun FormContent(
     saving: Boolean,
     onChange: (ShoeFormState) -> Unit,
     onSave: () -> Unit,
-    modifier: Modifier,
 ) {
     val locale = LocalConfiguration.current.locales[0]
     var showCurrencyPicker by rememberSaveable { mutableStateOf(false) }
     var showDatePicker by rememberSaveable { mutableStateOf(false) }
 
-    Column(
-        modifier
-            .fillMaxSize()
-            .imePadding()
-            .verticalScroll(rememberScrollState())
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
-    ) {
-        TextInput(
-            value = form.name,
-            onValueChange = { onChange(form.copy(name = it)) },
-            label = stringResource(R.string.field_name),
-            placeholder = stringResource(R.string.field_name_hint),
-            max = ShoeValidator.NAME_MAX,
-            error = errors[ShoeField.NAME]?.let { errorText(ShoeField.NAME, it, form.currencyCode) },
-        )
-        TextInput(
-            value = form.brand,
-            onValueChange = { onChange(form.copy(brand = it)) },
-            label = stringResource(R.string.field_brand),
-            max = ShoeValidator.BRAND_MAX,
-            error = errors[ShoeField.BRAND]?.let { errorText(ShoeField.BRAND, it, form.currencyCode) },
-        )
-        TextInput(
-            value = form.model,
-            onValueChange = { onChange(form.copy(model = it)) },
-            label = stringResource(R.string.field_model),
-            max = ShoeValidator.MODEL_MAX,
-            error = errors[ShoeField.MODEL]?.let { errorText(ShoeField.MODEL, it, form.currencyCode) },
-        )
-
-        CardLabel(stringResource(R.string.field_type), heading = false)
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(SilverSpacing.s), verticalArrangement = Arrangement.spacedBy(SilverSpacing.s)) {
-            ShoeType.entries.forEach { type ->
-                SilverChip(
-                    text = stringResource(type.labelRes()),
-                    selected = form.type == type,
-                    onClick = { onChange(form.copy(type = type)) },
+    // PNG 05: all fields on one card, Save again underneath.
+    ScreenColumn(Modifier.imePadding()) {
+        SilverCard {
+            Column(verticalArrangement = Arrangement.spacedBy(SilverSpacing.m)) {
+                TextInput(
+                    value = form.name,
+                    onValueChange = { onChange(form.copy(name = it)) },
+                    label = stringResource(R.string.field_name),
+                    placeholder = stringResource(R.string.field_name_hint),
+                    max = ShoeValidator.NAME_MAX,
+                    error = errors[ShoeField.NAME]?.let { errorText(ShoeField.NAME, it, form.currencyCode) },
                 )
-            }
-        }
-
-        Row(horizontalArrangement = Arrangement.spacedBy(SilverSpacing.m), verticalAlignment = Alignment.Top) {
-            SilverTextField(
-                value = form.priceText,
-                onValueChange = { if (it.length <= 20) onChange(form.copy(priceText = it)) },
-                label = stringResource(R.string.field_price),
-                error = errors[ShoeField.PRICE]?.let { errorText(ShoeField.PRICE, it, form.currencyCode) },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal, imeAction = ImeAction.Done),
-                modifier = Modifier.weight(1.4f),
-            )
-            val currencyDescription = stringResource(
-                R.string.currency_button_description,
-                stringResource(R.string.field_currency),
-                form.currencyCode,
-                currencyName(form.currencyCode, locale),
-            )
-            Column(Modifier.weight(1f)) {
-                PickerField(
-                    label = stringResource(R.string.field_currency),
-                    value = form.currencyCode,
-                    icon = painterResource(R.drawable.ic_chevron_right),
-                    onClick = { showCurrencyPicker = true },
-                    modifier = Modifier.semantics { contentDescription = currencyDescription },
+                TextInput(
+                    value = form.brand,
+                    onValueChange = { onChange(form.copy(brand = it)) },
+                    label = stringResource(R.string.field_brand),
+                    max = ShoeValidator.BRAND_MAX,
+                    error = errors[ShoeField.BRAND]?.let { errorText(ShoeField.BRAND, it, form.currencyCode) },
                 )
-            }
-        }
-
-        Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(SilverSpacing.s)) {
-            Column(Modifier.weight(1f)) {
-                PickerField(
-                    label = stringResource(R.string.field_purchase_date),
-                    value = form.purchaseEpochDay?.let { Formatters.date(it, locale) } ?: stringResource(R.string.field_purchase_date_none),
-                    icon = painterResource(R.drawable.ic_calendar_month),
-                    onClick = { showDatePicker = true },
-                    placeholder = form.purchaseEpochDay == null,
+                TextInput(
+                    value = form.model,
+                    onValueChange = { onChange(form.copy(model = it)) },
+                    label = stringResource(R.string.field_model),
+                    max = ShoeValidator.MODEL_MAX,
+                    error = errors[ShoeField.MODEL]?.let { errorText(ShoeField.MODEL, it, form.currencyCode) },
                 )
-            }
-            if (form.purchaseEpochDay != null) {
-                IconButton(onClick = { onChange(form.copy(purchaseEpochDay = null)) }) {
-                    Icon(painterResource(R.drawable.ic_close), stringResource(R.string.field_purchase_date_clear), tint = SilverTheme.colors.textPrimary)
+
+                CardLabel(stringResource(R.string.field_type), heading = false)
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(SilverSpacing.s), verticalArrangement = Arrangement.spacedBy(SilverSpacing.s)) {
+                    ShoeType.entries.forEach { type ->
+                        SilverChip(
+                            text = stringResource(type.labelRes()),
+                            selected = form.type == type,
+                            onClick = { onChange(form.copy(type = type)) },
+                        )
+                    }
                 }
+
+                Row(horizontalArrangement = Arrangement.spacedBy(SilverSpacing.m), verticalAlignment = Alignment.Top) {
+                    SilverTextField(
+                        value = form.priceText,
+                        onValueChange = { if (it.length <= 20) onChange(form.copy(priceText = it)) },
+                        label = stringResource(R.string.field_price),
+                        error = errors[ShoeField.PRICE]?.let { errorText(ShoeField.PRICE, it, form.currencyCode) },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal, imeAction = ImeAction.Done),
+                        modifier = Modifier.weight(1.4f),
+                    )
+                    val currencyDescription = stringResource(
+                        R.string.currency_button_description,
+                        stringResource(R.string.field_currency),
+                        form.currencyCode,
+                        currencyName(form.currencyCode, locale),
+                    )
+                    Column(Modifier.weight(1f)) {
+                        PickerField(
+                            label = stringResource(R.string.field_currency),
+                            value = form.currencyCode,
+                            icon = painterResource(R.drawable.ic_chevron_right),
+                            onClick = { showCurrencyPicker = true },
+                            modifier = Modifier.semantics { contentDescription = currencyDescription },
+                        )
+                    }
+                }
+
+                Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(SilverSpacing.s)) {
+                    Column(Modifier.weight(1f)) {
+                        PickerField(
+                            label = stringResource(R.string.field_purchase_date),
+                            value = form.purchaseEpochDay?.let { Formatters.date(it, locale) } ?: stringResource(R.string.field_purchase_date_none),
+                            icon = painterResource(R.drawable.ic_calendar_month),
+                            onClick = { showDatePicker = true },
+                            placeholder = form.purchaseEpochDay == null,
+                        )
+                    }
+                    if (form.purchaseEpochDay != null) {
+                        IconButton(onClick = { onChange(form.copy(purchaseEpochDay = null)) }) {
+                            Icon(painterResource(R.drawable.ic_close), stringResource(R.string.field_purchase_date_clear), tint = SilverTheme.colors.textPrimary)
+                        }
+                    }
+                }
+                errors[ShoeField.PURCHASE_DATE]?.let {
+                    Text(errorText(ShoeField.PURCHASE_DATE, it, form.currencyCode), style = SilverTheme.type.note, color = SilverTheme.colors.danger)
+                }
+
+                CardLabel(stringResource(R.string.field_colour), heading = false)
+                ColourSwatches(selected = form.accentColor, onSelect = { onChange(form.copy(accentColor = it)) })
             }
         }
-        errors[ShoeField.PURCHASE_DATE]?.let {
-            Text(errorText(ShoeField.PURCHASE_DATE, it, form.currencyCode), style = SilverTheme.type.note, color = SilverTheme.colors.danger)
-        }
-
-        CardLabel(stringResource(R.string.field_colour), heading = false)
-        ColourSwatches(selected = form.accentColor, onSelect = { onChange(form.copy(accentColor = it)) })
 
         PrimaryButton(stringResource(R.string.action_save), onSave, Modifier.fillMaxWidth(), enabled = !saving)
     }
@@ -406,26 +422,33 @@ internal fun CurrencyPicker(locale: Locale, onPick: (String) -> Unit, onDismiss:
         val q = query.trim()
         if (q.isEmpty()) all else all.filter { (code, name) -> code.contains(q, true) || name.contains(q, true) }
     }
-    ModalBottomSheet(onDismissRequest = onDismiss) {
-        Column(Modifier.padding(horizontal = 16.dp)) {
+    val c = SilverTheme.colors
+    // Not mocked up: a sheet in the pop-up colours, with the Silver search field and plain rows.
+    ModalBottomSheet(onDismissRequest = onDismiss, shape = SilverShapes.sheet, containerColor = c.dialog.first(), scrimColor = c.scrim.copy(alpha = if (c.isNight) 0.60f else 0.42f)) {
+        FilterTouchesWhenObscured()
+        Column(Modifier.padding(horizontal = SilverSpacing.l), verticalArrangement = Arrangement.spacedBy(SilverSpacing.s)) {
             Text(
                 stringResource(R.string.currency_choose),
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.padding(bottom = 8.dp),
+                style = SilverTheme.type.section.copy(fontSize = 20.sp, lineHeight = 26.sp),
+                color = c.textPrimary,
+                modifier = Modifier.semantics { heading() },
             )
-            OutlinedTextField(
+            SilverTextField(
                 value = query,
                 onValueChange = { if (it.length <= 40) query = it },
-                label = { Text(stringResource(R.string.currency_search)) },
-                leadingIcon = { Icon(painterResource(R.drawable.ic_search), contentDescription = null) },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
+                label = stringResource(R.string.currency_search),
             )
             LazyColumn {
                 items(filtered, key = { it.first }) { (code, name) ->
-                    ListItem(
-                        headlineContent = { Text(stringResource(R.string.currency_item, code, name)) },
-                        modifier = Modifier.selectable(selected = false, role = Role.Button) { onPick(code) },
+                    Text(
+                        stringResource(R.string.currency_item, code, name),
+                        style = SilverTheme.type.body.copy(fontSize = 16.sp, lineHeight = 22.sp),
+                        color = c.textPrimary,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(min = SilverSpacing.touch)
+                            .selectable(selected = false, role = Role.Button) { onPick(code) }
+                            .padding(vertical = 13.dp),
                     )
                 }
             }
@@ -448,24 +471,34 @@ private fun PurchaseDatePicker(initialEpochDay: Long?, onPick: (Long) -> Unit, o
             }
         },
     )
+    // Not mocked up: Material's calendar in the pop-up colours, with the Silver buttons.
+    val colors = DatePickerDefaults.colors(containerColor = SilverTheme.colors.dialog.first())
     DatePickerDialog(
         onDismissRequest = onDismiss,
         confirmButton = {
-            TextButton(
+            TextActionButton(
+                stringResource(R.string.action_ok),
                 onClick = {
                     // The picker works in UTC midnight millis; floorDiv gives the epoch day on every API level.
                     state.selectedDateMillis?.let { onPick(Math.floorDiv(it, MILLIS_PER_DAY)) }
                         ?: onDismiss()
                 },
-            ) { Text(stringResource(R.string.action_ok)) }
+                accent = true,
+            )
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) } },
+        dismissButton = { TextActionButton(stringResource(R.string.action_cancel), onDismiss) },
+        shape = SilverShapes.dialog,
+        colors = colors,
     ) {
+        FilterTouchesWhenObscured()
         DatePicker(
             state = state,
+            colors = colors,
             title = {
                 Text(
                     stringResource(R.string.field_purchase_date_pick),
+                    style = SilverTheme.type.label,
+                    color = SilverTheme.colors.textMuted,
                     modifier = Modifier.padding(start = 24.dp, end = 12.dp, top = 16.dp),
                 )
             },

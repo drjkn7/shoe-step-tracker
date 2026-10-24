@@ -53,8 +53,19 @@ class ShoeFormViewModel(
     defaultCurrencyCode: String,
 ) : ViewModel() {
 
-    var form by mutableStateOf(restore() ?: ShoeFormState(currencyCode = defaultCurrencyCode))
+    var form by mutableStateOf(restore(PREFIX_FORM) ?: ShoeFormState(currencyCode = defaultCurrencyCode))
         private set
+
+    /** The values the form started with (the saved pair, or a blank form), to tell whether anything changed. */
+    private var initial by mutableStateOf(
+        restore(PREFIX_INITIAL) ?: ShoeFormState(currencyCode = defaultCurrencyCode).also { persist(PREFIX_INITIAL, it) },
+    )
+
+    /** True once the user changed something; Back or Close then asks "Discard changes?". */
+    val hasChanges: Boolean get() = form != initial
+
+    /** The pair's name as saved (editing), for "Your changes to … won't be saved." */
+    val savedName: String get() = initial.name
 
     var status by mutableStateOf<FormStatus>(FormStatus.Editing)
         private set
@@ -77,18 +88,18 @@ class ShoeFormViewModel(
                 if (shoe == null) {
                     status = FormStatus.NotFound
                 } else {
-                    update(
-                        ShoeFormState(
-                            name = shoe.name,
-                            brand = shoe.brand,
-                            model = shoe.model,
-                            type = shoe.type,
-                            priceText = shoe.priceMinor?.let { formatPriceForEditing(it, shoe.currencyCode) }.orEmpty(),
-                            currencyCode = shoe.currencyCode,
-                            purchaseEpochDay = shoe.purchaseEpochDay,
-                            accentColor = shoe.accentColor,
-                        ),
+                    val loaded = ShoeFormState(
+                        name = shoe.name,
+                        brand = shoe.brand,
+                        model = shoe.model,
+                        type = shoe.type,
+                        priceText = shoe.priceMinor?.let { formatPriceForEditing(it, shoe.currencyCode) }.orEmpty(),
+                        currencyCode = shoe.currencyCode,
+                        purchaseEpochDay = shoe.purchaseEpochDay,
+                        accentColor = shoe.accentColor,
                     )
+                    rememberAsInitial(loaded)
+                    update(loaded)
                     status = FormStatus.Editing
                 }
             }
@@ -106,13 +117,20 @@ class ShoeFormViewModel(
     fun applyDefaultCurrency(code: String) {
         if (currencyChosen) return
         currencyChosen = true
+        // The blank form now starts with this currency, so it doesn't count as a change.
+        rememberAsInitial(initial.copy(currencyCode = code))
         update(form.copy(currencyCode = code))
+    }
+
+    private fun rememberAsInitial(state: ShoeFormState) {
+        initial = state
+        persist(PREFIX_INITIAL, state)
     }
 
     fun update(newState: ShoeFormState) {
         if (newState.currencyCode != form.currencyCode) currencyChosen = true
         form = newState
-        persist(newState)
+        persist(PREFIX_FORM, newState)
         if (showErrors) revalidate()
     }
 
@@ -158,46 +176,52 @@ class ShoeFormViewModel(
         return result is ShoeValidation.Valid
     }
 
-    private fun persist(s: ShoeFormState) {
-        savedState[KEY_RESTORED] = true
-        savedState[KEY_NAME] = s.name
-        savedState[KEY_BRAND] = s.brand
-        savedState[KEY_MODEL] = s.model
-        savedState[KEY_TYPE] = s.type.name
-        savedState[KEY_PRICE] = s.priceText
-        savedState[KEY_CURRENCY] = s.currencyCode
-        savedState[KEY_DATE] = s.purchaseEpochDay ?: NO_DATE
-        savedState[KEY_COLOUR] = s.accentColor
+    private fun persist(prefix: String, s: ShoeFormState) {
+        savedState["$prefix$RESTORED"] = true
+        savedState["$prefix$NAME"] = s.name
+        savedState["$prefix$BRAND"] = s.brand
+        savedState["$prefix$MODEL"] = s.model
+        savedState["$prefix$TYPE"] = s.type.name
+        savedState["$prefix$PRICE"] = s.priceText
+        savedState["$prefix$CURRENCY"] = s.currencyCode
+        savedState["$prefix$DATE"] = s.purchaseEpochDay ?: NO_DATE
+        savedState["$prefix$COLOUR"] = s.accentColor
     }
 
     /** Restores only well-formed values; anything odd falls back to defaults. */
-    private fun restore(): ShoeFormState? {
-        if (savedState.get<Boolean>(KEY_RESTORED) != true) return null
-        val currency = savedState.get<String>(KEY_CURRENCY) ?: return null
+    private fun restore(prefix: String): ShoeFormState? {
+        if (savedState.get<Boolean>("$prefix$RESTORED") != true) return null
+        val currency = savedState.get<String>("$prefix$CURRENCY") ?: return null
         return ShoeFormState(
-            name = savedState[KEY_NAME] ?: "",
-            brand = savedState[KEY_BRAND] ?: "",
-            model = savedState[KEY_MODEL] ?: "",
-            type = savedState.get<String>(KEY_TYPE)
+            name = savedState["$prefix$NAME"] ?: "",
+            brand = savedState["$prefix$BRAND"] ?: "",
+            model = savedState["$prefix$MODEL"] ?: "",
+            type = savedState.get<String>("$prefix$TYPE")
                 ?.let { name -> ShoeType.entries.firstOrNull { it.name == name } } ?: ShoeType.ROAD_RUNNING,
-            priceText = savedState[KEY_PRICE] ?: "",
+            priceText = savedState["$prefix$PRICE"] ?: "",
             currencyCode = currency,
-            purchaseEpochDay = savedState.get<Long>(KEY_DATE)?.takeIf { it != NO_DATE },
-            accentColor = savedState[KEY_COLOUR] ?: 0,
+            purchaseEpochDay = savedState.get<Long>("$prefix$DATE")?.takeIf { it != NO_DATE },
+            accentColor = savedState["$prefix$COLOUR"] ?: 0,
         )
     }
 
     private companion object {
-        const val KEY_RESTORED = "form.restored"
+        /** What the user is typing. */
+        const val PREFIX_FORM = "form."
+        /** What the form started with. */
+        const val PREFIX_INITIAL = "initial."
+        const val KEY_RESTORED = PREFIX_FORM + "restored"
         const val KEY_SHOW_ERRORS = "form.showErrors"
-        const val KEY_NAME = "form.name"
-        const val KEY_BRAND = "form.brand"
-        const val KEY_MODEL = "form.model"
-        const val KEY_TYPE = "form.type"
-        const val KEY_PRICE = "form.price"
-        const val KEY_CURRENCY = "form.currency"
-        const val KEY_DATE = "form.date"
-        const val KEY_COLOUR = "form.colour"
+        const val KEY_CURRENCY = PREFIX_FORM + "currency"
+        const val RESTORED = "restored"
+        const val NAME = "name"
+        const val BRAND = "brand"
+        const val MODEL = "model"
+        const val TYPE = "type"
+        const val PRICE = "price"
+        const val CURRENCY = "currency"
+        const val DATE = "date"
+        const val COLOUR = "colour"
         const val NO_DATE = Long.MIN_VALUE
     }
 }
