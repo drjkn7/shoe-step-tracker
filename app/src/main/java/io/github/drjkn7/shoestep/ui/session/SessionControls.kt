@@ -117,7 +117,8 @@ fun ActiveSessionCard(
         )
     }
     SilverCard(modifier, onClick = onOpen) {
-        CardLabel(stringResource(R.string.session_card_title))
+        // Not a heading: the whole card is one button, and TalkBack would call the button a heading.
+        CardLabel(stringResource(R.string.session_card_title), heading = false)
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(SilverSpacing.m)) {
             ColourDot(active.shoeAccentColor)
             Text(status, style = SilverTheme.type.body.copy(fontSize = SilverTheme.type.section.fontSize), color = SilverTheme.colors.textPrimary)

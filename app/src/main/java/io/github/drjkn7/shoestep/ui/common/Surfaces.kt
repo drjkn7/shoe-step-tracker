@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -54,6 +55,8 @@ fun SilverCard(
     modifier: Modifier = Modifier,
     onClick: (() -> Unit)? = null,
     register: Boolean = false,
+    /** Space inside the card; the Show archived row uses less top and bottom, like the mockup's pill. */
+    contentPadding: PaddingValues = PaddingValues(20.dp),
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val c = SilverTheme.colors
@@ -64,7 +67,7 @@ fun SilverCard(
             .raised(c, SilverShapes.panel, fill)
             .clip(SilverShapes.panel)
             .then(if (onClick != null) Modifier.clickable(role = Role.Button, onClick = onClick) else Modifier)
-            .padding(20.dp),
+            .padding(contentPadding),
         verticalArrangement = Arrangement.spacedBy(SilverSpacing.s),
         content = content,
     )

@@ -1,20 +1,30 @@
 package io.github.drjkn7.shoestep.ui.common
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import io.github.drjkn7.shoestep.R
+import io.github.drjkn7.shoestep.ui.theme.SilverShapes
 import io.github.drjkn7.shoestep.ui.theme.SilverSpacing
 import io.github.drjkn7.shoestep.ui.theme.SilverTheme
 
@@ -41,6 +51,32 @@ private fun StatCell(item: StatItem, modifier: Modifier) {
         Text(item.label, style = SilverTheme.type.body, color = c.textMuted)
         Text(item.value, style = SilverTheme.type.section.copy(fontSize = 20.sp, lineHeight = 26.sp), color = c.textPrimary)
         item.extra?.let { Text(it, style = SilverTheme.type.body.copy(fontSize = 16.sp), color = c.textPrimary) }
+    }
+}
+
+/**
+ * A row that opens something (PNG 21: "Default currency", "Privacy statement"): title, an optional
+ * value under it, and a chevron at the end. The whole row is one button, at least 56 dp tall.
+ */
+@Composable
+fun LinkRow(title: String, onClick: () -> Unit, modifier: Modifier = Modifier, value: String? = null) {
+    val c = SilverTheme.colors
+    Row(
+        modifier
+            .fillMaxWidth()
+            .heightIn(min = 56.dp)
+            .clip(SilverShapes.input)
+            .clickable(role = Role.Button, onClick = onClick)
+            .padding(vertical = SilverSpacing.s),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(SilverSpacing.m),
+    ) {
+        Column(Modifier.weight(1f)) {
+            Text(title, style = SilverTheme.type.body.copy(fontSize = 17.sp, lineHeight = 24.sp, fontWeight = FontWeight.Medium), color = c.textPrimary)
+            value?.let { Text(it, style = SilverTheme.type.body, color = c.textMuted) }
+        }
+        // The icon is auto-mirrored, so it points the other way in right-to-left languages.
+        Icon(painterResource(R.drawable.ic_chevron_right), contentDescription = null, tint = c.textPrimary, modifier = Modifier.size(22.dp))
     }
 }
 

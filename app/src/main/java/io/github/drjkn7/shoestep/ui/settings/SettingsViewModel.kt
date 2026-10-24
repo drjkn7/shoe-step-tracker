@@ -7,6 +7,8 @@ import io.github.drjkn7.shoestep.core.Clock
 import io.github.drjkn7.shoestep.export.CsvExportRepository
 import io.github.drjkn7.shoestep.export.ExportKind
 import io.github.drjkn7.shoestep.settings.SettingsStore
+import io.github.drjkn7.shoestep.settings.SystemNightMode
+import io.github.drjkn7.shoestep.settings.ThemeMode
 import io.github.drjkn7.shoestep.steps.StepsAccess
 import io.github.drjkn7.shoestep.steps.StepsSource
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -24,11 +26,28 @@ class SettingsViewModel(
     private val stepsSource: StepsSource,
     private val exporter: CsvExportRepository,
     private val clock: Clock,
+    private val systemNightMode: SystemNightMode,
 ) : ViewModel() {
 
     /** Null = not chosen yet (new pairs use the region's currency). */
     val defaultCurrency: StateFlow<String?> = settings.defaultCurrency
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+
+    /** Null until read (a moment); the Theme control shows no choice until then. */
+    val themeMode: StateFlow<ThemeMode?> = settings.themeMode
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+
+    /**
+     * Settings → Appearance → Theme. The app redraws as soon as the choice is saved; Android is told
+     * afterwards so the launch window matches next time (this may recreate the screen on Android 12+).
+     */
+    fun setThemeMode(mode: ThemeMode) {
+        if (mode == themeMode.value) return
+        viewModelScope.launch {
+            settings.setThemeMode(mode)
+            systemNightMode.apply(mode)
+        }
+    }
 
     private val _stepsAccess = MutableStateFlow<StepsAccess?>(null)
     val stepsAccess: StateFlow<StepsAccess?> = _stepsAccess.asStateFlow()

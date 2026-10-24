@@ -147,7 +147,7 @@ fun AppNavHost(container: AppContainer) {
             composable(Routes.SETTINGS) {
                 SettingsScreen(
                     viewModel = viewModel {
-                        SettingsViewModel(container.settings, container.stepsSource, container.exporter, container.clock)
+                        SettingsViewModel(container.settings, container.stepsSource, container.exporter, container.clock, container.systemNightMode)
                     },
                     onBack = goBack,
                     onOpenPrivacy = { navController.navigate(Routes.PRIVACY) },

@@ -8,6 +8,9 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStoreFile
 import io.github.drjkn7.shoestep.core.Money
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
@@ -24,10 +27,19 @@ interface SettingsStore {
     suspend fun setThemeMode(mode: ThemeMode)
 }
 
-/** The real store: one Preferences DataStore file ("settings") per app, created once by AppContainer. */
-class DataStoreSettings(context: Context) : SettingsStore {
+/**
+ * The real store: one Preferences DataStore file ("settings") per app, created once by AppContainer.
+ * Tests pass their own [fileName] and [scope] (cancelling the scope closes the file, like the app
+ * stopping), so they never touch the app's settings.
+ */
+class DataStoreSettings(
+    context: Context,
+    fileName: String = FILE_NAME,
+    scope: CoroutineScope = CoroutineScope(Dispatchers.IO + SupervisorJob()),
+) : SettingsStore {
     private val store: DataStore<Preferences> = PreferenceDataStoreFactory.create(
-        produceFile = { context.applicationContext.preferencesDataStoreFile(FILE_NAME) },
+        scope = scope,
+        produceFile = { context.applicationContext.preferencesDataStoreFile(fileName) },
     )
 
     // Anything unexpected in the file (e.g. a code this phone doesn't know) counts as "not chosen".
