@@ -10,8 +10,11 @@ import kotlinx.coroutines.flow.flowOf
 
 /** What a running session shows for steps. */
 sealed interface SoFarSteps {
-    /** Approximate steps since the session started ("About 1,500 steps so far"). */
-    data class Count(val steps: Long) : SoFarSteps
+    /**
+     * Approximate steps since the session started ("About 1,500 steps so far"), and the distance in
+     * metres when it can be read ("About 1.1 km"; null = no distance line).
+     */
+    data class Count(val steps: Long, val distanceMeters: Double? = null) : SoFarSteps
 
     /** Steps can't be read right now ("Steps counted later"). */
     data object Later : SoFarSteps
@@ -38,7 +41,8 @@ fun soFarSteps(
         } else {
             flow<SoFarSteps?> {
                 while (true) {
-                    emit(reconciler.stepsSoFar(sessionId)?.let { SoFarSteps.Count(it) } ?: SoFarSteps.Later)
+                    val steps = reconciler.stepsSoFar(sessionId)
+                    emit(if (steps == null) SoFarSteps.Later else SoFarSteps.Count(steps, reconciler.distanceSoFar(sessionId)))
                     delay(periodMillis)
                 }
             }

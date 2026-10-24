@@ -2,6 +2,9 @@ package io.github.drjkn7.shoestep.ui.common
 
 import io.github.drjkn7.shoestep.core.CostCalculator
 import io.github.drjkn7.shoestep.core.Money
+import io.github.drjkn7.shoestep.settings.DistanceUnit
+import java.math.BigDecimal
+import java.math.RoundingMode
 import java.text.NumberFormat
 import java.time.DateTimeException
 import java.time.Instant
@@ -64,5 +67,31 @@ object Formatters {
             maximumFractionDigits = digits + 2
         }
         return formatter.format(cost.perThousandSteps)
+    }
+
+    /** Cost per km or mile (see [CostCalculator.costPerDistance]); null when not available (a dash). */
+    fun costPerDistance(cost: BigDecimal?, currencyCode: String, locale: Locale): String? {
+        if (cost == null) return null
+        val digits = Money.fractionDigits(currencyCode)
+        val formatter = NumberFormat.getCurrencyInstance(locale).apply {
+            currency = Currency.getInstance(currencyCode)
+            minimumFractionDigits = digits
+            maximumFractionDigits = digits + 2
+        }
+        return formatter.format(cost)
+    }
+
+    /**
+     * A distance number in [unit] with one decimal and the locale's separators, e.g. "2.4" or "1,234.5"
+     * (the caller adds "km" or "mi"). Negative or unreadable values count as zero.
+     */
+    fun distance(meters: Double, unit: DistanceUnit, locale: Locale): String {
+        val value = if (meters.isFinite() && meters > 0) unit.fromMeters(meters) else 0.0
+        val formatter = NumberFormat.getNumberInstance(locale).apply {
+            minimumFractionDigits = 1
+            maximumFractionDigits = 1
+            roundingMode = RoundingMode.HALF_UP
+        }
+        return formatter.format(BigDecimal.valueOf(value))
     }
 }

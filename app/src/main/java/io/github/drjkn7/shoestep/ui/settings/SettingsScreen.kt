@@ -27,13 +27,16 @@ import io.github.drjkn7.shoestep.DebugTools
 import io.github.drjkn7.shoestep.R
 import io.github.drjkn7.shoestep.core.Money
 import io.github.drjkn7.shoestep.export.ExportKind
+import io.github.drjkn7.shoestep.settings.DistanceUnit
 import io.github.drjkn7.shoestep.settings.ThemeMode
 import io.github.drjkn7.shoestep.steps.HealthConnectStepsSource
 import io.github.drjkn7.shoestep.steps.StepsAccess
 import io.github.drjkn7.shoestep.ui.common.CardLabel
 import io.github.drjkn7.shoestep.ui.common.InfoDialog
 import io.github.drjkn7.shoestep.ui.common.LinkRow
+import io.github.drjkn7.shoestep.ui.common.LocalDistanceUnit
 import io.github.drjkn7.shoestep.ui.common.NavIcon
+import io.github.drjkn7.shoestep.ui.common.PrimaryButton
 import io.github.drjkn7.shoestep.ui.common.ScreenColumn
 import io.github.drjkn7.shoestep.ui.common.SecondaryButton
 import io.github.drjkn7.shoestep.ui.common.SegmentedControl
@@ -59,11 +62,12 @@ fun SettingsScreen(
     val stepsAccess by viewModel.stepsAccess.collectAsStateWithLifecycle()
     val exportOutcome by viewModel.exportOutcome.collectAsStateWithLifecycle()
     val themeMode by viewModel.themeMode.collectAsStateWithLifecycle()
+    val distanceAllowed by viewModel.distanceAllowed.collectAsStateWithLifecycle()
     var showCurrencyPicker by rememberSaveable { mutableStateOf(false) }
 
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { viewModel.refreshSteps() }
     val permissionLauncher = rememberLauncherForActivityResult(HealthConnectStepsSource.permissionContract()) {
-        viewModel.refreshSteps()
+        viewModel.onPermissionResult()
     }
     // The system file picker: the user chooses where the file goes, so no storage permission is needed.
     val exportPairs = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument(CSV_MIME)) {
@@ -104,10 +108,33 @@ fun SettingsScreen(
                 }
             }
 
+            // PNG 21: Units → Distance, Kilometres / Miles.
+            Section(stringResource(R.string.settings_units)) {
+                val distance = stringResource(R.string.settings_distance)
+                SettingTitle(distance)
+                SegmentedControl(
+                    options = DistanceUnit.entries,
+                    selected = LocalDistanceUnit.current,
+                    label = { stringResource(it.labelRes()) },
+                    onSelect = viewModel::setDistanceUnit,
+                    description = distance,
+                    modifier = Modifier.padding(top = SilverSpacing.xs),
+                )
+            }
+
             Section(stringResource(R.string.settings_steps)) {
                 when (val access = stepsAccess) {
                     StepsAccess.READY -> {
-                        BodyText(stringResource(R.string.settings_steps_ready))
+                        if (distanceAllowed == false) {
+                            BodyText(stringResource(R.string.settings_steps_no_distance))
+                            PrimaryButton(
+                                stringResource(R.string.settings_allow_distance),
+                                onClick = { permissionLauncher.launch(setOf(HealthConnectStepsSource.DISTANCE_PERMISSION)) },
+                                modifier = Modifier.fillMaxWidth().padding(top = SilverSpacing.s),
+                            )
+                        } else {
+                            BodyText(stringResource(R.string.settings_steps_ready))
+                        }
                         SecondaryButton(
                             stringResource(R.string.settings_manage_health_connect),
                             onClick = { openHealthConnect(context) },
@@ -191,6 +218,11 @@ private fun SettingTitle(text: String) {
 @Composable
 private fun BodyText(text: String) {
     Text(text, style = SilverTheme.type.body.copy(fontSize = SilverTheme.type.button.fontSize, lineHeight = 22.sp), color = SilverTheme.colors.textPrimary)
+}
+
+private fun DistanceUnit.labelRes(): Int = when (this) {
+    DistanceUnit.KILOMETRES -> R.string.units_kilometres
+    DistanceUnit.MILES -> R.string.units_miles
 }
 
 private fun ThemeMode.labelRes(): Int = when (this) {

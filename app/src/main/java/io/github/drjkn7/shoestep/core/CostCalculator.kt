@@ -33,4 +33,23 @@ object CostCalculator {
                 .divide(steps, digits + EXTRA_DIGITS_PER_THOUSAND, RoundingMode.HALF_UP),
         )
     }
+
+    /**
+     * Cost per km or per mile: price / distance in that unit ([unitMeters] metres per unit), in major
+     * units with two extra decimals. Null when the price is missing or no distance is known yet (the UI
+     * shows a dash); free shoes cost 0.
+     */
+    fun costPerDistance(priceMinor: Long?, currencyCode: String, meters: Double?, unitMeters: Double): BigDecimal? {
+        if (priceMinor == null || priceMinor < 0 || meters == null || !(meters > 0) || meters.isInfinite()) return null
+        if (!Money.isSupportedCurrency(currencyCode) || !(unitMeters > 0)) return null
+
+        val digits = Money.fractionDigits(currencyCode)
+        val price = BigDecimal.valueOf(priceMinor, digits)
+        val units = BigDecimal.valueOf(meters).divide(BigDecimal.valueOf(unitMeters), DISTANCE_SCALE, RoundingMode.HALF_UP)
+        if (units.signum() == 0) return null
+        return price.divide(units, digits + EXTRA_DIGITS_PER_THOUSAND, RoundingMode.HALF_UP)
+    }
+
+    /** Decimal places kept for the distance before dividing (micro-units: far below what is shown). */
+    private const val DISTANCE_SCALE = 6
 }

@@ -7,6 +7,7 @@ import io.github.drjkn7.shoestep.data.model.EndReason
 import io.github.drjkn7.shoestep.data.model.SessionState
 import io.github.drjkn7.shoestep.data.model.ShoeType
 import java.math.BigDecimal
+import java.math.RoundingMode
 import java.time.DateTimeException
 import java.time.Instant
 import java.time.LocalDate
@@ -24,10 +25,12 @@ object CsvExporter {
     val PAIRS_HEADER = listOf(
         "Name", "Brand", "Model", "Type", "Price", "Currency", "Purchase date", "Colour", "Archived",
         "Sessions", "Total steps", "Steps status", "Walking minutes", "Last worn",
+        "Total distance in metres", "Distance status",
     )
 
     val SESSIONS_HEADER = listOf(
         "Pair", "Started", "Ended", "Time zone", "Status", "Walking minutes", "Steps", "Steps status",
+        "Distance in metres", "Distance status",
     )
 
     private val DATE_TIME = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
@@ -57,6 +60,8 @@ object CsvExporter {
                     stepsStatus(row.hasPendingSteps, row.hasUnfinalSteps),
                     row.activeMillis.coerceAtLeast(0) / 60_000,
                     row.lastUsedUtc?.let { dateTime(it, zone) },
+                    row.totalDistanceMeters?.let(::meters),
+                    stepsStatus(row.hasPendingDistance, row.hasUnfinalDistance),
                 ),
             )
         }
@@ -77,15 +82,24 @@ object CsvExporter {
                     row.activeMillis.coerceAtLeast(0) / 60_000,
                     row.totalSteps,
                     stepsStatus(row.hasPendingSteps, row.hasUnfinalSteps),
+                    row.totalDistanceMeters?.let(::meters),
+                    stepsStatus(row.hasPendingDistance, row.hasUnfinalDistance),
                 ),
             )
         }
     }
 
+    /**
+     * Whole metres, always metric whatever the app shows, so other apps can read it. An unknown
+     * distance is an empty cell, never 0; negative or unreadable values count as 0.
+     */
+    fun meters(value: Double): Long = if (value.isFinite() && value > 0) BigDecimal.valueOf(value).setScale(0, RoundingMode.HALF_UP).toLong() else 0
+
     /** Major units with the currency's own decimals, e.g. 12000 EUR → 120.00, 500 JPY → 500. */
     fun price(minor: Long, currencyCode: String): String =
         BigDecimal.valueOf(minor).movePointLeft(Money.fractionDigits(currencyCode).coerceAtLeast(0)).toPlainString()
 
+    /** Status of a step count or a distance: they follow the same rules, each with its own flags. */
     fun stepsStatus(hasPending: Boolean, hasUnfinal: Boolean): String = when {
         hasPending -> "counted later"
         hasUnfinal -> "provisional"

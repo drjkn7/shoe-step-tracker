@@ -6,6 +6,7 @@ import io.github.drjkn7.shoestep.data.ShoeRepository
 import io.github.drjkn7.shoestep.data.db.ActiveSessionWithShoe
 import io.github.drjkn7.shoestep.data.db.ShoeWithStats
 import io.github.drjkn7.shoestep.session.SessionManager
+import io.github.drjkn7.shoestep.settings.SettingsStore
 import io.github.drjkn7.shoestep.steps.StepReconciler
 import io.github.drjkn7.shoestep.steps.StepsAccess
 import io.github.drjkn7.shoestep.steps.SoFarSteps
@@ -16,6 +17,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
@@ -27,6 +29,7 @@ class HomeViewModel(
     private val sessions: SessionManager,
     private val stepsSource: StepsSource,
     private val reconciler: StepReconciler,
+    private val settings: SettingsStore,
 ) : ViewModel() {
 
     private val _showArchived = MutableStateFlow(false)
@@ -47,6 +50,20 @@ class HomeViewModel(
 
     /** Whether steps can be read; null until first checked. Anything but READY shows the Home banner. */
     val stepsAccess: StateFlow<StepsAccess?> = _stepsAccess.asStateFlow()
+
+    private val _distanceAllowed = MutableStateFlow<Boolean?>(null)
+
+    /**
+     * Home's "Show distance" card (PNG 03): steps are allowed but distance isn't, and "Not now" was never
+     * tapped. False until both checks have answered, so the card never flashes up at launch.
+     */
+    val showDistanceCard: StateFlow<Boolean> = combine(_stepsAccess, _distanceAllowed, settings.distanceCardDismissed) { access, allowed, dismissed ->
+        access == StepsAccess.READY && allowed == false && !dismissed
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
+
+    fun dismissDistanceCard() {
+        viewModelScope.launch { settings.dismissDistanceCard() }
+    }
 
     private val stepsRefresh = MutableStateFlow(0)
 
@@ -80,6 +97,7 @@ class HomeViewModel(
     fun refreshSteps() {
         viewModelScope.launch {
             _stepsAccess.value = stepsSource.access()
+            _distanceAllowed.value = stepsSource.distanceAllowed()
             stepsRefresh.value += 1
         }
     }
@@ -89,6 +107,7 @@ class HomeViewModel(
         viewModelScope.launch {
             val access = stepsSource.access()
             _stepsAccess.value = access
+            _distanceAllowed.value = stepsSource.distanceAllowed()
             stepsRefresh.value += 1
             if (access == StepsAccess.READY) reconciler.reconcile()
         }

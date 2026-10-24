@@ -18,7 +18,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.text
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -28,8 +31,21 @@ import io.github.drjkn7.shoestep.ui.theme.SilverShapes
 import io.github.drjkn7.shoestep.ui.theme.SilverSpacing
 import io.github.drjkn7.shoestep.ui.theme.SilverTheme
 
-/** One figure in the stats grid: label, value, and an optional second line (e.g. distance under steps). */
-data class StatItem(val label: String, val value: String, val extra: String? = null)
+/**
+ * One figure in the stats grid: label, value, and an optional second line (e.g. distance under steps).
+ * The spoken versions, when given, are what TalkBack reads instead ("2.4 kilometres" for "2.4 km").
+ */
+data class StatItem(
+    val label: String,
+    val value: String,
+    val extra: String? = null,
+    val valueSpoken: String? = null,
+    val extraSpoken: String? = null,
+)
+
+/** Shows one text but has TalkBack read [spoken] instead (inside a merged row or cell). */
+internal fun Modifier.spokenAs(spoken: String?): Modifier =
+    if (spoken == null) this else clearAndSetSemantics { text = AnnotatedString(spoken) }
 
 /** The pair's stats in two columns (PNG 08). Each figure is read out as "label, value". */
 @Composable
@@ -49,8 +65,15 @@ private fun StatCell(item: StatItem, modifier: Modifier) {
     val c = SilverTheme.colors
     Column(modifier.semantics(mergeDescendants = true) {}) {
         Text(item.label, style = SilverTheme.type.body, color = c.textMuted)
-        Text(item.value, style = SilverTheme.type.section.copy(fontSize = 20.sp, lineHeight = 26.sp), color = c.textPrimary)
-        item.extra?.let { Text(it, style = SilverTheme.type.body.copy(fontSize = 16.sp), color = c.textPrimary) }
+        Text(
+            item.value,
+            style = SilverTheme.type.section.copy(fontSize = 20.sp, lineHeight = 26.sp),
+            color = c.textPrimary,
+            modifier = Modifier.spokenAs(item.valueSpoken),
+        )
+        item.extra?.let {
+            Text(it, style = SilverTheme.type.body.copy(fontSize = 16.sp), color = c.textPrimary, modifier = Modifier.spokenAs(item.extraSpoken))
+        }
     }
 }
 
@@ -91,6 +114,7 @@ fun HistoryRow(
     steps: String,
     distance: String?,
     modifier: Modifier = Modifier,
+    distanceSpoken: String? = null,
 ) {
     val c = SilverTheme.colors
     Column(modifier.fillMaxWidth()) {
@@ -105,7 +129,9 @@ fun HistoryRow(
             }
             Column(Modifier.widthIn(max = 160.dp), horizontalAlignment = Alignment.End) {
                 Text(steps, style = SilverTheme.type.button, color = c.accentInk, textAlign = TextAlign.End)
-                distance?.let { Text(it, style = SilverTheme.type.body, color = c.textMuted, textAlign = TextAlign.End) }
+                distance?.let {
+                    Text(it, style = SilverTheme.type.body, color = c.textMuted, textAlign = TextAlign.End, modifier = Modifier.spokenAs(distanceSpoken))
+                }
             }
         }
     }

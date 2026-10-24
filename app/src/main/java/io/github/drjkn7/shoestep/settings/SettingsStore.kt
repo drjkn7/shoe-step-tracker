@@ -3,6 +3,7 @@ package io.github.drjkn7.shoestep.settings
 import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
+import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
@@ -25,6 +26,16 @@ interface SettingsStore {
     val themeMode: Flow<ThemeMode>
 
     suspend fun setThemeMode(mode: ThemeMode)
+
+    /** Kilometres or miles; null = not chosen (the phone's region decides, [DistanceUnit.defaultFor]). */
+    val distanceUnit: Flow<DistanceUnit?>
+
+    suspend fun setDistanceUnit(unit: DistanceUnit)
+
+    /** True once "Not now" was tapped on Home's "Show distance" card; it then stays hidden. */
+    val distanceCardDismissed: Flow<Boolean>
+
+    suspend fun dismissDistanceCard()
 }
 
 /**
@@ -57,9 +68,23 @@ class DataStoreSettings(
         store.edit { it[THEME] = mode.name }
     }
 
+    override val distanceUnit: Flow<DistanceUnit?> = store.data.map { prefs -> DistanceUnit.fromStored(prefs[DISTANCE_UNIT]) }
+
+    override suspend fun setDistanceUnit(unit: DistanceUnit) {
+        store.edit { it[DISTANCE_UNIT] = unit.name }
+    }
+
+    override val distanceCardDismissed: Flow<Boolean> = store.data.map { prefs -> prefs[DISTANCE_CARD_DISMISSED] == true }
+
+    override suspend fun dismissDistanceCard() {
+        store.edit { it[DISTANCE_CARD_DISMISSED] = true }
+    }
+
     private companion object {
         const val FILE_NAME = "settings"
         val CURRENCY = stringPreferencesKey("default_currency")
         val THEME = stringPreferencesKey("theme_mode")
+        val DISTANCE_UNIT = stringPreferencesKey("distance_unit")
+        val DISTANCE_CARD_DISMISSED = booleanPreferencesKey("distance_card_dismissed")
     }
 }

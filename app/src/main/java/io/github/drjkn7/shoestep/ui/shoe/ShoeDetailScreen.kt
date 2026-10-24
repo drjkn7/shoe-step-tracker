@@ -37,6 +37,7 @@ import io.github.drjkn7.shoestep.data.db.SessionWithSteps
 import io.github.drjkn7.shoestep.data.db.ShoeWithStats
 import io.github.drjkn7.shoestep.data.model.EndReason
 import io.github.drjkn7.shoestep.data.model.SessionState
+import io.github.drjkn7.shoestep.settings.DistanceUnit
 import io.github.drjkn7.shoestep.steps.SoFarSteps
 import io.github.drjkn7.shoestep.ui.common.CardLabel
 import io.github.drjkn7.shoestep.ui.common.ColourDot
@@ -56,6 +57,8 @@ import io.github.drjkn7.shoestep.ui.common.StatItem
 import io.github.drjkn7.shoestep.ui.common.StatsGrid
 import io.github.drjkn7.shoestep.ui.common.StepsLabel
 import io.github.drjkn7.shoestep.ui.common.TextActionButton
+import io.github.drjkn7.shoestep.ui.common.LocalDistanceUnit
+import io.github.drjkn7.shoestep.ui.common.distanceText
 import io.github.drjkn7.shoestep.ui.common.labelRes
 import io.github.drjkn7.shoestep.ui.common.labelledSteps
 import io.github.drjkn7.shoestep.ui.common.stepsCountText
@@ -257,11 +260,14 @@ private fun DetailContent(
             val stepsLabel = StepsLabel.of(item.hasPendingSteps, item.hasUnfinalSteps)
             val (hours, minutes) = Formatters.hoursAndMinutes(item.activeMillis)
             val cost = CostCalculator.cost(shoe.priceMinor, shoe.currencyCode, item.totalSteps)
-            // Distance figures show a dash until distance is read from Health Connect (M2 Phase 5).
+            val unit = LocalDistanceUnit.current
+            val totalDistance = distanceText(item.totalDistanceMeters, item.hasUnfinalDistance)
+            val averageDistance = distanceText(item.averageDistancePerSession, item.hasUnfinalDistance)
+            val costPerDistance = CostCalculator.costPerDistance(shoe.priceMinor, shoe.currencyCode, item.totalDistanceMeters, unit.metres)
             StatsGrid(
                 listOf(
                     StatItem(stringResource(R.string.detail_total_steps), labelledSteps(Formatters.count(item.totalSteps, locale), stepsLabel)),
-                    StatItem(stringResource(R.string.detail_total_distance), dash),
+                    StatItem(stringResource(R.string.detail_total_distance), totalDistance.shown, valueSpoken = totalDistance.spoken),
                     StatItem(stringResource(R.string.detail_sessions), Formatters.count(item.sessionCount.toLong(), locale)),
                     StatItem(
                         stringResource(R.string.detail_walking_time),
@@ -271,14 +277,18 @@ private fun DetailContent(
                     StatItem(
                         stringResource(R.string.detail_average_steps),
                         item.averageStepsPerSession?.let { labelledSteps(Formatters.count(it, locale), stepsLabel) } ?: dash,
-                        extra = dash,
+                        extra = averageDistance.shown,
+                        extraSpoken = averageDistance.spoken,
                     ),
                     StatItem(
                         stringResource(R.string.detail_last_worn),
                         item.lastUsedUtc?.let { Formatters.date(Formatters.localEpochDay(it), locale) } ?: dash,
                     ),
                     StatItem(stringResource(R.string.detail_cost_per_1000), Formatters.costPerThousand(cost, shoe.currencyCode, locale) ?: dash),
-                    StatItem(stringResource(R.string.detail_cost_per_km), dash),
+                    StatItem(
+                        stringResource(if (unit == DistanceUnit.MILES) R.string.detail_cost_per_mile else R.string.detail_cost_per_km),
+                        Formatters.costPerDistance(costPerDistance, shoe.currencyCode, locale) ?: dash,
+                    ),
                 ),
                 modifier = Modifier.padding(top = SilverSpacing.s),
             )
@@ -400,7 +410,6 @@ private const val SEPARATOR = " · "
 @Composable
 private fun HistoryCard(history: List<SessionWithSteps>) {
     val locale = LocalConfiguration.current.locales[0]
-    val dash = stringResource(R.string.dash)
     // T26: a long-used pair can have thousands of sessions; build only the newest ones, a page at a time.
     var shown by rememberSaveable { mutableIntStateOf(HISTORY_PAGE_SIZE) }
     SilverCard {
@@ -417,6 +426,7 @@ private fun HistoryCard(history: List<SessionWithSteps>) {
             } else {
                 stringResource(R.string.duration_minutes, minutes)
             }
+            val distance = distanceText(row.totalDistanceMeters, row.hasUnfinalDistance)
             HistoryRow(
                 title = stringResource(R.string.history_row, Formatters.dateTime(session.startUtc, session.zoneId, locale), duration),
                 note = if (session.endReason == EndReason.SWITCH) stringResource(R.string.history_switched) else null,
@@ -425,8 +435,8 @@ private fun HistoryCard(history: List<SessionWithSteps>) {
                 } else {
                     stringResource(R.string.history_in_progress)
                 },
-                // Distance per session arrives in M2 Phase 5.
-                distance = if (ended) dash else null,
+                distance = if (ended) distance.shown else null,
+                distanceSpoken = if (ended) distance.spoken else null,
             )
         }
         val remaining = history.size - shown

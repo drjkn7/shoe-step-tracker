@@ -115,6 +115,7 @@
     <string name="detail_cost_per_1000">Cost per 1,000 steps</string>
     <string name="detail_total_distance">Total distance</string>
     <string name="detail_cost_per_km">Cost per km</string>
+    <string name="detail_cost_per_mile">Cost per mile</string>
     <string name="detail_archived_note">This shoe is archived. Its history is kept.</string>
     <string name="detail_session_running">Session running since %1$s</string>
     <string name="detail_session_paused">Session paused</string>
@@ -148,6 +149,17 @@
     <string name="history_steps_pending">%1$s (counted later)</string>
     <!-- Provisional counts: may still change for one day while wearables sync. -->
     <string name="steps_about">About %1$s</string>
+
+    <!-- Distance (M2). The number already has one decimal and the locale's separators. -->
+    <string name="distance_km">%1$s km</string>
+    <string name="distance_mi">%1$s mi</string>
+    <!-- What TalkBack reads instead of the short units. -->
+    <string name="distance_km_spoken">%1$s kilometres</string>
+    <string name="distance_mi_spoken">%1$s miles</string>
+    <string name="distance_card_title">Show distance</string>
+    <string name="distance_card_body">Allow distance in Health Connect to see how far each pair has walked. Steps keep counting either way.</string>
+    <string name="distance_card_not_now">Not now</string>
+    <string name="distance_card_allow">Allow</string>
 
     <!-- Step counting (Health Connect) -->
     <string name="session_card_steps_so_far">About %1$s so far</string>
@@ -233,6 +245,12 @@
     <string name="settings_steps">Step counting</string>
     <string name="settings_steps_ready">Steps and distance are read from Health Connect. You can stop this at any time there.</string>
     <string name="settings_manage_health_connect">Open Health Connect</string>
+    <string name="settings_steps_no_distance">Steps are read from Health Connect. Distance isn\'t allowed yet, so how far each pair has walked shows a dash.</string>
+    <string name="settings_allow_distance">Allow distance</string>
+    <string name="settings_units">Units</string>
+    <string name="settings_distance">Distance</string>
+    <string name="units_kilometres">Kilometres</string>
+    <string name="units_miles">Miles</string>
     <string name="settings_your_data">Your data</string>
     <string name="settings_export_body">Save your pairs or your sessions as a spreadsheet (CSV) file, in a place you choose. This is the only way data leaves the app.</string>
     <string name="settings_export_pairs">Export pairs</string>

@@ -1,6 +1,8 @@
 package io.github.drjkn7.shoestep.ui.home
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
@@ -11,6 +13,7 @@ import io.github.drjkn7.shoestep.R
 import io.github.drjkn7.shoestep.steps.StepsAccess
 import io.github.drjkn7.shoestep.ui.common.CardLabel
 import io.github.drjkn7.shoestep.ui.common.PrimaryButton
+import io.github.drjkn7.shoestep.ui.common.SecondaryButton
 import io.github.drjkn7.shoestep.ui.common.SilverCard
 import io.github.drjkn7.shoestep.ui.theme.SilverSpacing
 import io.github.drjkn7.shoestep.ui.theme.SilverTheme
@@ -27,6 +30,27 @@ fun StepsAccessCard(
     SilverCard(modifier) {
         CardLabel(stringResource(R.string.steps_access_title))
         StepsAccessContent(access, onAllow, onInstall)
+    }
+}
+
+/**
+ * Home's "Show distance" card (PNG 03), for people who allowed steps but not distance (everyone
+ * updating from v0.1.0). Allow asks Health Connect for distance only; Not now hides the card for good
+ * (Settings → Step counting still offers "Allow distance").
+ */
+@Composable
+fun DistanceAccessCard(onAllow: () -> Unit, onNotNow: () -> Unit, modifier: Modifier = Modifier) {
+    SilverCard(modifier) {
+        CardLabel(stringResource(R.string.distance_card_title))
+        Text(
+            stringResource(R.string.distance_card_body),
+            style = SilverTheme.type.body.copy(fontSize = SilverTheme.type.button.fontSize),
+            color = SilverTheme.colors.textPrimary,
+        )
+        Row(Modifier.fillMaxWidth().padding(top = SilverSpacing.s), horizontalArrangement = Arrangement.spacedBy(SilverSpacing.m)) {
+            SecondaryButton(stringResource(R.string.distance_card_not_now), onNotNow, Modifier.weight(1f))
+            PrimaryButton(stringResource(R.string.distance_card_allow), onAllow, Modifier.weight(1f))
+        }
     }
 }
 

@@ -29,6 +29,7 @@ import io.github.drjkn7.shoestep.ui.common.Formatters
 import io.github.drjkn7.shoestep.ui.common.PrimaryButton
 import io.github.drjkn7.shoestep.ui.common.SecondaryButton
 import io.github.drjkn7.shoestep.ui.common.SilverCard
+import io.github.drjkn7.shoestep.ui.common.distanceText
 import io.github.drjkn7.shoestep.ui.common.stepsCountText
 import io.github.drjkn7.shoestep.ui.theme.SilverSpacing
 import io.github.drjkn7.shoestep.ui.theme.SilverTheme
@@ -60,12 +61,12 @@ fun SessionButtons(
 }
 
 /**
- * The live count of a running session: "About 3,214" large with "steps so far" beside it, then the
- * distance in accent ink when known ([distanceText], from Phase 5). Read out as one sentence.
+ * The live count of a running session: "About 3,214" large with "steps so far" beside it, then
+ * "About 2.4 km" in accent ink when the distance can be read. Steps are read out as one sentence.
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun SoFarCount(stepsSoFar: SoFarSteps?, distanceText: String? = null) {
+fun SoFarCount(stepsSoFar: SoFarSteps?) {
     val c = SilverTheme.colors
     when (stepsSoFar) {
         is SoFarSteps.Count -> {
@@ -88,8 +89,15 @@ fun SoFarCount(stepsSoFar: SoFarSteps?, distanceText: String? = null) {
         SoFarSteps.Later -> Text(stringResource(R.string.session_card_steps_later), style = SilverTheme.type.body, color = c.textMuted)
         null -> Unit
     }
-    distanceText?.let {
-        Text(stringResource(R.string.steps_about, it), style = SilverTheme.type.section.copy(fontWeight = FontWeight.Medium), color = c.accentInk)
+    (stepsSoFar as? SoFarSteps.Count)?.distanceMeters?.let { meters ->
+        // Always "About": a running session's distance can still change.
+        val distance = distanceText(meters, unfinal = true)
+        Text(
+            distance.shown,
+            style = SilverTheme.type.section.copy(fontWeight = FontWeight.Medium),
+            color = c.accentInk,
+            modifier = Modifier.clearAndSetSemantics { text = AnnotatedString(distance.spoken) },
+        )
     }
 }
 

@@ -27,7 +27,12 @@ private const val SHOE_STATS_COLUMNS = """
            WHERE x.shoe_id = s.id AND g.end_utc IS NOT NULL
            AND g.steps_status IN ('PENDING', 'PROVISIONAL')) AS has_unfinal_steps,
     EXISTS(SELECT 1 FROM segments g JOIN sessions x ON g.session_id = x.id
-           WHERE x.shoe_id = s.id AND g.end_utc IS NOT NULL AND g.steps_status = 'PENDING') AS has_pending_steps
+           WHERE x.shoe_id = s.id AND g.end_utc IS NOT NULL AND g.steps_status = 'PENDING') AS has_pending_steps,
+    EXISTS(SELECT 1 FROM segments g JOIN sessions x ON g.session_id = x.id
+           WHERE x.shoe_id = s.id AND g.end_utc IS NOT NULL
+           AND g.distance_status IN ('PENDING', 'PROVISIONAL')) AS has_unfinal_distance,
+    EXISTS(SELECT 1 FROM segments g JOIN sessions x ON g.session_id = x.id
+           WHERE x.shoe_id = s.id AND g.end_utc IS NOT NULL AND g.distance_status = 'PENDING') AS has_pending_distance
 """
 
 @Dao
@@ -111,7 +116,9 @@ interface SessionDao {
             EXISTS(SELECT 1 FROM segments g WHERE g.session_id = x.id
                    AND g.end_utc IS NOT NULL AND g.steps_status IN ('PENDING', 'PROVISIONAL')) AS has_unfinal_steps,
             EXISTS(SELECT 1 FROM segments g WHERE g.session_id = x.id
-                   AND g.end_utc IS NOT NULL AND g.steps_status = 'PENDING') AS has_pending_steps
+                   AND g.end_utc IS NOT NULL AND g.steps_status = 'PENDING') AS has_pending_steps,
+            EXISTS(SELECT 1 FROM segments g WHERE g.session_id = x.id
+                   AND g.end_utc IS NOT NULL AND g.distance_status IN ('PENDING', 'PROVISIONAL')) AS has_unfinal_distance
         FROM sessions x WHERE x.shoe_id = :shoeId ORDER BY x.start_utc DESC, x.id
         """,
     )
@@ -122,12 +129,17 @@ interface SessionDao {
         """
         SELECT x.*, s.name AS shoe_name,
             COALESCE((SELECT SUM(g.steps) FROM segments g WHERE g.session_id = x.id), 0) AS total_steps,
+            (SELECT SUM(g.distance_m) FROM segments g WHERE g.session_id = x.id) AS total_distance_m,
             COALESCE((SELECT SUM(MAX(0, g.end_utc - g.start_utc)) FROM segments g
                       WHERE g.session_id = x.id AND g.end_utc IS NOT NULL), 0) AS active_millis,
             EXISTS(SELECT 1 FROM segments g WHERE g.session_id = x.id
                    AND g.end_utc IS NOT NULL AND g.steps_status IN ('PENDING', 'PROVISIONAL')) AS has_unfinal_steps,
             EXISTS(SELECT 1 FROM segments g WHERE g.session_id = x.id
-                   AND g.end_utc IS NOT NULL AND g.steps_status = 'PENDING') AS has_pending_steps
+                   AND g.end_utc IS NOT NULL AND g.steps_status = 'PENDING') AS has_pending_steps,
+            EXISTS(SELECT 1 FROM segments g WHERE g.session_id = x.id
+                   AND g.end_utc IS NOT NULL AND g.distance_status IN ('PENDING', 'PROVISIONAL')) AS has_unfinal_distance,
+            EXISTS(SELECT 1 FROM segments g WHERE g.session_id = x.id
+                   AND g.end_utc IS NOT NULL AND g.distance_status = 'PENDING') AS has_pending_distance
         FROM sessions x JOIN shoes s ON x.shoe_id = s.id
         ORDER BY x.start_utc, x.id
         """,
