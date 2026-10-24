@@ -185,4 +185,31 @@ class DistanceReconcilerTest {
         reconciler.reconcile()
         assertEquals(640.0, store["g1"].distanceMeters!!, 0.0)
     }
+
+    // --- distanceSoFar(): the live "About 2.4 km" on a running session's card (Phase 5) ------------
+
+    @Test fun distanceSoFarUsesSavedDistancesAndReadsTheRestUpToNow() = runTest {
+        store.add("done", now - 3 * hour, now - 2 * hour, meters = 1_000.0, distanceStatus = PROVISIONAL)
+        store.add("gone", now - 5 * hour, now - 4 * hour, distanceStatus = UNAVAILABLE)
+        store.add("open", now - 30 * minute, null)
+        store.add("other", now - 30 * minute, null, sessionId = "s2")
+        source.distanceAnswer = { _, _ -> DistanceRead.Meters(400.0) }
+
+        assertEquals(1_400.0, reconciler.distanceSoFar("s1")!!, 0.0)
+        assertEquals(listOf((now - 30 * minute) to now), source.distanceReads)
+        assertEquals("nothing is saved", PENDING, store["open"].distanceStatus)
+    }
+
+    @Test fun distanceSoFarIsNullWhenNotAllowedFailedOrNothingKnown() = runTest {
+        store.add("open", now - hour, null)
+        assertNull("Health Connect has no distance yet: no line, not 0 km", reconciler.distanceSoFar("s1"))
+
+        source.distanceAnswer = { _, _ -> DistanceRead.Failed }
+        assertNull(reconciler.distanceSoFar("s1"))
+
+        source.distanceAllowed = false
+        source.distanceReads.clear()
+        assertNull(reconciler.distanceSoFar("s1"))
+        assertTrue("no read without permission", source.distanceReads.isEmpty())
+    }
 }

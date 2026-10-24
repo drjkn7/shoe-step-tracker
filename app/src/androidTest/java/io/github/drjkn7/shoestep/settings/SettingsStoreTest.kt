@@ -11,6 +11,9 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.util.UUID
@@ -39,6 +42,22 @@ class SettingsStoreTest {
         val secondRun = CoroutineScope(Dispatchers.IO + SupervisorJob())
         val after = DataStoreSettings(context, fileName, secondRun)
         assertEquals(ThemeMode.DARK, after.themeMode.first())
+        secondRun.cancel()
+    }
+
+    @Test fun distanceUnitAndCardChoiceSurviveARestart() = runBlocking {
+        val firstRun = CoroutineScope(Dispatchers.IO + SupervisorJob())
+        val before = DataStoreSettings(context, fileName, firstRun)
+        assertNull("not chosen: the region decides", before.distanceUnit.first())
+        assertFalse(before.distanceCardDismissed.first())
+        before.setDistanceUnit(DistanceUnit.MILES)
+        before.dismissDistanceCard()
+        firstRun.cancel()
+
+        val secondRun = CoroutineScope(Dispatchers.IO + SupervisorJob())
+        val after = DataStoreSettings(context, fileName, secondRun)
+        assertEquals(DistanceUnit.MILES, after.distanceUnit.first())
+        assertTrue(after.distanceCardDismissed.first())
         secondRun.cancel()
     }
 }

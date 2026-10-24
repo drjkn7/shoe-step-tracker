@@ -9,6 +9,7 @@ import io.github.drjkn7.shoestep.AppContainer
 import io.github.drjkn7.shoestep.core.Clock
 import io.github.drjkn7.shoestep.data.db.ShoeStepDatabase
 import io.github.drjkn7.shoestep.nfc.NfcState
+import io.github.drjkn7.shoestep.settings.DistanceUnit
 import io.github.drjkn7.shoestep.settings.SettingsStore
 import io.github.drjkn7.shoestep.settings.SystemNightMode
 import io.github.drjkn7.shoestep.settings.ThemeMode
@@ -31,7 +32,8 @@ class FakeStepsSource(
     @Volatile var access: StepsAccess = StepsAccess.READY,
     /** Returned for every read; null = no data. */
     @Volatile var steps: Long? = null,
-    @Volatile var distanceAllowed: Boolean = false,
+    /** Allowed by default, like someone who tapped Allow once (so Home shows no "Show distance" card). */
+    @Volatile var distanceAllowed: Boolean = true,
     /** Returned for every distance read; null = no data. */
     @Volatile var meters: Double? = null,
 ) : StepsSource {
@@ -66,8 +68,29 @@ fun testContainer(
     systemNightModeFactory = { systemNightMode },
 )
 
-/** Settings that live only in memory, so UI tests never touch the real settings file. */
-class InMemorySettings(initialCurrency: String? = null, initialTheme: ThemeMode = ThemeMode.SYSTEM) : SettingsStore {
+/**
+ * Settings that live only in memory, so UI tests never touch the real settings file. Distance starts in
+ * kilometres so tests don't depend on the emulator's region (a US emulator would pick miles).
+ */
+class InMemorySettings(
+    initialCurrency: String? = null,
+    initialTheme: ThemeMode = ThemeMode.SYSTEM,
+    initialDistanceUnit: DistanceUnit? = DistanceUnit.KILOMETRES,
+) : SettingsStore {
+    private val unit = MutableStateFlow(initialDistanceUnit)
+    override val distanceUnit: Flow<DistanceUnit?> = unit
+
+    override suspend fun setDistanceUnit(unit: DistanceUnit) {
+        this.unit.value = unit
+    }
+
+    private val cardDismissed = MutableStateFlow(false)
+    override val distanceCardDismissed: Flow<Boolean> = cardDismissed
+
+    override suspend fun dismissDistanceCard() {
+        cardDismissed.value = true
+    }
+
     private val currency = MutableStateFlow(initialCurrency)
     override val defaultCurrency: Flow<String?> = currency
 
