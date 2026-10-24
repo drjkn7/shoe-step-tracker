@@ -46,6 +46,7 @@ fun testContainer(
     clock: Clock = TestClock,
     nfcState: NfcState = NfcState.ON,
     settings: SettingsStore = InMemorySettings(),
+    systemNightMode: SystemNightMode = SystemNightMode {},
 ): AppContainer = AppContainer(
     context = ApplicationProvider.getApplicationContext(),
     databaseFactory = ShoeStepDatabase::buildInMemory,
@@ -53,7 +54,7 @@ fun testContainer(
     stepsSourceFactory = { stepsSource },
     nfcStateProvider = { nfcState },
     settingsFactory = { settings },
-    systemNightModeFactory = { SystemNightMode {} },
+    systemNightModeFactory = { systemNightMode },
 )
 
 /** Settings that live only in memory, so UI tests never touch the real settings file. */

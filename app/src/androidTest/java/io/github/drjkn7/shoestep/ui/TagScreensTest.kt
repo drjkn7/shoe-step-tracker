@@ -9,6 +9,7 @@ import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -216,7 +217,7 @@ class TagScreensTest {
         dialogButton(str(R.string.tag_add_new_pair)).performClick()
         rule.onNode(hasSetTextAction() and hasText(str(R.string.field_name), substring = true))
             .performTextReplacement("Gym shoes")
-        rule.onNodeWithText(str(R.string.action_save)).performScrollTo().performClick()
+        rule.onAllNodesWithText(str(R.string.action_save)).onFirst().performClick()
 
         waitForText(str(R.string.tag_linking_title, "Gym shoes"))
         tap(TagContent.Blank)
