@@ -25,6 +25,8 @@ import io.github.drjkn7.shoestep.nfc.TagEvent
 import io.github.drjkn7.shoestep.ui.nfc.TagPromptHost
 import io.github.drjkn7.shoestep.ui.common.FilterTouchesWhenObscured
 import io.github.drjkn7.shoestep.ui.common.LocalAppContainer
+import io.github.drjkn7.shoestep.ui.common.LocalDistanceUnit
+import io.github.drjkn7.shoestep.settings.DistanceUnit
 import io.github.drjkn7.shoestep.ui.home.HomeScreen
 import io.github.drjkn7.shoestep.ui.home.HomeViewModel
 import io.github.drjkn7.shoestep.ui.settings.LicencesScreen
@@ -40,10 +42,15 @@ import kotlinx.coroutines.launch
 @Composable
 fun AppNavHost(container: AppContainer) {
     FilterTouchesWhenObscured() // SEC-11 for the main window
-    CompositionLocalProvider(LocalAppContainer provides container) {
+    val locale = LocalConfiguration.current.locales[0]
+    // Settings → Units; until chosen, the phone's region decides. A change redraws every screen.
+    val chosenUnit by container.settings.distanceUnit.collectAsStateWithLifecycle(initialValue = null)
+    CompositionLocalProvider(
+        LocalAppContainer provides container,
+        LocalDistanceUnit provides (chosenUnit ?: DistanceUnit.defaultFor(locale)),
+    ) {
         val navController = rememberNavController()
         val shoeIdArg = listOf(navArgument(Routes.ARG_SHOE_ID) { type = NavType.StringType })
-        val locale = LocalConfiguration.current.locales[0]
         val goBack: () -> Unit = { navController.popBackStack() }
         val tags = container.tagCoordinator
         val scope = rememberCoroutineScope()
@@ -76,6 +83,7 @@ fun AppNavHost(container: AppContainer) {
                             container.sessionManager,
                             container.stepsSource,
                             container.stepReconciler,
+                            container.settings,
                         ) },
                     onAddShoe = {
                         tags.onAddCancelled() // a plain "Add" never links a tag afterwards
@@ -147,7 +155,7 @@ fun AppNavHost(container: AppContainer) {
             composable(Routes.SETTINGS) {
                 SettingsScreen(
                     viewModel = viewModel {
-                        SettingsViewModel(container.settings, container.stepsSource, container.exporter, container.clock, container.systemNightMode)
+                        SettingsViewModel(container.settings, container.stepsSource, container.exporter, container.clock, container.systemNightMode, container.stepReconciler)
                     },
                     onBack = goBack,
                     onOpenPrivacy = { navController.navigate(Routes.PRIVACY) },

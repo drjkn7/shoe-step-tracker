@@ -28,8 +28,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.text
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -51,6 +54,7 @@ import io.github.drjkn7.shoestep.ui.common.SilverScreen
 import io.github.drjkn7.shoestep.ui.common.StatusBadge
 import io.github.drjkn7.shoestep.ui.common.StepsLabel
 import io.github.drjkn7.shoestep.ui.common.SwitchRow
+import io.github.drjkn7.shoestep.ui.common.distanceText
 import io.github.drjkn7.shoestep.ui.common.labelRes
 import io.github.drjkn7.shoestep.ui.common.labelledSteps
 import io.github.drjkn7.shoestep.ui.common.screenContentPadding
@@ -63,7 +67,7 @@ import io.github.drjkn7.shoestep.ui.theme.SilverTheme
 import io.github.drjkn7.shoestep.ui.theme.pressedIn
 
 /**
- * Home (PNGs 01, 02): "My shoes", the current session, the steps banner, the pairs, the "Show
+ * Home (PNGs 01–03): "My shoes", the current session, the steps and distance cards, the pairs, the "Show
  * archived" switch, and "Add shoe" at the bottom end. Everything scrolls together under the gear.
  */
 @Composable
@@ -78,6 +82,7 @@ fun HomeScreen(
     val active by viewModel.activeSession.collectAsStateWithLifecycle()
     val stepsAccess by viewModel.stepsAccess.collectAsStateWithLifecycle()
     val stepsSoFar by viewModel.stepsSoFar.collectAsStateWithLifecycle()
+    val showDistanceCard by viewModel.showDistanceCard.collectAsStateWithLifecycle()
     var confirmEndId by rememberSaveable { mutableStateOf<String?>(null) }
     val context = LocalContext.current
     val permissionLauncher = rememberLauncherForActivityResult(HealthConnectStepsSource.permissionContract()) {
@@ -125,6 +130,14 @@ fun HomeScreen(
                         access = access,
                         onAllow = { permissionLauncher.launch(HealthConnectStepsSource.PERMISSIONS) },
                         onInstall = { HealthConnectStepsSource.openInstallPage(context) },
+                    )
+                }
+            }
+            if (showDistanceCard) {
+                item(key = "distance") {
+                    DistanceAccessCard(
+                        onAllow = { permissionLauncher.launch(setOf(HealthConnectStepsSource.DISTANCE_PERMISSION)) },
+                        onNotNow = viewModel::dismissDistanceCard,
                     )
                 }
             }
@@ -183,6 +196,7 @@ internal fun ShoeRow(item: ShoeWithStats, paused: Boolean, onClick: () -> Unit) 
         stepsCountText(item.totalSteps),
         StepsLabel.of(item.hasPendingSteps, item.hasUnfinalSteps),
     )
+    val distance = distanceText(item.totalDistanceMeters, item.hasUnfinalDistance)
     val nameAndType = @Composable { modifier: Modifier ->
         Column(modifier) {
             Text(shoe.name, style = SilverTheme.type.section.copy(fontSize = 18.sp), color = c.textPrimary, maxLines = 2, overflow = TextOverflow.Ellipsis)
@@ -201,8 +215,12 @@ internal fun ShoeRow(item: ShoeWithStats, paused: Boolean, onClick: () -> Unit) 
                 )
             }
             Text(stepsText, style = SilverTheme.type.button.copy(fontSize = 16.sp), color = c.accentInk)
-            // Total distance arrives in M2 Phase 5.
-            Text(stringResource(R.string.dash), style = SilverTheme.type.body.copy(fontWeight = FontWeight.SemiBold), color = c.textMuted)
+            Text(
+                distance.shown,
+                style = SilverTheme.type.body.copy(fontWeight = FontWeight.SemiBold),
+                color = c.textMuted,
+                modifier = Modifier.clearAndSetSemantics { text = AnnotatedString(distance.spoken) },
+            )
         }
     }
     SilverCard(onClick = onClick) {

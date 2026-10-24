@@ -41,15 +41,15 @@ Status: ☐ not run · ✅ passed · ❌ failed. Phase = when it first becomes t
 
 | ID | Scenario | Expected | Phase | Status |
 |---|---|---|---|---|
-| T31 | Session with distance in Health Connect | Distance per session, totals and average correct | 4–5 | ☐ |
-| T32 | Switch km ↔ miles | Every screen updates; stored metres unchanged | 5 | ☐ |
-| T33 | Steps allowed, distance refused | Steps unaffected; distance "–"; "Show distance" card | 4–5 | ◐ data side automated (DistanceReconcilerTest: steps unaffected, distance waits, filled once allowed); "–" and the card in Phase 5 |
-| T34 | No distance data for a session | "–", not 0; left out of totals; cost per km/mile shows a dash | 4–5 | ◐ data side automated (UNAVAILABLE, totals null not 0: DistanceReconcilerTest, StepsDbTest); display in Phase 5 |
+| T31 | Session with distance in Health Connect | Distance per session, totals and average correct | 4–5 | ✅ DistanceScreensTest (Home row, pair stats, average, History rows, live "About" on the session card), DistanceReconcilerTest; with real Health Connect data on the phone before release |
+| T32 | Switch km ↔ miles | Every screen updates; stored metres unchanged | 5 | ✅ DistanceScreensTest (Settings → Units → Miles: Home, pair page and cost per mile update; stored metres unchanged), SettingsStoreTest (kept after restart), DistanceUnitTest (region default) |
+| T33 | Steps allowed, distance refused | Steps unaffected; distance "–"; "Show distance" card | 4–5 | ✅ DistanceReconcilerTest (steps unaffected, distance waits, filled once allowed); DistanceScreensTest (card shown, Not now hides it for good, Settings still offers "Allow distance"). The Allow button opens Health Connect's own screen: manual check on the phone |
+| T34 | No distance data for a session | "–", not 0; left out of totals; cost per km/mile shows a dash | 4–5 | ✅ DistanceReconcilerTest, StepsDbTest (totals null, not 0); DistanceScreensTest (dashes on the pair page, never "0.0 km"); CsvExporterTest (empty cell) |
 | T35 | Provisional distance | "About" for one day, may go up or down, then final | 4 | ✅ DistanceReconcilerTest (same rules as steps, shared code), StepsDbTest end to end |
 | T36 | Phone + watch both write distance | Not counted twice (manual) | 4 | ◐ uses Health Connect's de-duplicated total (official aggregate guide); manual check with a watch before release |
 | T37 | Database v1 → v2 | All shoes, sessions, segments and tags kept (MigrationTest + install over v0.1.0) | 4 | ◐ MigrationTest (every table and value kept, distance PENDING) and the test app upgraded on the Pixel with its data; install over v0.1.0 with the release key in Phase 8 |
-| T38 | CSV export | distance_m columns present; injection protection intact | 5 | ☐ |
-| T39 | Cost per km/mile edge cases | Dash with no price or zero distance; 0 for free shoes | 5 | ☐ |
+| T38 | CSV export | Distance columns in metres present; injection protection intact | 5 | ✅ CsvExporterTest, ExportDbTest ("Total distance in metres" / "Distance in metres" in whole metres, always metric, empty when unknown, plus "Distance status"; formula neutralising unchanged) |
+| T39 | Cost per km/mile edge cases | Dash with no price or zero distance; 0 for free shoes | 5 | ✅ CostCalculatorTest (no price, no or zero distance, negative, unknown currency, free shoes, yen, tiny distances), FormattersTest, DistanceScreensTest (€ per km and per mile on screen) |
 | T40 | Notification permission (13+) | In-app ask, then system prompt; refusing leaves the app usable; no prompt below 13 | 7 | ☐ |
 | T41 | Notification lifecycle | Appears on start (button and tag); updates on pause/resume; removed on end, switch, archive, delete | 7 | ☐ |
 | T42 | Notification actions | Pause/Resume act at once; End opens the confirmation; stale or foreign session ids ignored | 7 | ☐ |

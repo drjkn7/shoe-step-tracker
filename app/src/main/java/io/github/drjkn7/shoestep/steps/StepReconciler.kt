@@ -86,6 +86,36 @@ class StepReconciler(
         return total
     }
 
+    /**
+     * Like [stepsSoFar], for distance in metres. Null when distance isn't allowed, can't be read right
+     * now, or Health Connect has none for this session yet (the card then shows no distance line).
+     */
+    suspend fun distanceSoFar(sessionId: String): Double? {
+        if (!source.distanceAllowed()) return null
+        val now = clock.nowUtcMillis()
+        var total = 0.0
+        var anyKnown = false
+        for (segment in store.segments(sessionId)) {
+            val known = segment.distanceMeters
+            when {
+                known != null -> {
+                    total += known
+                    anyKnown = true
+                }
+                segment.distanceStatus == StepsStatus.UNAVAILABLE -> Unit
+                else -> when (val read = readDistanceOrZero(segment.startUtc, segment.endUtc ?: now)) {
+                    is DistanceRead.Meters -> {
+                        total += read.meters
+                        anyKnown = true
+                    }
+                    DistanceRead.NoData -> Unit
+                    DistanceRead.Failed -> return null
+                }
+            }
+        }
+        return if (anyKnown) total else null
+    }
+
     /** A zero-length (or clock-reversed) time span has no steps; no need to ask. */
     private suspend fun readOrZero(startUtc: Long, endUtc: Long): StepsRead =
         if (endUtc <= startUtc) StepsRead.Count(0) else source.read(startUtc, endUtc)

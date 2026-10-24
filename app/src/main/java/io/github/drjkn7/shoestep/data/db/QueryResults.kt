@@ -20,10 +20,18 @@ data class ShoeWithStats(
     @ColumnInfo(name = "has_unfinal_steps") val hasUnfinalSteps: Boolean,
     /** True while any closed segment has no count yet (UI shows "counted later"). */
     @ColumnInfo(name = "has_pending_steps") val hasPendingSteps: Boolean,
+    /** Like [hasUnfinalSteps], for distance (its own status): the UI shows "About" before the distance. */
+    @ColumnInfo(name = "has_unfinal_distance") val hasUnfinalDistance: Boolean = false,
+    /** True while any closed segment has no distance yet (e.g. distance not allowed); CSV "counted later". */
+    @ColumnInfo(name = "has_pending_distance") val hasPendingDistance: Boolean = false,
 ) {
     /** Average over ended sessions; null when there are none. */
     val averageStepsPerSession: Long?
         get() = if (endedSessionCount == 0) null else totalSteps / endedSessionCount
+
+    /** Average distance over ended sessions; null when there are none or no distance is known. */
+    val averageDistancePerSession: Double?
+        get() = if (endedSessionCount == 0) null else totalDistanceMeters?.let { it / endedSessionCount }
 }
 
 /** The running or paused session plus the shoe details the Home card shows. */
@@ -45,6 +53,8 @@ data class SessionWithSteps(
     @ColumnInfo(name = "has_unfinal_steps") val hasUnfinalSteps: Boolean,
     /** True while any closed segment has no count yet (UI shows "counted later"). */
     @ColumnInfo(name = "has_pending_steps") val hasPendingSteps: Boolean,
+    /** True while any closed segment's distance is PENDING or PROVISIONAL (UI shows "About"). */
+    @ColumnInfo(name = "has_unfinal_distance") val hasUnfinalDistance: Boolean = false,
 )
 
 /** One session row of the CSV export: the session, its pair's name and computed totals. */
@@ -55,4 +65,8 @@ data class SessionExportRow(
     @ColumnInfo(name = "active_millis") val activeMillis: Long,
     @ColumnInfo(name = "has_unfinal_steps") val hasUnfinalSteps: Boolean,
     @ColumnInfo(name = "has_pending_steps") val hasPendingSteps: Boolean,
+    /** Metres; null while no segment of this session has a distance yet (empty cell). */
+    @ColumnInfo(name = "total_distance_m") val totalDistanceMeters: Double? = null,
+    @ColumnInfo(name = "has_unfinal_distance") val hasUnfinalDistance: Boolean = false,
+    @ColumnInfo(name = "has_pending_distance") val hasPendingDistance: Boolean = false,
 )

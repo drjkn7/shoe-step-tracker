@@ -13,15 +13,16 @@ length, background Health Connect reads, WorkManager.
 - [x] Phase 2: Components (PR #19, merged)
 - [x] Phase 3: Restyle every screen + "Discard changes?" + Appearance card (PR #25, merged; night mockups still to compare)
 - [x] Phase 4: Distance data (READ_DISTANCE, schema v1 → v2, reconciler reads distance, backfill) (PR #27, merged)
-- [ ] Phase 5: Distance in the UI, units setting, cost per km/mile, CSV distance_m
+- [ ] Phase 5: Distance in the UI, units setting, cost per km/mile, CSV distance columns (branch `m2-phase-5`, in review)
 - [ ] Phase 6: Add past session (and deleting "Added later" sessions)
 - [ ] Phase 7: Session notification (POST_NOTIFICATIONS)
 - [ ] Phase 8: Hardening and release 0.2.0
 
-Next: Phase 5 (distance in the UI, units setting, cost per km/mile, CSV distance_m, "Show distance" card for people
-who already allowed steps). Give the plain-English Phase 5 plan first and wait for "approved". Still open: the 30-day
-check (test app → Settings → Test build → "How far back can it read?" after allowing distance in Health Connect) and
-the night mockups (T49). CI ran 97/97 on-device tests for debug and staging on PR #27, MigrationTest included.
+Next: finish Phase 5 (PR, CI), then Phase 6: give the plain-English Phase 6 plan first and wait for "approved".
+Still open: the 30-day check (test app → Settings → Test build → "How far back can it read?" after allowing distance
+in Health Connect); the "Allow" buttons for distance open Health Connect's own screen, checked by hand on the phone;
+tablet layout (content stretches the full width in landscape, left for later). Night mode uses the Balanced palette
+(PR #29). On-device tests can also run on the Galaxy Tab S7+ while the Pixel is away.
 
 Waiting on the product owner:
 - 7 of the 30 mockups are not in `docs/design/` (23 files there): Add past session, Add past session
@@ -147,6 +148,10 @@ What Phase 8 added:
 | 2026-10-24 | "Allow" now asks for steps and distance together. People who already allowed steps (everyone on v0.1.0) have no in-app way to allow distance until the "Show distance" card (PNG 03) in Phase 5; meanwhile Health Connect's own app permissions screen works. Wording updated from the mockups: Allow card (PNG 02), Settings step counting (PNG 21), "Why we read your activity" (PNG 22), privacy statement and PRIVACY.md (effective 0.2.0). |
 | 2026-10-24 | Test app only: Settings → Test build → "Distance per pair" (stored totals) and "How far back can it read?" (whether Health Connect answers or refuses steps and distance reads 29–40 days back; shows no values). |
 | 2026-10-24 | Night mode uses the "Balanced" palette (steel navy with a darker navy tint, then 15% darker), chosen by the product owner from a side-by-side canvas of the built night mode, their navy SVG and this middle ground. Colours only: layout, accent gradient, step lavender, danger colours and shoe colours unchanged. The canvas's 8% card hairline border was left out. Values in DESIGN.md section 3. |
+| 2026-10-24 | Phase 5 plan approved. Distance shows on Home rows, the running-session card ("About 2.4 km", read live like steps), the pair's stats (total, average under steps, cost per km or mile) and History rows; "–" when unknown, never 0; "About" while any part may still change. One decimal with the locale's separators. |
+| 2026-10-24 | Units: Settings → Units → Distance (Kilometres / Miles). Until chosen the phone's region decides, like the currency: miles in the US, UK, Liberia and Myanmar, kilometres elsewhere. Only the display changes; distances stay stored in metres. TalkBack reads "kilometres" / "miles" in full. |
+| 2026-10-24 | "Show distance" card on Home (PNG 03) when steps are allowed but distance isn't. Allow asks Health Connect for distance only; Not now hides the card for good (stored in settings); Settings → Step counting keeps an "Allow distance" button. |
+| 2026-10-24 | CSV: "Total distance in metres" (pairs) and "Distance in metres" (sessions) in whole metres, always metric whatever the app shows, empty when unknown; each with a "Distance status" column (final / provisional / counted later) like steps. Header names stay plain words (the CSV header check allows only letters, digits and spaces, so not "distance_m"). |
 
 ## Open items carried to later phases
 - SessionDao/ActiveSessionDao write methods must be called only via SessionManager/RoomSessionStore (convention; not enforced by visibility).
