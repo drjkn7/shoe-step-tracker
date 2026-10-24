@@ -65,7 +65,7 @@ data class SessionEntity(
             onDelete = ForeignKey.CASCADE,
         ),
     ],
-    indices = [Index("session_id"), Index("steps_status")],
+    indices = [Index("session_id"), Index("steps_status"), Index("distance_status")],
 )
 data class SegmentEntity(
     @PrimaryKey val id: String,
@@ -74,7 +74,13 @@ data class SegmentEntity(
     @ColumnInfo(name = "end_utc") val endUtc: Long?,
     val steps: Long?,
     @ColumnInfo(name = "steps_status") val stepsStatus: StepsStatus,
+    /** When the steps were last read (named before distance existed). */
     @ColumnInfo(name = "last_read_utc") val lastReadUtc: Long?,
+    // Schema v2: distance from Health Connect, filled in separately from steps (StepReconciler), so
+    // refusing distance never holds steps back. Metres; null until known. Same statuses as steps.
+    @ColumnInfo(name = "distance_m") val distanceMeters: Double? = null,
+    @ColumnInfo(name = "distance_status", defaultValue = "PENDING") val distanceStatus: StepsStatus = StepsStatus.PENDING,
+    @ColumnInfo(name = "distance_read_utc") val distanceReadUtc: Long? = null,
 )
 
 /**

@@ -6,7 +6,9 @@ import android.content.Intent
 import androidx.core.net.toUri
 import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.PermissionController
+import androidx.health.connect.client.aggregate.AggregateMetric
 import androidx.health.connect.client.permission.HealthPermission
+import androidx.health.connect.client.records.DistanceRecord
 import androidx.health.connect.client.records.StepsRecord
 import androidx.health.connect.client.request.AggregateRequest
 import androidx.health.connect.client.time.TimeRangeFilter
@@ -16,9 +18,10 @@ import java.time.Instant
 import kotlin.coroutines.cancellation.CancellationException
 
 /**
- * Reads steps from Health Connect (READ_STEPS only). Health Connect merges phone and wearable
- * data using the user's app priority, so a watch and a phone are not double-counted.
- * Errors are turned into [StepsAccess.UNAVAILABLE] / [StepsRead.Failed] and never logged.
+ * Reads steps and distance from Health Connect (READ_STEPS and READ_DISTANCE only). Health Connect
+ * merges phone and wearable data using the user's app priority, so a watch and a phone are not
+ * double-counted (official "Read aggregated data" guide: steps and distance are de-duplicated).
+ * Errors are turned into [StepsAccess.UNAVAILABLE] / Failed reads and never logged.
  */
 class HealthConnectStepsSource(context: Context) : StepsSource {
     private val appContext = context.applicationContext
@@ -37,10 +40,8 @@ class HealthConnectStepsSource(context: Context) : StepsSource {
 
     override suspend fun access(): StepsAccess = try {
         when (sdkStatus()) {
-            HealthConnectClient.SDK_AVAILABLE -> {
-                val granted = clientOrNull()?.permissionController?.getGrantedPermissions().orEmpty()
-                if (granted.containsAll(PERMISSIONS)) StepsAccess.READY else StepsAccess.NEEDS_PERMISSION
-            }
+            HealthConnectClient.SDK_AVAILABLE ->
+                if (STEPS_PERMISSION in grantedPermissions()) StepsAccess.READY else StepsAccess.NEEDS_PERMISSION
             HealthConnectClient.SDK_UNAVAILABLE_PROVIDER_UPDATE_REQUIRED -> StepsAccess.NEEDS_INSTALL
             else -> StepsAccess.UNAVAILABLE
         }
@@ -50,32 +51,78 @@ class HealthConnectStepsSource(context: Context) : StepsSource {
         StepsAccess.UNAVAILABLE
     }
 
+    override suspend fun distanceAllowed(): Boolean = try {
+        sdkStatus() == HealthConnectClient.SDK_AVAILABLE && DISTANCE_PERMISSION in grantedPermissions()
+    } catch (e: CancellationException) {
+        throw e
+    } catch (_: Exception) {
+        false
+    }
+
+    private suspend fun grantedPermissions(): Set<String> =
+        clientOrNull()?.permissionController?.getGrantedPermissions().orEmpty()
+
     override suspend fun read(startUtc: Long, endUtc: Long): StepsRead {
         if (endUtc <= startUtc) return StepsRead.Count(0)
-        return try {
-            val healthConnect = clientOrNull() ?: return StepsRead.Failed
-            val result = healthConnect.aggregate(
-                AggregateRequest(
-                    metrics = setOf(StepsRecord.COUNT_TOTAL),
-                    timeRangeFilter = TimeRangeFilter.between(
-                        Instant.ofEpochMilli(startUtc),
-                        Instant.ofEpochMilli(endUtc),
-                    ),
-                ),
-            )
-            // Null means Health Connect has no step records for this time.
-            result[StepsRecord.COUNT_TOTAL]?.let { StepsRead.Count(it.coerceAtLeast(0)) } ?: StepsRead.NoData
-        } catch (e: CancellationException) {
-            throw e
-        } catch (_: Exception) {
-            // Includes SecurityException (permission revoked) and reads older than Health Connect allows.
-            StepsRead.Failed
+        return when (val total = aggregate(StepsRecord.COUNT_TOTAL, startUtc, endUtc)) {
+            is Total.Value -> StepsRead.Count(total.value.coerceAtLeast(0))
+            Total.None -> StepsRead.NoData
+            Total.Failed -> StepsRead.Failed
         }
     }
 
+    override suspend fun readDistance(startUtc: Long, endUtc: Long): DistanceRead {
+        if (endUtc <= startUtc) return DistanceRead.Meters(0.0)
+        return when (val total = aggregate(DistanceRecord.DISTANCE_TOTAL, startUtc, endUtc)) {
+            // A negative or not-a-number total would be a broken record; treat it like no answer.
+            is Total.Value -> total.value.inMeters.takeIf { it.isFinite() && it >= 0 }
+                ?.let { DistanceRead.Meters(it) } ?: DistanceRead.Failed
+            Total.None -> DistanceRead.NoData
+            Total.Failed -> DistanceRead.Failed
+        }
+    }
+
+    /** What an aggregate read returned: a total, nothing recorded, or an error. */
+    private sealed interface Total<out T> {
+        data class Value<T>(val value: T) : Total<T>
+        data object None : Total<Nothing>
+        data object Failed : Total<Nothing>
+    }
+
+    /**
+     * Health Connect's own total of [metric] between two instants. Health Connect removes duplicates
+     * (phone and watch both recording) using the user's app priority before adding up.
+     */
+    private suspend fun <T : Any> aggregate(metric: AggregateMetric<T>, startUtc: Long, endUtc: Long): Total<T> = try {
+        val healthConnect = clientOrNull()
+        if (healthConnect == null) {
+            Total.Failed
+        } else {
+            val result = healthConnect.aggregate(
+                AggregateRequest(
+                    metrics = setOf(metric),
+                    timeRangeFilter = TimeRangeFilter.between(Instant.ofEpochMilli(startUtc), Instant.ofEpochMilli(endUtc)),
+                ),
+            )
+            // Null means Health Connect has no records of this kind for this time.
+            result[metric]?.let { Total.Value(it) } ?: Total.None
+        }
+    } catch (e: CancellationException) {
+        throw e
+    } catch (_: Exception) {
+        // Includes SecurityException (permission revoked or refused) and reads older than Health Connect allows.
+        Total.Failed
+    }
+
     companion object {
-        /** The only Health Connect permission this app asks for (SEC-04). */
-        val PERMISSIONS: Set<String> = setOf(HealthPermission.getReadPermission(StepsRecord::class))
+        /** Reading steps: what makes step counting work (SEC-04). */
+        val STEPS_PERMISSION: String = HealthPermission.getReadPermission(StepsRecord::class)
+
+        /** Reading distance (M2): optional; steps work without it (SEC-04). */
+        val DISTANCE_PERMISSION: String = HealthPermission.getReadPermission(DistanceRecord::class)
+
+        /** What "Allow" asks for: steps and distance together. The user may allow either or both. */
+        val PERMISSIONS: Set<String> = setOf(STEPS_PERMISSION, DISTANCE_PERMISSION)
 
         private const val HEALTH_CONNECT_PACKAGE = "com.google.android.apps.healthdata"
 

@@ -6,18 +6,24 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
 /**
- * Deferred step reconciliation. Segments are saved PENDING (steps unknown) when a session runs;
- * this fills them in from the [StepsSource] while the app is open:
+ * Deferred reconciliation of steps and distance. Segments are saved PENDING (unknown) when a session
+ * runs; this fills them in from the [StepsSource] while the app is open. Steps and distance each have
+ * their own value and status, and follow the same rules:
  *
- * - A count is saved as PROVISIONAL, and re-checked on later runs because wearables sync late.
- * - Once a segment ended at least [SETTLE_MILLIS] ago, its count becomes FINAL and stops changing.
+ * - A value is saved as PROVISIONAL, and re-checked on later runs because wearables sync late.
+ * - Once a segment ended at least [SETTLE_MILLIS] ago, its value becomes FINAL and stops changing.
  * - No data after the settle time: UNAVAILABLE (left out of totals), or the last provisional
- *   count becomes FINAL so a number the user already saw is never lost.
+ *   value becomes FINAL so a number the user already saw is never lost.
  * - Read errors leave the segment for the next run, except for segments older than
  *   [HISTORY_LIMIT_MILLIS], which Health Connect may refuse to read at all: those settle too.
- * - Without access (no Health Connect or no permission) nothing changes: "counted later".
+ * - Without access nothing changes. Steps need the steps permission, distance the distance
+ *   permission; refusing one never holds the other back.
  *
- * Only this class writes step counts. It never changes session state (SessionManager's job).
+ * Each run reads Health Connect at most [MAX_PER_RUN] times in all. When both are allowed, steps get
+ * up to half and distance the rest, so a backfill of older sessions spreads over several runs and
+ * neither kind can hold the other back.
+ *
+ * Only this class writes steps and distances. It never changes session state (SessionManager's job).
  */
 class StepReconciler(
     private val store: StepStore,
@@ -26,16 +32,32 @@ class StepReconciler(
 ) {
     private val mutex = Mutex()
 
-    /** Fills in or re-checks closed segments. Safe to call often; calls run one at a time. Returns rows saved. */
+    /** Fills in or re-checks closed segments. Safe to call often; calls run one at a time. Returns values saved. */
     suspend fun reconcile(): Int = mutex.withLock {
-        if (source.access() != StepsAccess.READY) return 0
         var saved = 0
-        for (segment in store.unresolvedClosedSegments(MAX_PER_RUN)) {
-            val endUtc = segment.endUtc ?: continue
-            val read = readOrZero(segment.startUtc, endUtc)
-            val now = clock.nowUtcMillis()
-            val outcome = decide(segment.steps, endUtc, read, now) ?: continue
-            if (store.saveSteps(segment.id, endUtc, outcome.steps, outcome.status, now)) saved++
+        var reads = 0
+        val distanceAllowed = source.distanceAllowed()
+        if (source.access() == StepsAccess.READY) {
+            // With distance allowed, steps get half the reads so neither can crowd out the other
+            // (provisional counts are re-checked every run for a day); whatever steps leave, distance may use.
+            for (segment in store.unresolvedClosedSegments(if (distanceAllowed) MAX_PER_RUN / 2 else MAX_PER_RUN)) {
+                val endUtc = segment.endUtc ?: continue
+                if (endUtc > segment.startUtc) reads++
+                val read = readOrZero(segment.startUtc, endUtc)
+                val now = clock.nowUtcMillis()
+                val outcome = decide(segment.steps, endUtc, read, now) ?: continue
+                if (store.saveSteps(segment.id, endUtc, outcome.steps, outcome.status, now)) saved++
+            }
+        }
+        val budget = MAX_PER_RUN - reads
+        if (budget > 0 && distanceAllowed) {
+            for (segment in store.unresolvedClosedDistanceSegments(budget)) {
+                val endUtc = segment.endUtc ?: continue
+                val read = readDistanceOrZero(segment.startUtc, endUtc)
+                val now = clock.nowUtcMillis()
+                val outcome = decideDistance(segment.distanceMeters, endUtc, read, now) ?: continue
+                if (store.saveDistance(segment.id, endUtc, outcome.meters, outcome.status, now)) saved++
+            }
         }
         saved
     }
@@ -68,16 +90,28 @@ class StepReconciler(
     private suspend fun readOrZero(startUtc: Long, endUtc: Long): StepsRead =
         if (endUtc <= startUtc) StepsRead.Count(0) else source.read(startUtc, endUtc)
 
+    /** A zero-length (or clock-reversed) time span has no distance; no need to ask. */
+    private suspend fun readDistanceOrZero(startUtc: Long, endUtc: Long): DistanceRead =
+        if (endUtc <= startUtc) DistanceRead.Meters(0.0) else source.readDistance(startUtc, endUtc)
+
     data class Outcome(val steps: Long?, val status: StepsStatus)
 
+    data class DistanceOutcome(val meters: Double?, val status: StepsStatus)
+
     companion object {
-        /** How long after a segment ends its count may still change (product owner: one day). */
+        /** How long after a segment ends its value may still change (product owner: one day). */
         const val SETTLE_MILLIS = 24L * 60 * 60 * 1000
 
-        /** Health Connect only lets apps read about 30 days before permission was first granted. */
+        /**
+         * Health Connect lets apps read about 30 days before a permission was first granted
+         * (official "Read data" guide); older reads fail.
+         */
         const val HISTORY_LIMIT_MILLIS = 30L * 24 * 60 * 60 * 1000
 
-        /** Upper bound on reads per run, to stay well inside Health Connect's rate limits. */
+        /**
+         * Upper bound on Health Connect reads per run, steps and distance together, to stay well inside
+         * its rate limits (the official guide states limits exist but gives no numbers).
+         */
         const val MAX_PER_RUN = 100
 
         /**
@@ -86,17 +120,44 @@ class StepReconciler(
          * A clock set backwards (now before the end) counts as "not settled yet".
          */
         fun decide(previousSteps: Long?, endUtc: Long, read: StepsRead, nowUtc: Long): Outcome? {
+            val answer = when (read) {
+                is StepsRead.Count -> Answer.Value(read.steps)
+                StepsRead.NoData -> Answer.None
+                StepsRead.Failed -> Answer.Failed
+            }
+            return rule(previousSteps, endUtc, answer, nowUtc)?.let { (steps, status) -> Outcome(steps, status) }
+        }
+
+        /** The same rules as [decide], for distance in metres. */
+        fun decideDistance(previousMeters: Double?, endUtc: Long, read: DistanceRead, nowUtc: Long): DistanceOutcome? {
+            val answer = when (read) {
+                is DistanceRead.Meters -> Answer.Value(read.meters)
+                DistanceRead.NoData -> Answer.None
+                DistanceRead.Failed -> Answer.Failed
+            }
+            return rule(previousMeters, endUtc, answer, nowUtc)?.let { (meters, status) -> DistanceOutcome(meters, status) }
+        }
+
+        /** What Health Connect said, the same way for steps and distance. */
+        private sealed interface Answer<out T> {
+            data class Value<T>(val value: T) : Answer<T>
+            data object None : Answer<Nothing>
+            data object Failed : Answer<Nothing>
+        }
+
+        /** The one set of rules behind [decide] and [decideDistance]. */
+        private fun <T : Any> rule(previous: T?, endUtc: Long, answer: Answer<T>, nowUtc: Long): Pair<T?, StepsStatus>? {
             val age = nowUtc - endUtc
             val settled = age >= SETTLE_MILLIS
-            return when (read) {
-                is StepsRead.Count ->
-                    Outcome(read.steps, if (settled) StepsStatus.FINAL else StepsStatus.PROVISIONAL)
-                StepsRead.NoData -> if (settled) settle(previousSteps) else null
-                StepsRead.Failed -> if (age >= HISTORY_LIMIT_MILLIS) settle(previousSteps) else null
+            return when (answer) {
+                is Answer.Value -> answer.value to if (settled) StepsStatus.FINAL else StepsStatus.PROVISIONAL
+                Answer.None -> if (settled) settle(previous) else null
+                Answer.Failed -> if (age >= HISTORY_LIMIT_MILLIS) settle(previous) else null
             }
         }
 
-        private fun settle(previousSteps: Long?) =
-            if (previousSteps != null) Outcome(previousSteps, StepsStatus.FINAL) else Outcome(null, StepsStatus.UNAVAILABLE)
+        /** A value the user already saw becomes final; with none, the segment is left out (UNAVAILABLE). */
+        private fun <T : Any> settle(previous: T?): Pair<T?, StepsStatus> =
+            if (previous != null) previous to StepsStatus.FINAL else null to StepsStatus.UNAVAILABLE
     }
 }

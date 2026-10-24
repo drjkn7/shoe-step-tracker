@@ -167,7 +167,7 @@ private fun sampleShoe(name: String, type: ShoeType, colour: Int, archived: Bool
 )
 
 private fun sampleStats(shoe: ShoeEntity, steps: Long, active: Boolean, about: Boolean = false) = ShoeWithStats(
-    shoe = shoe, totalSteps = steps, sessionCount = 148, endedSessionCount = 147, activeMillis = 0,
+    shoe = shoe, totalSteps = steps, totalDistanceMeters = null, sessionCount = 148, endedSessionCount = 147, activeMillis = 0,
     lastUsedUtc = null, isActive = active, hasUnfinalSteps = about, hasPendingSteps = false,
 )
 
