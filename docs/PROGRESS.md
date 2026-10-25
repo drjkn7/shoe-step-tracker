@@ -15,7 +15,7 @@ length, background Health Connect reads, WorkManager.
 - [x] Phase 4: Distance data (READ_DISTANCE, schema v1 → v2, reconciler reads distance, backfill) (PR #27, merged)
 - [x] Phase 5: Distance in the UI, units setting, cost per km/mile, CSV distance columns (PR #31, merged)
 - [x] Phase 6: Add past session (and deleting "Added later" sessions), plus the 25 Oct design polish (PR #33, merged)
-- [ ] Phase 7: Session notification (POST_NOTIFICATIONS)
+- [ ] Phase 7: Session notification (POST_NOTIFICATIONS) (built on m2-phase7-notification; PR to follow)
 - [ ] Phase 8: Hardening and release 0.2.0
 
 Next: Phase 7 (session notification: timer, Pause/Resume and End session, asked for before Android 13's
@@ -173,3 +173,5 @@ What Phase 8 added:
 - Android 9–13 with the Health Connect app installed (needs a real phone or a Play Store emulator with a Google sign-in) was not tested; the "not installed" path was. Same for the legacy NFC entry with a real tag.
 - Manual checks before each release: docs/MANUAL_CHECKS.md (TalkBack, restart, airplane mode, watch, lock, export).
 - A live timer on the session card was left out (M1); see BACKLOG for further ideas.
+| 2026-10-25 | **Phase 7 plan, wording and `POST_NOTIFICATIONS` approved** by the product owner. Built as design decision F2: an ordinary ongoing notification (no foreground service, no background work, no boot receiver). The app keeps it in step while it is open and after a notification button; opening the app posts it again if it was swiped away (Android 14+) or lost in a restart. Pause/Resume go through a receiver that is not exported; End session opens the app through a non-exported alias (`NotificationEntry`) and asks "End this session?", and only for the session that is still active. No steps in the notification (no background Health Connect reads). Lock screen shows only "Session running". |
+| 2026-10-25 | Phase 7 decisions: the question "Show sessions in notifications?" appears once, the first time a session is running on Android 13+ without the permission (also for a session already running when the update is installed). "Not now", or refusing Android's prompt, turns Settings → Session notification off; turning it on there asks Android again, and if Android no longer shows its prompt the card says "Notifications are off for this app in Android settings." with "Open Android settings". Back on the question hides it until the app is next opened. The timer counts walking time only (pauses left out). Draft wording added beyond the approved list: the Settings card heading "Notifications", the blocked note and its button, and Android's channel name "Current session" ("A timer while a session runs, with Pause and End session buttons."). |
