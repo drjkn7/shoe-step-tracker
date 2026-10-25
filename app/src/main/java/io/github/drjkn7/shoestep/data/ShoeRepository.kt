@@ -23,6 +23,9 @@ class ShoeRepository(
 ) {
     fun observeShoes(archived: Boolean = false): Flow<List<ShoeWithStats>> = shoeDao.observeWithStats(archived)
 
+    /** Pairs that aren't archived, names and colours only (no totals to compute). */
+    fun observePairs(): Flow<List<ShoeEntity>> = shoeDao.observeUnarchived()
+
     fun observeShoe(id: String): Flow<ShoeWithStats?> = shoeDao.observeWithStatsById(id)
 
     suspend fun findShoe(id: String): ShoeEntity? = shoeDao.getById(id)

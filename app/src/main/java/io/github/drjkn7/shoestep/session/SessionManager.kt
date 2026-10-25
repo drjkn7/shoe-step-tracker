@@ -143,6 +143,21 @@ class SessionManager(
         AddPastResult.Added(insertPast(shoeId, startUtc, endUtc))
     }
 
+    /**
+     * Archives or unarchives [shoeId]. Archiving ends its session first, in the same transaction, so a
+     * tag tap can never start a session in between (an archived pair can't have one).
+     */
+    suspend fun setArchived(shoeId: String, archived: Boolean): SessionResult = command { now ->
+        if (archived) activeSession()?.takeIf { it.shoeId == shoeId }?.let { finish(it, EndReason.USER, now) }
+        if (store.setShoeArchived(shoeId, archived)) SessionResult.Done else SessionResult.ShoeUnavailable
+    }
+
+    /** Ends [shoeId]'s session and deletes the pair (its sessions go with it), in one transaction. */
+    suspend fun deleteShoe(shoeId: String): SessionResult = command { now ->
+        activeSession()?.takeIf { it.shoeId == shoeId }?.let { finish(it, EndReason.USER, now) }
+        if (store.deleteShoe(shoeId)) SessionResult.Done else SessionResult.ShoeUnavailable
+    }
+
     /** Deletes [sessionId] only if it was added later; sessions recorded live can't be deleted. */
     suspend fun deleteAddedLater(sessionId: String): SessionResult = command {
         if (store.deleteAddedLater(sessionId)) SessionResult.Done else SessionResult.NoChange

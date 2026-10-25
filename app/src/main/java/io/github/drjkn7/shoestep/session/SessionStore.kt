@@ -40,6 +40,12 @@ interface SessionStore {
     /** Deletes an ended "added later" session and its segments; false if there was no such session. */
     suspend fun deleteAddedLater(sessionId: String): Boolean
 
+    /** Archives or unarchives a pair; false if it doesn't exist. */
+    suspend fun setShoeArchived(shoeId: String, archived: Boolean): Boolean
+
+    /** Deletes a pair and, by cascade, its sessions and segments; false if it doesn't exist. */
+    suspend fun deleteShoe(shoeId: String): Boolean
+
     fun observeActive(): Flow<ActiveSessionWithShoe?>
     fun observeHistory(shoeId: String): Flow<List<SessionWithSteps>>
 }
@@ -70,6 +76,8 @@ class RoomSessionStore(private val db: ShoeStepDatabase) : SessionStore {
     override suspend fun setActive(sessionId: String) = active.setActive(ActiveSessionEntity(sessionId = sessionId))
     override suspend fun clearActive() = active.clear()
     override suspend fun deleteAddedLater(sessionId: String) = sessions.deleteAddedLater(sessionId) > 0
+    override suspend fun setShoeArchived(shoeId: String, archived: Boolean) = shoes.setArchived(shoeId, archived) > 0
+    override suspend fun deleteShoe(shoeId: String) = shoes.delete(shoeId) > 0
 
     override fun observeActive() = active.observeActiveSessionWithShoe()
     override fun observeHistory(shoeId: String) = sessions.observeHistory(shoeId)

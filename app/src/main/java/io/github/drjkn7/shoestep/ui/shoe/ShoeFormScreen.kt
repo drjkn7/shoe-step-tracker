@@ -19,20 +19,16 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.DatePicker
-import androidx.compose.material3.DatePickerDefaults
-import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.SelectableDates
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -59,12 +55,14 @@ import io.github.drjkn7.shoestep.data.ShoeField
 import io.github.drjkn7.shoestep.data.ShoeValidator
 import io.github.drjkn7.shoestep.data.model.ShoeType
 import io.github.drjkn7.shoestep.ui.common.CardLabel
+import io.github.drjkn7.shoestep.ui.common.DayPickerDialog
 import io.github.drjkn7.shoestep.ui.common.DialogAction
 import io.github.drjkn7.shoestep.ui.common.DialogText
 import io.github.drjkn7.shoestep.ui.common.FilterTouchesWhenObscured
 import io.github.drjkn7.shoestep.ui.common.Formatters
 import io.github.drjkn7.shoestep.ui.common.InfoDialog
 import io.github.drjkn7.shoestep.ui.common.NavIcon
+import io.github.drjkn7.shoestep.ui.common.PairNotFound
 import io.github.drjkn7.shoestep.ui.common.PickerField
 import io.github.drjkn7.shoestep.ui.common.PrimaryButton
 import io.github.drjkn7.shoestep.ui.common.ScreenColumn
@@ -83,8 +81,9 @@ import io.github.drjkn7.shoestep.ui.theme.SilverTheme
 import java.time.LocalDate
 import java.util.Currency
 import java.util.Locale
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
-private const val MILLIS_PER_DAY = 86_400_000L
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -113,9 +112,7 @@ fun ShoeFormScreen(
     ) {
         when (status) {
             FormStatus.Loading -> ScreenLoading()
-            FormStatus.NotFound -> ScreenColumn {
-                SilverCard { Text(stringResource(R.string.form_not_found), style = SilverTheme.type.body, color = SilverTheme.colors.textPrimary) }
-            }
+            FormStatus.NotFound -> PairNotFound()
             else -> FormContent(
                 form = viewModel.form,
                 errors = viewModel.errors,
@@ -213,7 +210,7 @@ private fun FormContent(
                 Row(horizontalArrangement = Arrangement.spacedBy(SilverSpacing.m), verticalAlignment = Alignment.Top) {
                     SilverTextField(
                         value = form.priceText,
-                        onValueChange = { if (it.length <= 20) onChange(form.copy(priceText = it)) },
+                        onValueChange = { if (it.length <= Money.MAX_INPUT_LENGTH) onChange(form.copy(priceText = it)) },
                         label = stringResource(R.string.field_price),
                         error = errors[ShoeField.PRICE]?.let { errorText(ShoeField.PRICE, it, form.currencyCode) },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal, imeAction = ImeAction.Done),
@@ -223,7 +220,7 @@ private fun FormContent(
                         R.string.currency_button_description,
                         stringResource(R.string.field_currency),
                         form.currencyCode,
-                        currencyName(form.currencyCode, locale),
+                        remember(form.currencyCode, locale) { currencyName(form.currencyCode, locale) },
                     )
                     Column(Modifier.weight(1f)) {
                         PickerField(
@@ -275,8 +272,11 @@ private fun FormContent(
         )
     }
     if (showDatePicker) {
-        PurchaseDatePicker(
+        DayPickerDialog(
+            title = stringResource(R.string.field_purchase_date_pick),
             initialEpochDay = form.purchaseEpochDay,
+            earliest = ShoeValidator.EARLIEST_PURCHASE_DATE,
+            latest = remember { LocalDate.now() },
             onPick = {
                 onChange(form.copy(purchaseEpochDay = it))
                 showDatePicker = false
@@ -410,12 +410,15 @@ internal fun currencyName(code: String, locale: Locale): String =
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun CurrencyPicker(locale: Locale, onPick: (String) -> Unit, onDismiss: () -> Unit) {
-    val all = remember(locale) {
-        Currency.getAvailableCurrencies()
-            .map { it.currencyCode }
-            .filter { Money.isSupportedCurrency(it) }
-            .sorted()
-            .map { it to currencyName(it, locale) }
+    // Hundreds of currency names: built off the main thread so the sheet opens smoothly.
+    val all by produceState(initialValue = emptyList<Pair<String, String>>(), locale) {
+        value = withContext(Dispatchers.Default) {
+            Currency.getAvailableCurrencies()
+                .map { it.currencyCode }
+                .filter { Money.isSupportedCurrency(it) }
+                .sorted()
+                .map { it to currencyName(it, locale) }
+        }
     }
     var query by rememberSaveable { mutableStateOf("") }
     val filtered = remember(all, query) {
@@ -453,55 +456,5 @@ internal fun CurrencyPicker(locale: Locale, onPick: (String) -> Unit, onDismiss:
                 }
             }
         }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun PurchaseDatePicker(initialEpochDay: Long?, onPick: (Long) -> Unit, onDismiss: () -> Unit) {
-    val today = remember { LocalDate.now() }
-    val earliest = ShoeValidator.EARLIEST_PURCHASE_DATE
-    val state = rememberDatePickerState(
-        initialSelectedDateMillis = initialEpochDay?.times(MILLIS_PER_DAY),
-        yearRange = earliest.year..today.year,
-        selectableDates = object : SelectableDates {
-            override fun isSelectableDate(utcTimeMillis: Long): Boolean {
-                val day = Math.floorDiv(utcTimeMillis, MILLIS_PER_DAY)
-                return day in earliest.toEpochDay()..today.toEpochDay()
-            }
-        },
-    )
-    // Not mocked up: Material's calendar in the pop-up colours, with the Silver buttons.
-    val colors = DatePickerDefaults.colors(containerColor = SilverTheme.colors.dialog.first())
-    DatePickerDialog(
-        onDismissRequest = onDismiss,
-        confirmButton = {
-            TextActionButton(
-                stringResource(R.string.action_ok),
-                onClick = {
-                    // The picker works in UTC midnight millis; floorDiv gives the epoch day on every API level.
-                    state.selectedDateMillis?.let { onPick(Math.floorDiv(it, MILLIS_PER_DAY)) }
-                        ?: onDismiss()
-                },
-                accent = true,
-            )
-        },
-        dismissButton = { TextActionButton(stringResource(R.string.action_cancel), onDismiss) },
-        shape = SilverShapes.dialog,
-        colors = colors,
-    ) {
-        FilterTouchesWhenObscured()
-        DatePicker(
-            state = state,
-            colors = colors,
-            title = {
-                Text(
-                    stringResource(R.string.field_purchase_date_pick),
-                    style = SilverTheme.type.label,
-                    color = SilverTheme.colors.textMuted,
-                    modifier = Modifier.padding(start = 24.dp, end = 12.dp, top = 16.dp),
-                )
-            },
-        )
     }
 }

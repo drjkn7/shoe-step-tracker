@@ -17,7 +17,7 @@ object CostCalculator {
     }
 
     /** Extra decimal places beyond the currency's own, so small costs don't round to zero. */
-    private const val EXTRA_DIGITS_PER_THOUSAND = 2
+    private const val EXTRA_COST_DIGITS = 2
     private const val EXTRA_DIGITS_PER_STEP = 5
 
     fun cost(priceMinor: Long?, currencyCode: String, totalSteps: Long): Cost {
@@ -30,7 +30,7 @@ object CostCalculator {
         return Cost.Amount(
             perStep = price.divide(steps, digits + EXTRA_DIGITS_PER_STEP, RoundingMode.HALF_UP),
             perThousandSteps = price.multiply(BigDecimal.valueOf(1_000))
-                .divide(steps, digits + EXTRA_DIGITS_PER_THOUSAND, RoundingMode.HALF_UP),
+                .divide(steps, digits + EXTRA_COST_DIGITS, RoundingMode.HALF_UP),
         )
     }
 
@@ -47,7 +47,7 @@ object CostCalculator {
         val price = BigDecimal.valueOf(priceMinor, digits)
         val units = BigDecimal.valueOf(meters).divide(BigDecimal.valueOf(unitMeters), DISTANCE_SCALE, RoundingMode.HALF_UP)
         if (units.signum() == 0) return null
-        return price.divide(units, digits + EXTRA_DIGITS_PER_THOUSAND, RoundingMode.HALF_UP)
+        return price.divide(units, digits + EXTRA_COST_DIGITS, RoundingMode.HALF_UP)
     }
 
     /** Decimal places kept for the distance before dividing (micro-units: far below what is shown). */

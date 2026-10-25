@@ -49,6 +49,7 @@ import io.github.drjkn7.shoestep.steps.StepsAccess
 import io.github.drjkn7.shoestep.ui.common.AddShoeButton
 import io.github.drjkn7.shoestep.ui.common.ColourDot
 import io.github.drjkn7.shoestep.ui.common.IconCircleButton
+import io.github.drjkn7.shoestep.ui.common.LARGE_FONT_SCALE
 import io.github.drjkn7.shoestep.ui.common.SilverCard
 import io.github.drjkn7.shoestep.ui.common.SilverScreen
 import io.github.drjkn7.shoestep.ui.common.StatusBadge
@@ -254,9 +255,6 @@ internal fun ShoeRow(item: ShoeWithStats, paused: Boolean, onClick: () -> Unit) 
         }
     }
 }
-
-/** From this font size (Android's text-size setting) Home rows stack their totals under the name. */
-private const val LARGE_FONT_SCALE = 1.5f
 
 /** No pairs (PNG 02): a walking figure in a pressed-in circle, a title and what to do next. */
 @Composable

@@ -7,14 +7,9 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.DatePicker
-import androidx.compose.material3.DatePickerDefaults
-import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.SelectableDates
 import androidx.compose.material3.Text
 import androidx.compose.material3.TimeInput
-import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -38,10 +33,12 @@ import io.github.drjkn7.shoestep.R
 import io.github.drjkn7.shoestep.session.PastTimeProblem
 import io.github.drjkn7.shoestep.session.SessionManager
 import io.github.drjkn7.shoestep.ui.common.CardLabel
+import io.github.drjkn7.shoestep.ui.common.DayPickerDialog
 import io.github.drjkn7.shoestep.ui.common.DialogAction
 import io.github.drjkn7.shoestep.ui.common.FilterTouchesWhenObscured
 import io.github.drjkn7.shoestep.ui.common.Formatters
 import io.github.drjkn7.shoestep.ui.common.NavIcon
+import io.github.drjkn7.shoestep.ui.common.PairNotFound
 import io.github.drjkn7.shoestep.ui.common.PickerField
 import io.github.drjkn7.shoestep.ui.common.PrimaryButton
 import io.github.drjkn7.shoestep.ui.common.ScreenColumn
@@ -84,9 +81,7 @@ fun AddPastSessionScreen(viewModel: AddPastSessionViewModel, onBack: () -> Unit)
     ) {
         when (status) {
             PastStatus.Loading -> ScreenLoading()
-            PastStatus.NotFound -> ScreenColumn {
-                SilverCard { Text(stringResource(R.string.form_not_found), style = SilverTheme.type.body, color = SilverTheme.colors.textPrimary) }
-            }
+            PastStatus.NotFound -> PairNotFound()
             else -> PastContent(
                 shoeName = viewModel.shoeName,
                 times = viewModel.times,
@@ -128,7 +123,7 @@ private fun PastContent(
                 Text(stringResource(R.string.past_help), style = noteStyle, color = c.textMuted)
                 PickerField(
                     label = stringResource(R.string.past_date),
-                    value = dayText(times.epochDay, locale),
+                    value = Formatters.date(times.epochDay, locale),
                     icon = painterResource(R.drawable.ic_calendar_month),
                     onClick = { pickDate = true },
                 )
@@ -166,8 +161,13 @@ private fun PastContent(
     }
 
     if (pickDate) {
-        PastDatePicker(
+        // Only the last 30 days: older sessions can't be added.
+        val today = remember { LocalDate.now() }
+        DayPickerDialog(
+            title = stringResource(R.string.past_pick_date),
             initialEpochDay = times.epochDay,
+            earliest = today.minusDays(SessionManager.PAST_LIMIT_MILLIS / MILLIS_PER_DAY),
+            latest = today,
             onPick = {
                 pickDate = false
                 onChange(times.copy(epochDay = it))
@@ -246,59 +246,9 @@ private fun problemText(problem: PastProblem, locale: Locale): String = when (pr
     }
 }
 
-/** "Sun 18 Oct 2026" style, in the phone's language. */
-private fun dayText(epochDay: Long, locale: Locale): String =
-    LocalDate.ofEpochDay(epochDay).format(DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withLocale(locale))
-
+/** "07:40" or "7:40 AM", in the phone's language. */
 private fun minuteText(minute: Int, locale: Locale): String =
     LocalTime.of(minute / 60, minute % 60).format(DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT).withLocale(locale))
-
-/** The calendar, limited to the last 30 days (older sessions can't be added). */
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun PastDatePicker(initialEpochDay: Long, onPick: (Long) -> Unit, onDismiss: () -> Unit) {
-    val today = remember { LocalDate.now() }
-    val earliest = remember { today.minusDays(SessionManager.PAST_LIMIT_MILLIS / MILLIS_PER_DAY) }
-    val state = rememberDatePickerState(
-        initialSelectedDateMillis = initialEpochDay * MILLIS_PER_DAY,
-        yearRange = earliest.year..today.year,
-        selectableDates = object : SelectableDates {
-            override fun isSelectableDate(utcTimeMillis: Long): Boolean =
-                Math.floorDiv(utcTimeMillis, MILLIS_PER_DAY) in earliest.toEpochDay()..today.toEpochDay()
-
-            override fun isSelectableYear(year: Int): Boolean = year in earliest.year..today.year
-        },
-    )
-    // Like the purchase date: Material's calendar in the pop-up colours, with the Silver buttons.
-    val colors = DatePickerDefaults.colors(containerColor = SilverTheme.colors.dialog.first())
-    DatePickerDialog(
-        onDismissRequest = onDismiss,
-        confirmButton = {
-            TextActionButton(
-                stringResource(R.string.action_ok),
-                onClick = { state.selectedDateMillis?.let { onPick(Math.floorDiv(it, MILLIS_PER_DAY)) } ?: onDismiss() },
-                accent = true,
-            )
-        },
-        dismissButton = { TextActionButton(stringResource(R.string.action_cancel), onDismiss) },
-        shape = SilverShapes.dialog,
-        colors = colors,
-    ) {
-        FilterTouchesWhenObscured()
-        DatePicker(
-            state = state,
-            colors = colors,
-            title = {
-                Text(
-                    stringResource(R.string.past_pick_date),
-                    style = SilverTheme.type.label,
-                    color = SilverTheme.colors.textMuted,
-                    modifier = Modifier.padding(start = 24.dp, end = 12.dp, top = 16.dp),
-                )
-            },
-        )
-    }
-}
 
 /** Hours and minutes typed in (Material's time input), in the phone's 12- or 24-hour style. */
 @OptIn(ExperimentalMaterial3Api::class)

@@ -16,6 +16,10 @@ private const val SHOE_STATS_COLUMNS = """
               WHERE x.shoe_id = s.id), 0) AS total_steps,
     (SELECT SUM(g.distance_m) FROM segments g JOIN sessions x ON g.session_id = x.id
      WHERE x.shoe_id = s.id) AS total_distance_m,
+    COALESCE((SELECT SUM(g.steps) FROM segments g JOIN sessions x ON g.session_id = x.id
+              WHERE x.shoe_id = s.id AND x.state = 'ENDED'), 0) AS ended_steps,
+    (SELECT SUM(g.distance_m) FROM segments g JOIN sessions x ON g.session_id = x.id
+     WHERE x.shoe_id = s.id AND x.state = 'ENDED') AS ended_distance_m,
     (SELECT COUNT(*) FROM sessions x WHERE x.shoe_id = s.id) AS session_count,
     (SELECT COUNT(*) FROM sessions x WHERE x.shoe_id = s.id AND x.state = 'ENDED') AS ended_session_count,
     COALESCE((SELECT SUM(MAX(0, g.end_utc - g.start_utc)) FROM segments g JOIN sessions x ON g.session_id = x.id
@@ -33,6 +37,22 @@ private const val SHOE_STATS_COLUMNS = """
            AND g.distance_status IN ('PENDING', 'PROVISIONAL')) AS has_unfinal_distance,
     EXISTS(SELECT 1 FROM segments g JOIN sessions x ON g.session_id = x.id
            WHERE x.shoe_id = s.id AND g.end_utc IS NOT NULL AND g.distance_status = 'PENDING') AS has_pending_distance
+"""
+
+/** One session's totals (session `x`), shared by the history list and the CSV export so they always agree. */
+private const val SESSION_STATS_COLUMNS = """
+    COALESCE((SELECT SUM(g.steps) FROM segments g WHERE g.session_id = x.id), 0) AS total_steps,
+    (SELECT SUM(g.distance_m) FROM segments g WHERE g.session_id = x.id) AS total_distance_m,
+    COALESCE((SELECT SUM(MAX(0, g.end_utc - g.start_utc)) FROM segments g
+              WHERE g.session_id = x.id AND g.end_utc IS NOT NULL), 0) AS active_millis,
+    EXISTS(SELECT 1 FROM segments g WHERE g.session_id = x.id
+           AND g.end_utc IS NOT NULL AND g.steps_status IN ('PENDING', 'PROVISIONAL')) AS has_unfinal_steps,
+    EXISTS(SELECT 1 FROM segments g WHERE g.session_id = x.id
+           AND g.end_utc IS NOT NULL AND g.steps_status = 'PENDING') AS has_pending_steps,
+    EXISTS(SELECT 1 FROM segments g WHERE g.session_id = x.id
+           AND g.end_utc IS NOT NULL AND g.distance_status IN ('PENDING', 'PROVISIONAL')) AS has_unfinal_distance,
+    EXISTS(SELECT 1 FROM segments g WHERE g.session_id = x.id
+           AND g.end_utc IS NOT NULL AND g.distance_status = 'PENDING') AS has_pending_distance
 """
 
 @Dao
@@ -63,6 +83,10 @@ interface ShoeDao {
     @Query("SELECT $SHOE_STATS_COLUMNS FROM shoes s WHERE s.archived = :archived ORDER BY s.name COLLATE NOCASE, s.id")
     fun observeWithStats(archived: Boolean): Flow<List<ShoeWithStats>>
 
+    /** The pairs that aren't archived, without totals: for the tag pop-up, which only needs names. */
+    @Query("SELECT * FROM shoes WHERE archived = 0 ORDER BY name COLLATE NOCASE, id")
+    fun observeUnarchived(): Flow<List<ShoeEntity>>
+
     @Query("SELECT $SHOE_STATS_COLUMNS FROM shoes s WHERE s.id = :id")
     fun observeWithStatsById(id: String): Flow<ShoeWithStats?>
 
@@ -76,7 +100,7 @@ interface ShoeDao {
 
 /**
  * Session and segment storage. Write methods here must only be called by SessionManager
- * (Phase 4), which wraps them in transactions; screens only read.
+ * (through RoomSessionStore), which wraps them in transactions; screens only read.
  */
 @Dao
 interface SessionDao {
@@ -124,18 +148,8 @@ interface SessionDao {
 
     @Query(
         """
-        SELECT x.*,
-            COALESCE((SELECT SUM(g.steps) FROM segments g WHERE g.session_id = x.id), 0) AS total_steps,
-            (SELECT SUM(g.distance_m) FROM segments g WHERE g.session_id = x.id) AS total_distance_m,
-            COALESCE((SELECT SUM(MAX(0, g.end_utc - g.start_utc)) FROM segments g
-                      WHERE g.session_id = x.id AND g.end_utc IS NOT NULL), 0) AS active_millis,
-            (SELECT COUNT(*) FROM segments g WHERE g.session_id = x.id) AS segment_count,
-            EXISTS(SELECT 1 FROM segments g WHERE g.session_id = x.id
-                   AND g.end_utc IS NOT NULL AND g.steps_status IN ('PENDING', 'PROVISIONAL')) AS has_unfinal_steps,
-            EXISTS(SELECT 1 FROM segments g WHERE g.session_id = x.id
-                   AND g.end_utc IS NOT NULL AND g.steps_status = 'PENDING') AS has_pending_steps,
-            EXISTS(SELECT 1 FROM segments g WHERE g.session_id = x.id
-                   AND g.end_utc IS NOT NULL AND g.distance_status IN ('PENDING', 'PROVISIONAL')) AS has_unfinal_distance
+        SELECT x.*, (SELECT COUNT(*) FROM segments g WHERE g.session_id = x.id) AS segment_count,
+            $SESSION_STATS_COLUMNS
         FROM sessions x WHERE x.shoe_id = :shoeId ORDER BY x.start_utc DESC, x.id
         """,
     )
@@ -144,21 +158,8 @@ interface SessionDao {
     /** Every session with its pair's name and the same totals as the history list, for the CSV export. */
     @Query(
         """
-        SELECT x.*, s.name AS shoe_name,
-            COALESCE((SELECT SUM(g.steps) FROM segments g WHERE g.session_id = x.id), 0) AS total_steps,
-            (SELECT SUM(g.distance_m) FROM segments g WHERE g.session_id = x.id) AS total_distance_m,
-            COALESCE((SELECT SUM(MAX(0, g.end_utc - g.start_utc)) FROM segments g
-                      WHERE g.session_id = x.id AND g.end_utc IS NOT NULL), 0) AS active_millis,
-            EXISTS(SELECT 1 FROM segments g WHERE g.session_id = x.id
-                   AND g.end_utc IS NOT NULL AND g.steps_status IN ('PENDING', 'PROVISIONAL')) AS has_unfinal_steps,
-            EXISTS(SELECT 1 FROM segments g WHERE g.session_id = x.id
-                   AND g.end_utc IS NOT NULL AND g.steps_status = 'PENDING') AS has_pending_steps,
-            EXISTS(SELECT 1 FROM segments g WHERE g.session_id = x.id
-                   AND g.end_utc IS NOT NULL AND g.distance_status IN ('PENDING', 'PROVISIONAL')) AS has_unfinal_distance,
-            EXISTS(SELECT 1 FROM segments g WHERE g.session_id = x.id
-                   AND g.end_utc IS NOT NULL AND g.distance_status = 'PENDING') AS has_pending_distance
-        FROM sessions x JOIN shoes s ON x.shoe_id = s.id
-        ORDER BY x.start_utc, x.id
+        SELECT x.*, s.name AS shoe_name, $SESSION_STATS_COLUMNS
+        FROM sessions x JOIN shoes s ON x.shoe_id = s.id ORDER BY x.start_utc, x.id
         """,
     )
     suspend fun getAllForExport(): List<SessionExportRow>

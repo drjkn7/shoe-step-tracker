@@ -1,6 +1,8 @@
 package io.github.drjkn7.shoestep.export
 
+import io.github.drjkn7.shoestep.core.MILLIS_PER_MINUTE
 import io.github.drjkn7.shoestep.core.Money
+import io.github.drjkn7.shoestep.core.zoneIdOrUtc
 import io.github.drjkn7.shoestep.data.db.SessionEntity
 import io.github.drjkn7.shoestep.data.db.SessionExportRow
 import io.github.drjkn7.shoestep.data.db.ShoeWithStats
@@ -9,11 +11,9 @@ import io.github.drjkn7.shoestep.data.model.SessionState
 import io.github.drjkn7.shoestep.data.model.ShoeType
 import java.math.BigDecimal
 import java.math.RoundingMode
-import java.time.DateTimeException
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
-import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 
 /**
@@ -58,11 +58,11 @@ object CsvExporter {
                     if (shoe.archived) "yes" else "no",
                     row.sessionCount,
                     row.totalSteps,
-                    stepsStatus(row.hasPendingSteps, row.hasUnfinalSteps),
-                    row.activeMillis.coerceAtLeast(0) / 60_000,
+                    readStatus(row.hasPendingSteps, row.hasUnfinalSteps),
+                    row.activeMillis.coerceAtLeast(0) / MILLIS_PER_MINUTE,
                     row.lastUsedUtc?.let { dateTime(it, zone) },
                     row.totalDistanceMeters?.let(::meters),
-                    stepsStatus(row.hasPendingDistance, row.hasUnfinalDistance),
+                    readStatus(row.hasPendingDistance, row.hasUnfinalDistance),
                 ),
             )
         }
@@ -72,7 +72,7 @@ object CsvExporter {
         append(Csv.header(SESSIONS_HEADER))
         for (row in rows) {
             val session = row.session
-            val zone = zoneOrUtc(session.zoneId)
+            val zone = zoneIdOrUtc(session.zoneId)
             append(
                 Csv.row(
                     row.shoeName,
@@ -80,11 +80,11 @@ object CsvExporter {
                     session.endUtc?.let { dateTime(it, zone) },
                     zone.id,
                     status(session),
-                    row.activeMillis.coerceAtLeast(0) / 60_000,
+                    row.activeMillis.coerceAtLeast(0) / MILLIS_PER_MINUTE,
                     row.totalSteps,
-                    stepsStatus(row.hasPendingSteps, row.hasUnfinalSteps),
+                    readStatus(row.hasPendingSteps, row.hasUnfinalSteps),
                     row.totalDistanceMeters?.let(::meters),
-                    stepsStatus(row.hasPendingDistance, row.hasUnfinalDistance),
+                    readStatus(row.hasPendingDistance, row.hasUnfinalDistance),
                 ),
             )
         }
@@ -101,7 +101,7 @@ object CsvExporter {
         BigDecimal.valueOf(minor).movePointLeft(Money.fractionDigits(currencyCode).coerceAtLeast(0)).toPlainString()
 
     /** Status of a step count or a distance: they follow the same rules, each with its own flags. */
-    fun stepsStatus(hasPending: Boolean, hasUnfinal: Boolean): String = when {
+    fun readStatus(hasPending: Boolean, hasUnfinal: Boolean): String = when {
         hasPending -> "counted later"
         hasUnfinal -> "provisional"
         else -> "final"
@@ -119,10 +119,4 @@ object CsvExporter {
 
     private fun dateTime(epochMillis: Long, zone: ZoneId): String =
         Instant.ofEpochMilli(epochMillis).atZone(zone).format(DATE_TIME)
-
-    private fun zoneOrUtc(id: String): ZoneId = try {
-        ZoneId.of(id)
-    } catch (_: DateTimeException) {
-        ZoneOffset.UTC
-    }
 }

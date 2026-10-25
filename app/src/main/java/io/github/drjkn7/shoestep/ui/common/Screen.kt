@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
@@ -20,6 +21,7 @@ import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -61,20 +63,27 @@ fun SilverScreen(
     content: @Composable BoxScope.() -> Unit,
 ) {
     Box(modifier.fillMaxSize().backdrop(SilverTheme.colors)) {
-        Column(Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal))) {
-            TopBar(title, navIcon, onNavigate, actions)
-            Box(Modifier.fillMaxWidth().weight(1f), content = content)
-        }
-        floatingButton?.let {
-            Box(
-                Modifier
-                    .align(Alignment.BottomEnd)
-                    .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom + WindowInsetsSides.Horizontal))
-                    .padding(end = SilverSpacing.screen, bottom = SilverSpacing.m),
-            ) { it() }
+        // The backdrop fills the screen; on tablets and in landscape the content keeps a phone-like
+        // width in the middle instead of stretching edge to edge. Phones are narrower than the cap.
+        Box(Modifier.fillMaxHeight().widthIn(max = MAX_CONTENT_WIDTH).fillMaxWidth().align(Alignment.TopCenter)) {
+            Column(Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal))) {
+                TopBar(title, navIcon, onNavigate, actions)
+                Box(Modifier.fillMaxWidth().weight(1f), content = content)
+            }
+            floatingButton?.let {
+                Box(
+                    Modifier
+                        .align(Alignment.BottomEnd)
+                        .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom + WindowInsetsSides.Horizontal))
+                        .padding(end = SilverSpacing.screen, bottom = SilverSpacing.m),
+                ) { it() }
+            }
         }
     }
 }
+
+/** Widest the content of a screen gets (tablets, landscape); the backdrop still fills the screen. */
+private val MAX_CONTENT_WIDTH = 640.dp
 
 @Composable
 private fun TopBar(title: String?, navIcon: NavIcon?, onNavigate: () -> Unit, actions: @Composable RowScope.() -> Unit) {
@@ -140,4 +149,12 @@ fun screenContentPadding(bottomSpace: Dp = SilverSpacing.l, top: Dp = SilverSpac
 @Composable
 fun BoxScope.ScreenLoading() {
     CircularProgressIndicator(Modifier.align(Alignment.Center), color = SilverTheme.colors.accentInk)
+}
+
+/** The pair a screen was opened for no longer exists (deleted elsewhere, or archived for a form that needs it). */
+@Composable
+fun PairNotFound() {
+    ScreenColumn {
+        SilverCard { Text(stringResource(R.string.form_not_found), style = SilverTheme.type.body, color = SilverTheme.colors.textPrimary) }
+    }
 }

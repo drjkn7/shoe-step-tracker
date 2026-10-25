@@ -26,6 +26,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -184,33 +185,45 @@ fun <T> SegmentedControl(
     modifier: Modifier = Modifier,
 ) {
     val c = SilverTheme.colors
-    Row(
-        modifier
-            .fillMaxWidth()
-            .pressedIn(c, SilverShapes.pill)
-            .padding(4.dp)
-            .semantics { contentDescription = description }
-            .selectableGroup(),
-    ) {
-        options.forEach { option ->
-            val isSelected = option == selected
-            Box(
-                Modifier
-                    .weight(1f)
-                    .heightIn(min = SilverSpacing.touch)
-                    .then(if (isSelected) Modifier.accentGlow(c, SilverShapes.pill) else Modifier)
-                    .clip(SilverShapes.pill)
-                    .selectable(selected = isSelected, role = Role.RadioButton) { onSelect(option) }
-                    .padding(horizontal = SilverSpacing.s, vertical = 10.dp),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(
-                    label(option),
-                    style = SilverTheme.type.button,
-                    color = if (isSelected) c.textOnAccent else c.textPrimary,
-                    textAlign = TextAlign.Center,
-                )
-            }
+    // At large text the options stack, each full width, so a word like "Kilometres" never breaks.
+    val stacked = LocalDensity.current.fontScale >= LARGE_FONT_SCALE
+    val track = if (stacked) SilverShapes.input else SilverShapes.pill
+    val segment = @Composable { option: T, segmentModifier: Modifier ->
+        val isSelected = option == selected
+        Box(
+            segmentModifier
+                .heightIn(min = SilverSpacing.touch)
+                .then(if (isSelected) Modifier.accentGlow(c, SilverShapes.pill) else Modifier)
+                .clip(SilverShapes.pill)
+                .selectable(selected = isSelected, role = Role.RadioButton) { onSelect(option) }
+                .padding(horizontal = SilverSpacing.s, vertical = 10.dp),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(
+                label(option),
+                style = SilverTheme.type.button,
+                color = if (isSelected) c.textOnAccent else c.textPrimary,
+                textAlign = TextAlign.Center,
+            )
+        }
+    }
+    val trackModifier = modifier
+        .fillMaxWidth()
+        .pressedIn(c, track)
+        .padding(4.dp)
+        .semantics { contentDescription = description }
+        .selectableGroup()
+    if (stacked) {
+        Column(trackModifier, verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            options.forEach { segment(it, Modifier.fillMaxWidth()) }
+        }
+    } else {
+        Row(trackModifier) {
+            options.forEach { segment(it, Modifier.weight(1f)) }
         }
     }
 }
+
+
+/** From this font scale (150%) rows and choices stack instead of sitting side by side. */
+const val LARGE_FONT_SCALE = 1.5f

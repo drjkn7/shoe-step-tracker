@@ -67,7 +67,7 @@ object DebugTools {
                 },
                 modifier = Modifier.fillMaxWidth().padding(top = SilverSpacing.s),
             )
-            // M2 Phase 4 checks (DistanceChecks): distance isn't on screen until Phase 5.
+            // Distance checks (DistanceChecks): stored totals per pair, and how far back Health Connect reads.
             SecondaryButton(
                 "Distance per pair",
                 enabled = !busy,

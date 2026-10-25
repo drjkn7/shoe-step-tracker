@@ -24,14 +24,18 @@ data class ShoeWithStats(
     @ColumnInfo(name = "has_unfinal_distance") val hasUnfinalDistance: Boolean = false,
     /** True while any closed segment has no distance yet (e.g. distance not allowed); CSV "counted later". */
     @ColumnInfo(name = "has_pending_distance") val hasPendingDistance: Boolean = false,
+    /** Like [totalSteps], for ended sessions only: what the average divides, so a running session can't inflate it. */
+    @ColumnInfo(name = "ended_steps") val endedSteps: Long = totalSteps,
+    /** Like [totalDistanceMeters], for ended sessions only. */
+    @ColumnInfo(name = "ended_distance_m") val endedDistanceMeters: Double? = totalDistanceMeters,
 ) {
-    /** Average over ended sessions; null when there are none. */
+    /** Average over ended sessions (their steps only); null when there are none. */
     val averageStepsPerSession: Long?
-        get() = if (endedSessionCount == 0) null else totalSteps / endedSessionCount
+        get() = if (endedSessionCount == 0) null else endedSteps / endedSessionCount
 
     /** Average distance over ended sessions; null when there are none or no distance is known. */
     val averageDistancePerSession: Double?
-        get() = if (endedSessionCount == 0) null else totalDistanceMeters?.let { it / endedSessionCount }
+        get() = if (endedSessionCount == 0) null else endedDistanceMeters?.let { it / endedSessionCount }
 }
 
 /** The running or paused session plus the shoe details the Home card shows. */
@@ -61,6 +65,8 @@ data class SessionWithSteps(
     @ColumnInfo(name = "has_pending_steps") val hasPendingSteps: Boolean,
     /** True while any closed segment's distance is PENDING or PROVISIONAL (UI shows "About"). */
     @ColumnInfo(name = "has_unfinal_distance") val hasUnfinalDistance: Boolean = false,
+    /** True while any closed segment has no distance yet. */
+    @ColumnInfo(name = "has_pending_distance") val hasPendingDistance: Boolean = false,
 )
 
 /** One session row of the CSV export: the session, its pair's name and computed totals. */

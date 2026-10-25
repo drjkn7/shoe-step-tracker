@@ -1,16 +1,16 @@
 package io.github.drjkn7.shoestep.ui.common
 
 import io.github.drjkn7.shoestep.core.CostCalculator
+import io.github.drjkn7.shoestep.core.MILLIS_PER_MINUTE
 import io.github.drjkn7.shoestep.core.Money
+import io.github.drjkn7.shoestep.core.zoneIdOrUtc
 import io.github.drjkn7.shoestep.settings.DistanceUnit
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.text.NumberFormat
-import java.time.DateTimeException
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
-import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 import java.util.Currency
@@ -26,12 +26,12 @@ object Formatters {
 
     /** Date and time of [epochMillis] in the zone it was recorded in (falls back to UTC if unreadable). */
     fun dateTime(epochMillis: Long, zoneId: String, locale: Locale): String =
-        Instant.ofEpochMilli(epochMillis).atZone(zoneOrUtc(zoneId))
+        Instant.ofEpochMilli(epochMillis).atZone(zoneIdOrUtc(zoneId))
             .format(DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM, FormatStyle.SHORT).withLocale(locale))
 
     /** Time of day of [epochMillis] in the zone it was recorded in, e.g. "14:05". */
     fun time(epochMillis: Long, zoneId: String, locale: Locale): String =
-        Instant.ofEpochMilli(epochMillis).atZone(zoneOrUtc(zoneId))
+        Instant.ofEpochMilli(epochMillis).atZone(zoneIdOrUtc(zoneId))
             .format(DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT).withLocale(locale))
 
     /** The calendar day [epochMillis] falls on in [zone] (the phone's zone by default), for [date]. */
@@ -40,16 +40,10 @@ object Formatters {
 
     /** Whole hours and remaining minutes of a duration; negative durations count as zero. */
     fun hoursAndMinutes(millis: Long): Pair<Long, Long> {
-        val totalMinutes = millis.coerceAtLeast(0) / 60_000
+        val totalMinutes = millis.coerceAtLeast(0) / MILLIS_PER_MINUTE
         return totalMinutes / 60 to totalMinutes % 60
     }
 
-    private fun zoneOrUtc(zoneId: String): ZoneId =
-        try {
-            ZoneId.of(zoneId)
-        } catch (_: DateTimeException) {
-            ZoneOffset.UTC
-        }
 
     fun price(priceMinor: Long, currencyCode: String, locale: Locale): String =
         Money(priceMinor, currencyCode).format(locale)

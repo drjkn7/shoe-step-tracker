@@ -27,7 +27,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.drjkn7.shoestep.R
-import io.github.drjkn7.shoestep.data.db.ShoeWithStats
+import io.github.drjkn7.shoestep.data.db.ShoeEntity
 import io.github.drjkn7.shoestep.nfc.LinkProblem
 import io.github.drjkn7.shoestep.nfc.LinkRequest
 import io.github.drjkn7.shoestep.nfc.TagCoordinator
@@ -46,6 +46,7 @@ import io.github.drjkn7.shoestep.ui.theme.accentBrush
 import io.github.drjkn7.shoestep.ui.theme.pressedIn
 import io.github.drjkn7.shoestep.ui.theme.raised
 import io.github.drjkn7.shoestep.ui.theme.sheenBrush
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 
 /**
@@ -53,7 +54,8 @@ import kotlinx.coroutines.launch
  * linking, or the "Tag linked" note. Every pop-up cancels on Back or a tap outside it.
  */
 @Composable
-fun TagPromptHost(tags: TagCoordinator, pairs: List<ShoeWithStats>) {
+fun TagPromptHost(tags: TagCoordinator, pairsFlow: Flow<List<ShoeEntity>>) {
+    val pairs by pairsFlow.collectAsStateWithLifecycle(initialValue = emptyList())
     val prompt by tags.prompt.collectAsStateWithLifecycle()
     val linking by tags.linking.collectAsStateWithLifecycle()
     val notice by tags.notice.collectAsStateWithLifecycle()
@@ -119,7 +121,7 @@ private fun NewTagDialog(canLinkExisting: Boolean, onLinkExisting: () -> Unit, o
 }
 
 @Composable
-private fun PickPairDialog(pairs: List<ShoeWithStats>, onPick: (String) -> Unit, onDismiss: () -> Unit) {
+private fun PickPairDialog(pairs: List<ShoeEntity>, onPick: (String) -> Unit, onDismiss: () -> Unit) {
     SilverDialog(
         title = stringResource(R.string.tag_pick_title),
         onDismiss = onDismiss,
@@ -132,13 +134,13 @@ private fun PickPairDialog(pairs: List<ShoeWithStats>, onPick: (String) -> Unit,
                     Modifier
                         .fillMaxWidth()
                         .heightIn(min = SilverSpacing.touch)
-                        .clickable(role = Role.Button) { onPick(item.shoe.id) }
+                        .clickable(role = Role.Button) { onPick(item.id) }
                         .padding(vertical = SilverSpacing.s),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    ColourDot(item.shoe.accentColor)
+                    ColourDot(item.accentColor)
                     Text(
-                        item.shoe.name,
+                        item.name,
                         style = SilverTheme.type.button,
                         color = SilverTheme.colors.textPrimary,
                         modifier = Modifier.padding(start = SilverSpacing.m),

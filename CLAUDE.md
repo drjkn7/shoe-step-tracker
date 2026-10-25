@@ -1,5 +1,6 @@
 # Shoe Step Tracker (Android, open source)
-Tracks steps per pair of shoes via NFC tags + Health Connect. Milestone 1 only. See docs/PROGRESS.md.
+Tracks steps and distance per pair of shoes via NFC tags + Health Connect. Milestone 1 (v0.1.0) shipped;
+Milestone 2 (v0.2.0) in progress. See docs/PROGRESS.md.
 
 ## Commands
 - Build: ./gradlew assembleDebug | Install: ./gradlew installDebug
@@ -12,7 +13,7 @@ Tracks steps per pair of shoes via NFC tags + Health Connect. Milestone 1 only. 
   "C:\Program Files\Android\Android Studio\jbr" for command-line builds.
 
 ## Fixed decisions
-Kotlin, Compose + Material 3, Room 3 (androidx.room3), DataStore, Health Connect READ_STEPS only, manual DI,
+Kotlin, Compose + Material 3, Room 3 (androidx.room3), DataStore, Health Connect READ_STEPS + READ_DISTANCE only, manual DI,
 random-UUID NDEF tags, deferred step reconciliation, NO INTERNET, NO location, minSdk 28.
 Package io.github.drjkn7.shoestep. Licence Apache-2.0. Repo drjkn7/shoe-step-tracker (public).
 
@@ -26,7 +27,8 @@ Package io.github.drjkn7.shoestep. Licence Apache-2.0. Repo drjkn7/shoe-step-tra
 - GitHub Actions are pinned to full commit SHAs.
 - New permission or exported component? Update the allowlists in app/build.gradle.kts (needs approval).
 - Debug-only code goes in src/debug with a no-op in src/release.
-- Out of scope for M1: location, widget, notification, inactivity, photos, 3D, cloud.
+- Out of scope for M2: location, widget, inactivity detection and auto-pause, background Health Connect reads,
+  WorkManager, photos, 3D, cloud. (The session notification is in M2, Phase 7.)
 
 ## How we work (product owner has no coding experience)
 - Per phase: plain-English plan (3-6 sentences) → wait for "approved" → build → test → security

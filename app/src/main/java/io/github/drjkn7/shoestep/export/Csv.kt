@@ -43,7 +43,6 @@ object Csv {
         when (cell) {
             null -> ""
             is String -> text(cell)
-            is Long, is Int -> cell.toString()
             is Number -> cell.toString()
             else -> text(cell.toString())
         }
