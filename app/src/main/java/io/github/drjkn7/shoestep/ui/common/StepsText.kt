@@ -42,3 +42,14 @@ fun labelledSteps(text: String, label: StepsLabel): String = when (label) {
     StepsLabel.ABOUT -> stringResource(R.string.steps_about, text)
     StepsLabel.COUNTED_LATER -> stringResource(R.string.history_steps_pending, text)
 }
+
+/** Walking time as "1 h 05 min" or "12 min" (pair stats and History rows). */
+@Composable
+fun durationText(millis: Long): String {
+    val (hours, minutes) = Formatters.hoursAndMinutes(millis)
+    return if (hours > 0) {
+        stringResource(R.string.duration_hours_minutes, hours, minutes)
+    } else {
+        stringResource(R.string.duration_minutes, minutes)
+    }
+}

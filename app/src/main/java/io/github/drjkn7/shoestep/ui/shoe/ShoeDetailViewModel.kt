@@ -1,5 +1,6 @@
 package io.github.drjkn7.shoestep.ui.shoe
 
+import io.github.drjkn7.shoestep.ui.common.WhileScreenShown
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import io.github.drjkn7.shoestep.data.ShoeRepository
@@ -13,7 +14,6 @@ import io.github.drjkn7.shoestep.steps.StepReconciler
 import io.github.drjkn7.shoestep.steps.soFarSteps
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
@@ -35,15 +35,15 @@ class ShoeDetailViewModel(
 
     val state: StateFlow<DetailState> = repository.observeShoe(shoeId)
         .map { if (it == null) DetailState.NotFound else DetailState.Loaded(it) }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), DetailState.Loading)
+        .stateIn(viewModelScope, WhileScreenShown, DetailState.Loading)
 
     /** The app-wide active session (this pair's or another pair's), or null. */
     val activeSession: StateFlow<ActiveSessionWithShoe?> = sessions.activeSession
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+        .stateIn(viewModelScope, WhileScreenShown, null)
 
     /** This pair's sessions, newest first. */
     val history: StateFlow<List<SessionWithSteps>> = sessions.observeHistory(shoeId)
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+        .stateIn(viewModelScope, WhileScreenShown, emptyList())
 
     private val stepsRefresh = MutableStateFlow(0)
 
@@ -54,7 +54,7 @@ class ShoeDetailViewModel(
             .distinctUntilChanged(),
         refresh = stepsRefresh,
         reconciler = reconciler,
-    ).stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+    ).stateIn(viewModelScope, WhileScreenShown, null)
 
     /** Called when the page is shown again: re-read the "so far" count. */
     fun refreshSteps() {
@@ -101,18 +101,14 @@ class ShoeDetailViewModel(
         viewModelScope.launch { sessions.deleteAddedLater(sessionId) }
     }
 
-    /** Archiving ends this pair's session first: an archived pair can't have one running. */
+    /** Archiving ends this pair's session too (SessionManager does both at once). */
     fun setArchived(archived: Boolean) {
-        viewModelScope.launch {
-            if (archived) sessions.endForShoe(shoeId)
-            repository.setArchived(shoeId, archived)
-        }
+        viewModelScope.launch { sessions.setArchived(shoeId, archived) }
     }
 
     fun delete() {
         viewModelScope.launch {
-            sessions.endForShoe(shoeId)
-            repository.delete(shoeId)
+            sessions.deleteShoe(shoeId)
             _deleted.value = true
         }
     }

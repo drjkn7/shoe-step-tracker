@@ -20,6 +20,7 @@ import io.github.drjkn7.shoestep.steps.StepsSource
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
+import java.time.ZonedDateTime
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -173,12 +174,7 @@ class AddPastSessionViewModel(
         return at(t.startMinute) to at(t.endMinute)
     }
 
-    /** Today, from half an hour ago to now (rounded down to 5 minutes), kept within today. */
-    private fun defaultTimes(): PastTimes {
-        val now = Instant.ofEpochMilli(clock.nowUtcMillis()).atZone(clock.zoneId())
-        val end = (now.hour * 60 + now.minute) / 5 * 5
-        return PastTimes(now.toLocalDate().toEpochDay(), (end - 30).coerceAtLeast(0), end)
-    }
+    private fun defaultTimes(): PastTimes = defaultTimes(Instant.ofEpochMilli(clock.nowUtcMillis()).atZone(clock.zoneId()))
 
     private fun restore(): PastTimes? {
         val day = savedState.get<Long>(KEY_DAY) ?: return null
@@ -187,12 +183,32 @@ class AddPastSessionViewModel(
         return PastTimes(day, start, end)
     }
 
-    private companion object {
-        const val KEY_DAY = "past_day"
-        const val KEY_START = "past_start"
-        const val KEY_END = "past_end"
+    internal companion object {
+        /**
+         * The half hour up to [now] (rounded down to 5 minutes). In the first half hour after midnight that
+         * would cross into yesterday, so it starts on yesterday's last half hour instead of opening with an error.
+         */
+        fun defaultTimes(now: ZonedDateTime): PastTimes {
+            val end = (now.hour * 60 + now.minute) / 5 * 5
+            val today = now.toLocalDate().toEpochDay()
+            return if (end >= DEFAULT_MINUTES) {
+                PastTimes(today, end - DEFAULT_MINUTES, end)
+            } else {
+                PastTimes(today - 1, LAST_MINUTE - DEFAULT_MINUTES, LAST_MINUTE)
+            }
+        }
+
+        private const val KEY_DAY = "past_day"
+        private const val KEY_START = "past_start"
+        private const val KEY_END = "past_end"
 
         /** Waits this long after a change before asking Health Connect, so quick edits don't each read. */
-        const val PREVIEW_DELAY_MILLIS = 300L
+        private const val PREVIEW_DELAY_MILLIS = 300L
+
+        /** The form starts with a session this long, ending now. */
+        private const val DEFAULT_MINUTES = 30
+
+        /** 23:55, the last 5-minute mark of a day. */
+        private const val LAST_MINUTE = 23 * 60 + 55
     }
 }

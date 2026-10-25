@@ -31,7 +31,8 @@ data class Money(val minorUnits: Long, val currencyCode: String) {
         /** Highest accepted price in major units (whole euros, dollars, ...). */
         const val MAX_MAJOR_UNITS: Long = 1_000_000
 
-        private const val MAX_INPUT_LENGTH = 20
+        /** Longest price text the form accepts (also the field's typing limit). */
+        const val MAX_INPUT_LENGTH = 20
         private const val FALLBACK_CURRENCY = "EUR"
         private val CODE_PATTERN = Regex("^[A-Z]{3}$")
         private val NUMBER_PATTERN = Regex("^([0-9]+)(?:[.,]([0-9]+))?$")

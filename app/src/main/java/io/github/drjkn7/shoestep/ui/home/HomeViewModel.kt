@@ -1,5 +1,6 @@
 package io.github.drjkn7.shoestep.ui.home
 
+import io.github.drjkn7.shoestep.ui.common.WhileScreenShown
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import io.github.drjkn7.shoestep.data.ShoeRepository
@@ -14,7 +15,6 @@ import io.github.drjkn7.shoestep.steps.StepsSource
 import io.github.drjkn7.shoestep.steps.soFarSteps
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
@@ -39,12 +39,11 @@ class HomeViewModel(
     @OptIn(ExperimentalCoroutinesApi::class)
     val shoes: StateFlow<List<ShoeWithStats>?> = _showArchived
         .flatMapLatest { archived -> repository.observeShoes(archived) }
-        .map<List<ShoeWithStats>, List<ShoeWithStats>?> { it }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+        .stateIn<List<ShoeWithStats>?>(viewModelScope, WhileScreenShown, null)
 
     /** The running or paused session shown in the card at the top, or null. */
     val activeSession: StateFlow<ActiveSessionWithShoe?> = sessions.activeSession
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+        .stateIn(viewModelScope, WhileScreenShown, null)
 
     private val _stepsAccess = MutableStateFlow<StepsAccess?>(null)
 
@@ -59,7 +58,7 @@ class HomeViewModel(
      */
     val showDistanceCard: StateFlow<Boolean> = combine(_stepsAccess, _distanceAllowed, settings.distanceCardDismissed) { access, allowed, dismissed ->
         access == StepsAccess.READY && allowed == false && !dismissed
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
+    }.stateIn(viewModelScope, WhileScreenShown, false)
 
     fun dismissDistanceCard() {
         viewModelScope.launch { settings.dismissDistanceCard() }
@@ -75,7 +74,7 @@ class HomeViewModel(
         sessionKey = sessions.activeSession.map { active -> active?.session?.let { it.id to it.state } }.distinctUntilChanged(),
         refresh = stepsRefresh,
         reconciler = reconciler,
-    ).stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+    ).stateIn(viewModelScope, WhileScreenShown, null)
 
     fun setShowArchived(show: Boolean) {
         _showArchived.value = show

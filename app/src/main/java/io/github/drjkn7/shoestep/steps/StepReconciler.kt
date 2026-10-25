@@ -46,6 +46,8 @@ class StepReconciler(
                 val read = readOrZero(segment.startUtc, endUtc)
                 val now = clock.nowUtcMillis()
                 val outcome = decide(segment.steps, endUtc, read, now) ?: continue
+                // Same answer as last time: writing it again would only make every screen re-query the totals.
+                if (outcome.steps == segment.steps && outcome.status == segment.stepsStatus) continue
                 if (store.saveSteps(segment.id, endUtc, outcome.steps, outcome.status, now)) saved++
             }
         }
@@ -56,6 +58,7 @@ class StepReconciler(
                 val read = readDistanceOrZero(segment.startUtc, endUtc)
                 val now = clock.nowUtcMillis()
                 val outcome = decideDistance(segment.distanceMeters, endUtc, read, now) ?: continue
+                if (outcome.meters == segment.distanceMeters && outcome.status == segment.distanceStatus) continue
                 if (store.saveDistance(segment.id, endUtc, outcome.meters, outcome.status, now)) saved++
             }
         }

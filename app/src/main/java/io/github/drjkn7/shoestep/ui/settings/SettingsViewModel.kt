@@ -1,5 +1,6 @@
 package io.github.drjkn7.shoestep.ui.settings
 
+import io.github.drjkn7.shoestep.ui.common.WhileScreenShown
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -14,7 +15,6 @@ import io.github.drjkn7.shoestep.steps.StepReconciler
 import io.github.drjkn7.shoestep.steps.StepsAccess
 import io.github.drjkn7.shoestep.steps.StepsSource
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
@@ -34,11 +34,11 @@ class SettingsViewModel(
 
     /** Null = not chosen yet (new pairs use the region's currency). */
     val defaultCurrency: StateFlow<String?> = settings.defaultCurrency
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+        .stateIn(viewModelScope, WhileScreenShown, null)
 
     /** Null until read (a moment); the Theme control shows no choice until then. */
     val themeMode: StateFlow<ThemeMode?> = settings.themeMode
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+        .stateIn(viewModelScope, WhileScreenShown, null)
 
     /**
      * Settings → Appearance → Theme. The app redraws as soon as the choice is saved; Android is told

@@ -52,7 +52,7 @@ fun AppNavHost(container: AppContainer) {
         LocalDistanceUnit provides (chosenUnit ?: DistanceUnit.defaultFor(locale)),
     ) {
         val navController = rememberNavController()
-        val shoeIdArg = listOf(navArgument(Routes.ARG_SHOE_ID) { type = NavType.StringType })
+        val shoeIdArg = remember { listOf(navArgument(Routes.ARG_SHOE_ID) { type = NavType.StringType }) }
         val goBack: () -> Unit = { navController.popBackStack() }
         val tags = container.tagCoordinator
         val scope = rememberCoroutineScope()
@@ -186,9 +186,8 @@ fun AppNavHost(container: AppContainer) {
             composable(Routes.LICENCES) { LicencesScreen(onBack = goBack) }
         }
 
-        val pairs by remember { container.shoeRepository.observeShoes(archived = false) }
-            .collectAsStateWithLifecycle(initialValue = emptyList())
-        TagPromptHost(tags, pairs)
+        // The tag pop-ups collect their own list of pairs, so a change to any pair never redraws this screen map.
+        TagPromptHost(tags, remember { container.shoeRepository.observePairs() })
     }
 }
 

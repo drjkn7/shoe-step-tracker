@@ -6,7 +6,7 @@ import io.github.drjkn7.shoestep.steps.StepsRead
 import java.util.Locale
 
 /**
- * Debug build only: two read-only checks for M2 Phase 4, before distance appears on screen in Phase 5.
+ * Debug build only: two read-only distance checks (added in M2 Phase 4; still useful now distance is on screen).
  * Nothing is saved or logged; the results are shown in a pop-up in the test app.
  */
 object DistanceChecks {

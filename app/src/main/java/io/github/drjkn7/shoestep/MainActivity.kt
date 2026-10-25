@@ -92,6 +92,8 @@ class MainActivity : ComponentActivity() {
      */
     private fun handleTagIntent(intent: Intent?) {
         if (intent?.component?.className != tagEntry()) return
+        // Reopened from recent apps: Android hands back the old tag intent; that tap was already handled.
+        if (intent.flags and Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY != 0) return
         val tapped = AndroidTags.fromIntent(intent) ?: return
         lifecycleScope.launch { container.tagCoordinator.onTag(tapped) }
     }
