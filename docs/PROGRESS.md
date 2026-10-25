@@ -14,12 +14,12 @@ length, background Health Connect reads, WorkManager.
 - [x] Phase 3: Restyle every screen + "Discard changes?" + Appearance card (PR #25, merged; night mockups still to compare)
 - [x] Phase 4: Distance data (READ_DISTANCE, schema v1 → v2, reconciler reads distance, backfill) (PR #27, merged)
 - [x] Phase 5: Distance in the UI, units setting, cost per km/mile, CSV distance columns (PR #31, merged)
-- [ ] Phase 6: Add past session (and deleting "Added later" sessions) — built on branch `m2-phase-6`, waiting for the phone check
+- [ ] Phase 6: Add past session (and deleting "Added later" sessions), plus the 25 Oct design polish (branch `m2-phase-6`, in review)
 - [ ] Phase 7: Session notification (POST_NOTIFICATIONS)
 - [ ] Phase 8: Hardening and release 0.2.0
 
-Next: Phase 6 is built on branch `m2-phase-6` (schema v3) and waiting for the product owner's phone check and
-"go", then PR and CI; after that the Phase 7 plan. 111/111 on-device tests passed on the Pixel. Still open: the 30-day check (test app → Settings → Test build → "How far back can it read?" after allowing distance
+Next: finish Phase 6 (schema v3, plus the design polish): PR, CI, merge; then the Phase 7 plan. 114/114 on-device
+tests passed on the Pixel. Still open: the 30-day check (test app → Settings → Test build → "How far back can it read?" after allowing distance
 in Health Connect); the "Allow" buttons for distance open Health Connect's own screen, checked by hand on the phone;
 tablet layout (content stretches the full width in landscape, left for later). Night mode uses the Balanced palette
 (PR #29). On-device tests can also run on the Galaxy Tab S7+ while the Pixel is away.
