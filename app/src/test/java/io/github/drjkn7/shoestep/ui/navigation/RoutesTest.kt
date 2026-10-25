@@ -11,6 +11,13 @@ class RoutesTest {
 
     @Test fun buildsEditRoute() = assertEquals("shoe/$uuid/edit", Routes.editShoe(uuid))
 
+    @Test fun buildsAddPastSessionRoute() = assertEquals("shoe/$uuid/add-session", Routes.addPastSession(uuid))
+
+    @Test(expected = IllegalArgumentException::class)
+    fun addPastSessionRejectsUnsafeIds() {
+        Routes.addPastSession("abc/../settings")
+    }
+
     @Test(expected = IllegalArgumentException::class)
     fun rejectsSlash() {
         Routes.shoeDetail("abc/../settings")

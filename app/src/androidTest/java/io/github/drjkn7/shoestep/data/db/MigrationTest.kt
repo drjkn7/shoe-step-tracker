@@ -103,6 +103,52 @@ class MigrationTest {
         }
     }
 
+    @Test
+    fun version2To3KeepsEveryRowAndMarksNoSessionAsAddedLater() = runTest {
+        helper.createDatabase(2).apply {
+            execSQL(
+                "INSERT INTO shoes (id, tag_uuid, name, brand, model, type, price_minor, currency_code, " +
+                    "purchase_epoch_day, accent_color, archived, created_at_utc) VALUES " +
+                    "('a', NULL, 'Daily pair', 'Brand', 'Model', 'WALKING', 9000, 'GBP', NULL, 2, 0, 100)",
+            )
+            execSQL(
+                "INSERT INTO sessions (id, shoe_id, start_utc, end_utc, zone_id, state, end_reason) VALUES " +
+                    "('s1', 'a', 1000, 5000, 'Europe/London', 'ENDED', 'USER'), " +
+                    "('s2', 'a', 6000, NULL, 'Europe/London', 'PAUSED', NULL)",
+            )
+            execSQL(
+                "INSERT INTO segments (id, session_id, start_utc, end_utc, steps, steps_status, last_read_utc, " +
+                    "distance_m, distance_status, distance_read_utc) VALUES " +
+                    "('g1', 's1', 1000, 5000, 4321, 'FINAL', 9000, 3210.5, 'FINAL', 9000), " +
+                    "('g2', 's2', 6000, 7000, NULL, 'PENDING', NULL, NULL, 'PENDING', NULL)",
+            )
+            execSQL("INSERT INTO active_session (id, session_id) VALUES (1, 's2')")
+            close()
+        }
+
+        helper.runMigrationsAndValidate(3, listOf(MIGRATION_2_3)).close()
+
+        val db = ShoeStepDatabase.build(context, TEST_DB)
+        try {
+            val s1 = db.sessionDao().getSession("s1")!!
+            val s2 = db.sessionDao().getSession("s2")!!
+            assertEquals(false, s1.addedLater)
+            assertEquals(false, s2.addedLater)
+            assertEquals(5000L, s1.endUtc)
+            assertEquals(SessionState.PAUSED, s2.state)
+            assertEquals("s2", db.activeSessionDao().getActiveSessionId())
+            // Recorded sessions stay undeletable.
+            assertEquals(0, db.sessionDao().deleteAddedLater("s1"))
+
+            val stats = db.shoeDao().observeWithStatsById("a").first()!!
+            assertEquals(4321L, stats.totalSteps)
+            assertEquals(3210.5, stats.totalDistanceMeters!!, 0.0)
+            assertEquals(2, stats.sessionCount)
+        } finally {
+            db.close()
+        }
+    }
+
     private companion object {
         const val TEST_DB = "migration-test.db"
     }

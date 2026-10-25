@@ -52,8 +52,8 @@ import org.junit.runner.RunWith
 
 /**
  * M2 Phase 3: "Discard changes?" (T45), the Appearance card (T48), and every restyled screen in light
- * and night at normal and 200% text (T46, T49): each tappable element is at least 48 dp and has
- * something for TalkBack to read.
+ * and night at normal and 200% text (T46, T49; Add past session since Phase 6): each tappable element
+ * is at least 48 dp and has something for TalkBack to read.
  */
 @RunWith(AndroidJUnit4::class)
 class RestyledScreensTest {
@@ -201,6 +201,12 @@ class RestyledScreensTest {
             openEdit()
             rule.waitUntil(5_000) { rule.onAllNodes(hasSetTextAction() and hasText("Trail Runner 2")).fetchSemanticsNodes().isNotEmpty() }
             assertTappablesOk("$where edit form")
+            rule.onNodeWithContentDescription(str(R.string.nav_close)).performClick()
+            waitForText(str(R.string.detail_stats_title))
+
+            rule.onNodeWithText(str(R.string.past_add)).performScrollTo().performClick()
+            waitForText(str(R.string.title_add_past_session))
+            assertTappablesOk("$where add past session")
             rule.onNodeWithContentDescription(str(R.string.nav_close)).performClick()
             waitForText(str(R.string.detail_stats_title))
             rule.onNodeWithContentDescription(str(R.string.nav_back)).performClick()

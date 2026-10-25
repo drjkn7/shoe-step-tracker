@@ -3,6 +3,7 @@ package io.github.drjkn7.shoestep.session
 import io.github.drjkn7.shoestep.data.db.ActiveSessionWithShoe
 import io.github.drjkn7.shoestep.data.db.SegmentEntity
 import io.github.drjkn7.shoestep.data.db.SessionEntity
+import io.github.drjkn7.shoestep.data.db.SessionWithShoeName
 import io.github.drjkn7.shoestep.data.db.SessionWithSteps
 import io.github.drjkn7.shoestep.data.db.ShoeEntity
 import io.github.drjkn7.shoestep.data.model.SessionState
@@ -53,6 +54,11 @@ class FakeSessionStore : SessionStore {
         segments.values.filter { it.sessionId == sessionId }.sortedWith(compareBy({ it.startUtc }, { it.id }))
     override suspend fun unendedSessions() = sessions.values.filter { it.state != SessionState.ENDED }
 
+    override suspend fun firstOverlapping(startUtc: Long, endUtc: Long): SessionWithShoeName? =
+        sessions.values.filter { it.startUtc < endUtc && (it.endUtc == null || it.endUtc > startUtc) }
+            .minWithOrNull(compareBy({ it.startUtc }, { it.id }))
+            ?.let { SessionWithShoeName(it, shoes.getValue(it.shoeId).name) }
+
     override suspend fun insertSession(session: SessionEntity) {
         check("insertSession")
         require(session.id !in sessions) { "duplicate session id" }
@@ -83,6 +89,14 @@ class FakeSessionStore : SessionStore {
     override suspend fun clearActive() {
         check("clearActive")
         activeId = null
+    }
+
+    override suspend fun deleteAddedLater(sessionId: String): Boolean {
+        check("deleteAddedLater")
+        val session = sessions[sessionId]?.takeIf { it.addedLater && it.state == SessionState.ENDED } ?: return false
+        sessions.remove(session.id)
+        segments.values.removeAll { it.sessionId == session.id }
+        return true
     }
 
     override fun observeActive(): Flow<ActiveSessionWithShoe?> = version.map {

@@ -115,6 +115,42 @@ class SessionManagerDbTest {
         assertNull(sessions.activeSession.first())
     }
 
+    /** T50, T51, T53, T54 against real SQL: overlap rules, the history row, totals and deleting. */
+    @Test fun pastSessionsOverlapRulesAndDeletingUseTheRealQueries() = runTest {
+        addShoe("A")
+        addShoe("B")
+        val sessions = manager()
+        val now = TestClock.nowUtcMillis()
+        val hour = 3_600_000L
+        db.sessionDao().insertSession(SessionEntity("live", "B", now - 3 * hour, now - 2 * hour, "UTC", SessionState.ENDED, EndReason.USER))
+
+        // Overlaps "live" by a minute: refused, naming pair B.
+        val overlap = sessions.addPast("A", now - 2 * hour - 60_000, now - hour) as AddPastResult.Overlaps
+        assertEquals("live", overlap.other.session.id)
+        assertEquals("Shoe B", overlap.other.shoeName)
+        // Touching ends are fine.
+        val added = (sessions.addPast("A", now - 2 * hour, now - hour) as AddPastResult.Added).sessionId
+
+        val row = db.sessionDao().observeHistory("A").first().single()
+        assertEquals(added, row.session.id)
+        assertTrue(row.session.addedLater)
+        assertEquals(hour, row.activeMillis)
+        assertTrue(row.hasPendingSteps) // waiting for StepReconciler, like any other session
+        assertEquals(1, db.shoeDao().observeWithStatsById("A").first()!!.sessionCount)
+
+        // A running session (no end yet) reaches into the future: any time after its start overlaps it.
+        sessions.start("B")
+        val running = db.activeSessionDao().getActiveSessionId()!!
+        assertEquals(running, db.sessionDao().getFirstOverlapping(now + hour, now + 2 * hour)?.session?.id)
+
+        // Only the added session can be deleted; its segment goes with it.
+        assertEquals(SessionResult.NoChange, sessions.deleteAddedLater("live"))
+        assertEquals(SessionResult.Done, sessions.deleteAddedLater(added))
+        assertTrue(db.sessionDao().observeHistory("A").first().isEmpty())
+        assertTrue(db.sessionDao().getSegments(added).isEmpty())
+        assertEquals(0, db.shoeDao().observeWithStatsById("A").first()!!.sessionCount)
+    }
+
     private companion object {
         const val FILE = "session-manager-test.db"
     }
