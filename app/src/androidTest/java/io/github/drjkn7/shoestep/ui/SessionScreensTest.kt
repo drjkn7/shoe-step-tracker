@@ -219,6 +219,14 @@ class SessionScreensTest {
             assertTrue("${str(label)} too small: ${touch.width} x ${touch.height}px", touch.width >= minPx && touch.height >= minPx)
         }
         rule.clickWhenShown("Big text")
+        // Home's session card has a Pause button too: wait until Home has gone and only the pair
+        // page's Pause is left, or the tap can land on the one that is sliding away.
+        rule.waitUntil(5_000) {
+            rule.onAllNodesWithText(str(R.string.title_home)).fetchSemanticsNodes().isEmpty() &&
+                rule.onAllNodesWithText(str(R.string.detail_stats_title)).fetchSemanticsNodes().isNotEmpty() &&
+                rule.onAllNodes(hasText(str(R.string.session_pause)) and hasClickAction() and !hasAnyAncestor(isDialog()))
+                    .fetchSemanticsNodes().size == 1
+        }
         tap(R.string.session_pause)
         waitForText(str(R.string.session_resume))
     }
