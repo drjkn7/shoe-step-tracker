@@ -15,16 +15,17 @@ length, background Health Connect reads, WorkManager.
 - [x] Phase 4: Distance data (READ_DISTANCE, schema v1 → v2, reconciler reads distance, backfill) (PR #27, merged)
 - [x] Phase 5: Distance in the UI, units setting, cost per km/mile, CSV distance columns (PR #31, merged)
 - [x] Phase 6: Add past session (and deleting "Added later" sessions), plus the 25 Oct design polish (PR #33, merged)
-- [ ] Phase 7: Session notification (POST_NOTIFICATIONS) (built on m2-phase7-notification; PR to follow)
+- [x] Phase 7: Session notification (POST_NOTIFICATIONS) (PR #36, merged)
 - [ ] Phase 8: Hardening and release 0.2.0
 
-Next: Phase 7 (session notification: timer, Pause/Resume and End session, asked for before Android 13's
-prompt; POST_NOTIFICATIONS needs approval and the permission allowlist). Give the plain-English Phase 7 plan first
-and wait for "approved"; its draft wording is confirmed first. CI ran 114/114 on-device tests for debug and staging
-on PR #33, MigrationTest (v2 → v3) included. Still open: the 30-day check (test app → Settings → Test build → "How far back can it read?" after allowing distance
-in Health Connect); the "Allow" buttons for distance open Health Connect's own screen, checked by hand on the phone;
-tablet layout (content stretches the full width in landscape, left for later). Night mode uses the Balanced palette
-(PR #29). On-device tests can also run on the Galaxy Tab S7+ while the Pixel is away.
+Next: Phase 8 (hardening and release 0.2.0). Give the plain-English Phase 8 plan first and wait for "approved".
+CI ran 130/130 on-device tests for debug and staging on PR #36; locally 130/130 on the Pixel 9 Pro (Android 17) and
+the Galaxy Tab S7+ (Android 13). Still open: the session notification by hand on the phone (Android's own prompt, lock
+screen, buttons with the app closed, restart; T44, MANUAL_CHECKS); the 30-day check (test app → Settings → Test build →
+"How far back can it read?" after allowing distance in Health Connect); the "Allow" buttons for distance open Health
+Connect's own screen, checked by hand on the phone; tablet layout (content stretches the full width in landscape, left
+for later). Night mode uses the Balanced palette (PR #29). Draft wording added in Phase 7 (Settings "Notifications"
+card, the blocked note, Android's channel name "Current session") is to be confirmed on the phone.
 
 Waiting on the product owner:
 - 7 of the 30 mockups are not in `docs/design/` (23 files there): Add past session, Add past session
@@ -33,7 +34,7 @@ Waiting on the product owner:
   section 7 and in the M2 brief do not match the file names; work refers to file names. Night screens
   are needed before Phase 3 is finished, Add past session before Phase 6.
 - Draft copy on the M2 screens (permission cards, notification, Add past session) is confirmed per phase
-  (Phase 6 and Phase 7 ask first).
+  (Phase 6 and Phase 7 confirmed; Phase 7 extras listed above).
 
 ## Milestone 1 (v0.1.0)
 
@@ -175,3 +176,4 @@ What Phase 8 added:
 - A live timer on the session card was left out (M1); see BACKLOG for further ideas.
 | 2026-10-25 | **Phase 7 plan, wording and `POST_NOTIFICATIONS` approved** by the product owner. Built as design decision F2: an ordinary ongoing notification (no foreground service, no background work, no boot receiver). The app keeps it in step while it is open and after a notification button; opening the app posts it again if it was swiped away (Android 14+) or lost in a restart. Pause/Resume go through a receiver that is not exported; End session opens the app through a non-exported alias (`NotificationEntry`) and asks "End this session?", and only for the session that is still active. No steps in the notification (no background Health Connect reads). Lock screen shows only "Session running". |
 | 2026-10-25 | Phase 7 decisions: the question "Show sessions in notifications?" appears once, the first time a session is running on Android 13+ without the permission (also for a session already running when the update is installed). "Not now", or refusing Android's prompt, turns Settings → Session notification off; turning it on there asks Android again, and if Android no longer shows its prompt the card says "Notifications are off for this app in Android settings." with "Open Android settings". Back on the question hides it until the app is next opened. The timer counts walking time only (pauses left out). Draft wording added beyond the approved list: the Settings card heading "Notifications", the blocked note and its button, and Android's channel name "Current session" ("A timer while a session runs, with Pause and End session buttons."). |
+| 2026-10-25 | Phase 7 merged (PR #36): CI 130/130 on-device tests (debug and staging); locally 130/130 on the Pixel 9 Pro and the Galaxy Tab S7+. Test lesson: in Compose UI tests, don't block on the database (`runBlocking`) while a session command started from the screen is still running; it runs on the test's own UI dispatcher, so the two wait on each other. Wait on the screen instead. |
