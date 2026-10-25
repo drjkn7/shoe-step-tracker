@@ -1,5 +1,28 @@
 # Changelog
 
+## 0.2.0 – Milestone 2
+
+A new look, walking distance and a session notification. Your pairs and sessions from 0.1.0 are kept.
+
+- **New look**: "Silver Matte" design in a light and a night theme; Settings → Appearance chooses Light,
+  Dark or the phone's setting. Bundled Chakra Petch font (never downloaded). Larger text and tablets are
+  handled better (content is centred and capped in width).
+- **Distance**: walking distance from Health Connect (`READ_DISTANCE`, asked for separately) per session,
+  in each pair's totals and average, and as cost per km or mile. Settings → Units chooses kilometres or
+  miles (the phone's region decides until then). CSV exports gain distance columns.
+- **Session notification**: while a session runs, a notification shows a timer of walking time with Pause
+  or Resume and End session (End asks first, in the app). Asked for once before Android 13's prompt; can
+  be turned off in Settings → Notifications. Private on the lock screen ("Session running").
+- **Add past session**: forgot to tap? Add a session for a past time (up to 30 days back) from the pair's
+  History; it can't overlap another session. Its steps and distance are filled in from Health Connect.
+  Sessions added this way are marked "Added later" and can be deleted.
+- **Smaller things**: "Discard changes?" when leaving the pair form with unsaved edits; the running
+  session's card comes first on its pair's page; the app says "pair" throughout.
+- **Privacy and security**: still no internet permission. New permissions are only `READ_DISTANCE` and
+  `POST_NOTIFICATIONS`; the notification's buttons can't be used by other apps.
+
+Requires Android 9 or newer, as before.
+
 ## 0.1.0 – first release (Milestone 1)
 
 Counts steps per pair of shoes. Everything stays on your phone; the app has no internet access.
