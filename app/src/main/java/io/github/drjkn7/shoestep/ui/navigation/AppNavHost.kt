@@ -23,6 +23,7 @@ import io.github.drjkn7.shoestep.core.Money
 import io.github.drjkn7.shoestep.nfc.NfcState
 import io.github.drjkn7.shoestep.nfc.TagEvent
 import io.github.drjkn7.shoestep.ui.nfc.TagPromptHost
+import io.github.drjkn7.shoestep.ui.session.NotificationPromptHost
 import io.github.drjkn7.shoestep.ui.common.FilterTouchesWhenObscured
 import io.github.drjkn7.shoestep.ui.common.LocalAppContainer
 import io.github.drjkn7.shoestep.ui.common.LocalDistanceUnit
@@ -175,7 +176,7 @@ fun AppNavHost(container: AppContainer) {
             composable(Routes.SETTINGS) {
                 SettingsScreen(
                     viewModel = viewModel {
-                        SettingsViewModel(container.settings, container.stepsSource, container.exporter, container.clock, container.systemNightMode, container.stepReconciler)
+                        SettingsViewModel(container.settings, container.stepsSource, container.exporter, container.clock, container.systemNightMode, container.stepReconciler, container.notificationAccess, container.sessionNotifier)
                     },
                     onBack = goBack,
                     onOpenPrivacy = { navController.navigate(Routes.PRIVACY) },
@@ -188,6 +189,7 @@ fun AppNavHost(container: AppContainer) {
 
         // The tag pop-ups collect their own list of pairs, so a change to any pair never redraws this screen map.
         TagPromptHost(tags, remember { container.shoeRepository.observePairs() })
+        NotificationPromptHost(container)
     }
 }
 

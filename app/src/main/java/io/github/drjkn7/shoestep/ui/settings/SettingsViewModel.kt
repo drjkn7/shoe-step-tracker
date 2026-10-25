@@ -7,6 +7,8 @@ import androidx.lifecycle.viewModelScope
 import io.github.drjkn7.shoestep.core.Clock
 import io.github.drjkn7.shoestep.export.CsvExportRepository
 import io.github.drjkn7.shoestep.export.ExportKind
+import io.github.drjkn7.shoestep.notify.NotificationAccess
+import io.github.drjkn7.shoestep.notify.SessionNotifier
 import io.github.drjkn7.shoestep.settings.DistanceUnit
 import io.github.drjkn7.shoestep.settings.SettingsStore
 import io.github.drjkn7.shoestep.settings.SystemNightMode
@@ -30,6 +32,8 @@ class SettingsViewModel(
     private val clock: Clock,
     private val systemNightMode: SystemNightMode,
     private val reconciler: StepReconciler,
+    private val notificationAccess: NotificationAccess,
+    private val notifier: SessionNotifier,
 ) : ViewModel() {
 
     /** Null = not chosen yet (new pairs use the region's currency). */
@@ -55,6 +59,33 @@ class SettingsViewModel(
     /** Settings → Units → Distance. Every screen redraws as soon as it is saved; stored metres never change. */
     fun setDistanceUnit(unit: DistanceUnit) {
         viewModelScope.launch { settings.setDistanceUnit(unit) }
+    }
+
+    /** Settings → Notifications → Session notification; null until read. */
+    val sessionNotification: StateFlow<Boolean?> = settings.sessionNotification
+        .stateIn(viewModelScope, WhileScreenShown, null)
+
+    private val _notificationsAllowed = MutableStateFlow(true)
+
+    /** False when Android blocks the app's notifications; the switch then explains and links to Android's settings. */
+    val notificationsAllowed: StateFlow<Boolean> = _notificationsAllowed.asStateFlow()
+
+    /** True when turning the switch on must first ask for Android's permission (Android 13+). */
+    fun needsNotificationPermission(): Boolean = notificationAccess.needsPermission()
+
+    /** Turning it on here answers the "Show sessions in notifications?" question too, so that is never asked. */
+    fun setSessionNotification(on: Boolean) {
+        viewModelScope.launch {
+            if (on) settings.markNotificationAsked()
+            settings.setSessionNotification(on)
+            notifier.refresh()
+        }
+    }
+
+    /** Called each time Settings is shown and after Android's prompt: notifications can be allowed or blocked meanwhile. */
+    fun refreshNotifications() {
+        _notificationsAllowed.value = notificationAccess.isAllowed()
+        viewModelScope.launch { notifier.refresh() }
     }
 
     private val _stepsAccess = MutableStateFlow<StepsAccess?>(null)

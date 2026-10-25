@@ -36,6 +36,16 @@ interface SettingsStore {
     val distanceCardDismissed: Flow<Boolean>
 
     suspend fun dismissDistanceCard()
+
+    /** Settings → Notifications → Session notification; on unless turned off (or "Not now" was tapped). */
+    val sessionNotification: Flow<Boolean>
+
+    suspend fun setSessionNotification(on: Boolean)
+
+    /** True once "Show sessions in notifications?" was answered; it is then never shown again. */
+    val notificationAsked: Flow<Boolean>
+
+    suspend fun markNotificationAsked()
 }
 
 /**
@@ -80,11 +90,25 @@ class DataStoreSettings(
         store.edit { it[DISTANCE_CARD_DISMISSED] = true }
     }
 
+    override val sessionNotification: Flow<Boolean> = store.data.map { prefs -> prefs[SESSION_NOTIFICATION] != false }
+
+    override suspend fun setSessionNotification(on: Boolean) {
+        store.edit { it[SESSION_NOTIFICATION] = on }
+    }
+
+    override val notificationAsked: Flow<Boolean> = store.data.map { prefs -> prefs[NOTIFICATION_ASKED] == true }
+
+    override suspend fun markNotificationAsked() {
+        store.edit { it[NOTIFICATION_ASKED] = true }
+    }
+
     private companion object {
         const val FILE_NAME = "settings"
         val CURRENCY = stringPreferencesKey("default_currency")
         val THEME = stringPreferencesKey("theme_mode")
         val DISTANCE_UNIT = stringPreferencesKey("distance_unit")
         val DISTANCE_CARD_DISMISSED = booleanPreferencesKey("distance_card_dismissed")
+        val SESSION_NOTIFICATION = booleanPreferencesKey("session_notification")
+        val NOTIFICATION_ASKED = booleanPreferencesKey("notification_asked")
     }
 }

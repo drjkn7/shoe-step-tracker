@@ -15,12 +15,16 @@ import io.github.drjkn7.shoestep.nfc.NfcState
 import io.github.drjkn7.shoestep.nfc.RoomTagStore
 import io.github.drjkn7.shoestep.nfc.TagCoordinator
 import io.github.drjkn7.shoestep.nfc.deviceNfcState
+import io.github.drjkn7.shoestep.notify.AndroidNotificationAccess
+import io.github.drjkn7.shoestep.notify.NotificationAccess
+import io.github.drjkn7.shoestep.notify.SessionNotifier
 import io.github.drjkn7.shoestep.session.RoomSessionStore
 import io.github.drjkn7.shoestep.session.SessionManager
 import io.github.drjkn7.shoestep.steps.HealthConnectStepsSource
 import io.github.drjkn7.shoestep.steps.RoomStepStore
 import io.github.drjkn7.shoestep.steps.StepReconciler
 import io.github.drjkn7.shoestep.steps.StepsSource
+import kotlinx.coroutines.flow.MutableStateFlow
 
 /**
  * Manual dependency injection: the single place where app-wide objects are created.
@@ -39,6 +43,8 @@ class AppContainer(
     settingsFactory: (Context) -> SettingsStore = ::DataStoreSettings,
     /** Tests pass a no-op: the real one changes the theme Android keeps for this app (the real app's too). */
     systemNightModeFactory: (Context) -> SystemNightMode = ::AndroidSystemNightMode,
+    /** Tests pass a fake so they never depend on the phone's notification permission. */
+    notificationAccessFactory: (Context) -> NotificationAccess = ::AndroidNotificationAccess,
 ) {
     private val appContext = context.applicationContext
 
@@ -62,6 +68,14 @@ class AppContainer(
     val sessionManager: SessionManager by lazy { SessionManager(RoomSessionStore(database), clock) }
 
     val stepsSource: StepsSource by lazy { stepsSourceFactory(appContext) }
+
+    val notificationAccess: NotificationAccess by lazy { notificationAccessFactory(appContext) }
+
+    /** Keeps the session notification in step with the session (shown only while the app allows it). */
+    val sessionNotifier: SessionNotifier by lazy { SessionNotifier(appContext, sessionManager, settings, notificationAccess) }
+
+    /** The session whose End session button was tapped in the notification; the app asks before ending it. */
+    val endRequests = MutableStateFlow<String?>(null)
 
     /** The only object that writes step counts; one per app so runs never overlap. */
     val stepReconciler: StepReconciler by lazy { StepReconciler(RoomStepStore(database), stepsSource, clock) }
