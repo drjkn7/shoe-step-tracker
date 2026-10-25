@@ -69,6 +69,16 @@ class FormattersTest {
         assertEquals("$0.0333", Formatters.costPerThousand(cost, "USD", Locale.US))
     }
 
+    @Test fun costsOfOneUnitOrMoreKeepOnlyTheCurrencysDecimals() {
+        // Design review 25 Oct 2026: "£190.5465" read like a glitch.
+        val cost = CostCalculator.cost(12_900, "GBP", 677) // £190.5465 per 1,000 steps
+        assertEquals("£190.55", Formatters.costPerThousand(cost, "GBP", Locale.UK))
+        assertEquals("£455.75", Formatters.costPerDistance(java.math.BigDecimal("455.7499"), "GBP", Locale.UK))
+        assertEquals("£1.00", Formatters.costPerDistance(java.math.BigDecimal("1.0004"), "GBP", Locale.UK))
+        // Below one unit the extra decimals stay, so tiny costs never show as zero.
+        assertEquals("£0.9999", Formatters.costPerDistance(java.math.BigDecimal("0.9999"), "GBP", Locale.UK))
+    }
+
     @Test fun costPerThousandForFreeShoeIsZero() {
         val cost = CostCalculator.cost(0, "USD", 1_000)
         assertEquals("$0.00", Formatters.costPerThousand(cost, "USD", Locale.US))
