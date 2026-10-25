@@ -6,7 +6,8 @@ import androidx.test.platform.app.InstrumentationRegistry
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.cancel
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.job
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.After
@@ -32,17 +33,23 @@ class SettingsStoreTest {
         context.preferencesDataStoreFile(fileName).delete()
     }
 
+    /**
+     * Stops a run and waits until its DataStore has really let go of the file. Only cancelling can leave
+     * it open for a moment, and DataStore refuses a second one on the same file (seen once on CI).
+     */
+    private suspend fun CoroutineScope.close() = coroutineContext.job.cancelAndJoin()
+
     @Test fun themeChoiceSurvivesARestart() = runBlocking {
         val firstRun = CoroutineScope(Dispatchers.IO + SupervisorJob())
         val before = DataStoreSettings(context, fileName, firstRun)
         assertEquals(ThemeMode.SYSTEM, before.themeMode.first())
         before.setThemeMode(ThemeMode.DARK)
-        firstRun.cancel() // the app stops: the file is closed
+        firstRun.close() // the app stops: the file is closed
 
         val secondRun = CoroutineScope(Dispatchers.IO + SupervisorJob())
         val after = DataStoreSettings(context, fileName, secondRun)
         assertEquals(ThemeMode.DARK, after.themeMode.first())
-        secondRun.cancel()
+        secondRun.close()
     }
 
     @Test fun distanceUnitAndCardChoiceSurviveARestart() = runBlocking {
@@ -52,13 +59,13 @@ class SettingsStoreTest {
         assertFalse(before.distanceCardDismissed.first())
         before.setDistanceUnit(DistanceUnit.MILES)
         before.dismissDistanceCard()
-        firstRun.cancel()
+        firstRun.close()
 
         val secondRun = CoroutineScope(Dispatchers.IO + SupervisorJob())
         val after = DataStoreSettings(context, fileName, secondRun)
         assertEquals(DistanceUnit.MILES, after.distanceUnit.first())
         assertTrue(after.distanceCardDismissed.first())
-        secondRun.cancel()
+        secondRun.close()
     }
 
     /** T43: the Session notification switch is on until turned off; the question is asked only once. */
@@ -69,12 +76,12 @@ class SettingsStoreTest {
         assertFalse(before.notificationAsked.first())
         before.setSessionNotification(false)
         before.markNotificationAsked()
-        firstRun.cancel()
+        firstRun.close()
 
         val secondRun = CoroutineScope(Dispatchers.IO + SupervisorJob())
         val after = DataStoreSettings(context, fileName, secondRun)
         assertFalse(after.sessionNotification.first())
         assertTrue(after.notificationAsked.first())
-        secondRun.cancel()
+        secondRun.close()
     }
 }
