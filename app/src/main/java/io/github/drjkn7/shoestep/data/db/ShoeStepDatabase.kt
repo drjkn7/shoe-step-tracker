@@ -10,7 +10,7 @@ import androidx.sqlite.execSQL
 
 @Database(
     entities = [ShoeEntity::class, SessionEntity::class, SegmentEntity::class, ActiveSessionEntity::class],
-    version = 2,
+    version = 3,
     exportSchema = true,
 )
 abstract class ShoeStepDatabase : RoomDatabase() {

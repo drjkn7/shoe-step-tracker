@@ -147,6 +147,36 @@
     <string name="history_switched">Ended by switching pairs</string>
     <string name="history_row">%1$s · %2$s</string>
     <string name="history_steps_pending">%1$s (counted later)</string>
+    <string name="history_added_later">Added later</string>
+    <!-- TalkBack: the Delete button on an "Added later" row; %1$s is the row's date, time and duration. -->
+    <string name="history_delete_description">Delete the session from %1$s</string>
+
+    <!-- Add past session (M2 Phase 6, PNGs 12, 13, 29) -->
+    <string name="past_add">+ Add past session</string>
+    <string name="title_add_past_session">Add past session</string>
+    <string name="past_pair">Pair</string>
+    <string name="past_date">Date</string>
+    <string name="past_start">Start</string>
+    <string name="past_end">End</string>
+    <string name="past_pick_date">Date of the session</string>
+    <string name="past_pick_start">Start time</string>
+    <string name="past_pick_end">End time</string>
+    <string name="past_help">Forgot to tap? Add the time you wore this pair. It can\'t overlap another session or be in the future, and only the last 30 days can be added.</string>
+    <!-- %1$s is "6,120 steps", %2$s is "4.6 km". -->
+    <string name="past_preview_steps_distance">About %1$s · %2$s</string>
+    <string name="past_preview_steps">About %1$s</string>
+    <string name="past_preview_note">Health Connect has this for the time you chose. It shows as \"About\" for one day, like any session.</string>
+    <string name="past_preview_loading">Checking Health Connect…</string>
+    <string name="past_preview_none">Health Connect has no steps for this time.</string>
+    <string name="past_preview_unavailable">Steps are counted once Health Connect can be read.</string>
+    <!-- %1$s is the other pair's name, %2$s and %3$s its start and end times. -->
+    <string name="past_overlap">This overlaps a session for %1$s, %2$s–%3$s. Choose another time.</string>
+    <string name="past_overlap_running">This overlaps the session for %1$s that is still going. Choose another time.</string>
+    <string name="past_end_before_start">The end must be after the start.</string>
+    <string name="past_in_future">This time is in the future.</string>
+    <string name="past_too_old">Only the last 30 days can be added.</string>
+    <string name="past_delete_title">Delete this session?</string>
+    <string name="past_delete_body">It was added later. Its steps and distance come off this pair\'s totals.</string>
     <!-- Provisional counts: may still change for one day while wearables sync. -->
     <string name="steps_about">About %1$s</string>
 

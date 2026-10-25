@@ -4,10 +4,12 @@ import io.github.drjkn7.shoestep.core.Clock
 import io.github.drjkn7.shoestep.data.db.ActiveSessionWithShoe
 import io.github.drjkn7.shoestep.data.db.SegmentEntity
 import io.github.drjkn7.shoestep.data.db.SessionEntity
+import io.github.drjkn7.shoestep.data.db.SessionWithShoeName
 import io.github.drjkn7.shoestep.data.db.SessionWithSteps
 import io.github.drjkn7.shoestep.data.model.EndReason
 import io.github.drjkn7.shoestep.data.model.SessionState
 import io.github.drjkn7.shoestep.data.model.StepsStatus
+import io.github.drjkn7.shoestep.steps.StepReconciler
 import java.util.UUID
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.onStart
@@ -27,6 +29,22 @@ sealed interface SessionResult {
 
     /** The shoe does not exist or is archived, so it can't start a session. */
     data object ShoeUnavailable : SessionResult
+}
+
+/** Why a past session's times can't be saved (checked before looking for overlaps). */
+enum class PastTimeProblem { END_NOT_AFTER_START, IN_FUTURE, TOO_OLD }
+
+/** What [SessionManager.addPast] did. */
+sealed interface AddPastResult {
+    data class Added(val sessionId: String) : AddPastResult
+
+    data class Invalid(val problem: PastTimeProblem) : AddPastResult
+
+    /** Shares time with [other] (any pair, including the session running now); nothing was saved. */
+    data class Overlaps(val other: SessionWithShoeName) : AddPastResult
+
+    /** The shoe does not exist or is archived. */
+    data object ShoeUnavailable : AddPastResult
 }
 
 /**
@@ -52,6 +70,9 @@ class SessionManager(
     val activeSession: Flow<ActiveSessionWithShoe?> = store.observeActive().onStart { restore() }
 
     fun observeHistory(shoeId: String): Flow<List<SessionWithSteps>> = store.observeHistory(shoeId)
+
+    /** For the Add past session form, to warn while the times are chosen. [addPast] checks again. */
+    suspend fun firstOverlapping(startUtc: Long, endUtc: Long): SessionWithShoeName? = store.firstOverlapping(startUtc, endUtc)
 
     /** Starts a session for [shoeId] if nothing is active. Never ends another pair's session. */
     suspend fun start(shoeId: String): SessionResult = command { now ->
@@ -110,6 +131,24 @@ class SessionManager(
     }
 
     /**
+     * Saves an ended session from [startUtc] to [endUtc] for a forgotten tap, marked "added later", with
+     * one segment left PENDING for StepReconciler to fill in like any other. Refused if the times break
+     * [pastTimeProblem] or share any time with another session of any pair, the active one included.
+     * Repeating the same request finds the first one as an overlap, so it is never saved twice.
+     */
+    suspend fun addPast(shoeId: String, startUtc: Long, endUtc: Long): AddPastResult = command { now ->
+        if (!canStart(shoeId)) return@command AddPastResult.ShoeUnavailable
+        pastTimeProblem(startUtc, endUtc, now)?.let { return@command AddPastResult.Invalid(it) }
+        store.firstOverlapping(startUtc, endUtc)?.let { return@command AddPastResult.Overlaps(it) }
+        AddPastResult.Added(insertPast(shoeId, startUtc, endUtc))
+    }
+
+    /** Deletes [sessionId] only if it was added later; sessions recorded live can't be deleted. */
+    suspend fun deleteAddedLater(sessionId: String): SessionResult = command {
+        if (store.deleteAddedLater(sessionId)) SessionResult.Done else SessionResult.NoChange
+    }
+
+    /**
      * Once per launch, makes the stored state consistent. With transactions this should never find
      * anything, but if it does it prefers keeping data over inventing walking time:
      * - an active pointer to an ended session is cleared;
@@ -152,7 +191,7 @@ class SessionManager(
         restored = true
     }
 
-    private suspend fun command(block: suspend (now: Long) -> SessionResult): SessionResult =
+    private suspend fun <R> command(block: suspend (now: Long) -> R): R =
         mutex.withLock {
             restoreLocked()
             store.transaction { block(clock.nowUtcMillis()) }
@@ -176,6 +215,23 @@ class SessionManager(
         store.insertSession(session)
         openSegment(session.id, at)
         store.setActive(session.id)
+    }
+
+    private suspend fun insertPast(shoeId: String, startUtc: Long, endUtc: Long): String {
+        val session = SessionEntity(
+            id = newId(),
+            shoeId = shoeId,
+            startUtc = startUtc,
+            endUtc = endUtc,
+            zoneId = clock.zoneId().id,
+            state = SessionState.ENDED,
+            endReason = EndReason.USER,
+            addedLater = true,
+        )
+        store.insertSession(session)
+        openSegment(session.id, startUtc)
+        closeOpenSegments(session.id, endUtc)
+        return session.id
     }
 
     private suspend fun openSegment(sessionId: String, at: Long) {
@@ -217,5 +273,21 @@ class SessionManager(
     private suspend fun notBefore(session: SessionEntity, now: Long): Long {
         val latest = store.segments(session.id).maxOfOrNull { maxOf(it.startUtc, it.endUtc ?: it.startUtc) }
         return maxOf(now, session.startUtc, latest ?: session.startUtc)
+    }
+
+    companion object {
+        /**
+         * How far back a past session may start: Health Connect lets the app read at least this far
+         * back, so its steps can always be filled in.
+         */
+        const val PAST_LIMIT_MILLIS = StepReconciler.HISTORY_LIMIT_MILLIS
+
+        /** What is wrong with a past session from [startUtc] to [endUtc] at [nowUtc], or null if nothing. */
+        fun pastTimeProblem(startUtc: Long, endUtc: Long, nowUtc: Long): PastTimeProblem? = when {
+            endUtc <= startUtc -> PastTimeProblem.END_NOT_AFTER_START
+            endUtc > nowUtc -> PastTimeProblem.IN_FUTURE
+            startUtc < nowUtc - PAST_LIMIT_MILLIS -> PastTimeProblem.TOO_OLD
+            else -> null
+        }
     }
 }

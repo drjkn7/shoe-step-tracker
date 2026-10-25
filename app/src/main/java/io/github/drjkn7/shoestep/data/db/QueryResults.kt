@@ -41,6 +41,12 @@ data class ActiveSessionWithShoe(
     @ColumnInfo(name = "shoe_accent_color") val shoeAccentColor: Int,
 )
 
+/** A session and its pair's name, for "This overlaps a session for …". */
+data class SessionWithShoeName(
+    @Embedded val session: SessionEntity,
+    @ColumnInfo(name = "shoe_name") val shoeName: String,
+)
+
 /** One row of a shoe's session history. */
 data class SessionWithSteps(
     @Embedded val session: SessionEntity,

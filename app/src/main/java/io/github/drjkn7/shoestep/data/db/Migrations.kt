@@ -20,5 +20,13 @@ val MIGRATION_1_2 = Migration(1, 2) { connection ->
     connection.execSQL("CREATE INDEX IF NOT EXISTS `index_segments_distance_status` ON `segments` (`distance_status`)")
 }
 
+/**
+ * v2 → v3 (M2 Phase 6): sessions added afterwards for a forgotten tap are marked "added later". Every
+ * existing session was recorded live, so it starts as not added later.
+ */
+val MIGRATION_2_3 = Migration(2, 3) { connection ->
+    connection.execSQL("ALTER TABLE `sessions` ADD COLUMN `added_later` INTEGER NOT NULL DEFAULT 0")
+}
+
 /** Every migration, in order. A missing step fails loudly when the database opens; data is never wiped. */
-val ALL_MIGRATIONS = arrayOf(MIGRATION_1_2)
+val ALL_MIGRATIONS = arrayOf(MIGRATION_1_2, MIGRATION_2_3)

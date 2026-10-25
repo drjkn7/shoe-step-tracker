@@ -5,6 +5,7 @@ import io.github.drjkn7.shoestep.data.db.ActiveSessionEntity
 import io.github.drjkn7.shoestep.data.db.ActiveSessionWithShoe
 import io.github.drjkn7.shoestep.data.db.SegmentEntity
 import io.github.drjkn7.shoestep.data.db.SessionEntity
+import io.github.drjkn7.shoestep.data.db.SessionWithShoeName
 import io.github.drjkn7.shoestep.data.db.SessionWithSteps
 import io.github.drjkn7.shoestep.data.db.ShoeEntity
 import io.github.drjkn7.shoestep.data.db.ShoeStepDatabase
@@ -26,12 +27,18 @@ interface SessionStore {
     suspend fun segments(sessionId: String): List<SegmentEntity>
     suspend fun unendedSessions(): List<SessionEntity>
 
+    /** The earliest session of any pair sharing time with [startUtc]..[endUtc]; unended ones reach into the future. */
+    suspend fun firstOverlapping(startUtc: Long, endUtc: Long): SessionWithShoeName?
+
     suspend fun insertSession(session: SessionEntity)
     suspend fun updateSession(session: SessionEntity)
     suspend fun insertSegment(segment: SegmentEntity)
     suspend fun updateSegment(segment: SegmentEntity)
     suspend fun setActive(sessionId: String)
     suspend fun clearActive()
+
+    /** Deletes an ended "added later" session and its segments; false if there was no such session. */
+    suspend fun deleteAddedLater(sessionId: String): Boolean
 
     fun observeActive(): Flow<ActiveSessionWithShoe?>
     fun observeHistory(shoeId: String): Flow<List<SessionWithSteps>>
@@ -50,6 +57,7 @@ class RoomSessionStore(private val db: ShoeStepDatabase) : SessionStore {
     override suspend fun session(id: String) = sessions.getSession(id)
     override suspend fun segments(sessionId: String) = sessions.getSegments(sessionId)
     override suspend fun unendedSessions() = sessions.getUnendedSessions()
+    override suspend fun firstOverlapping(startUtc: Long, endUtc: Long) = sessions.getFirstOverlapping(startUtc, endUtc)
 
     override suspend fun insertSession(session: SessionEntity) = sessions.insertSession(session)
     override suspend fun updateSession(session: SessionEntity) {
@@ -61,6 +69,7 @@ class RoomSessionStore(private val db: ShoeStepDatabase) : SessionStore {
     }
     override suspend fun setActive(sessionId: String) = active.setActive(ActiveSessionEntity(sessionId = sessionId))
     override suspend fun clearActive() = active.clear()
+    override suspend fun deleteAddedLater(sessionId: String) = sessions.deleteAddedLater(sessionId) > 0
 
     override fun observeActive() = active.observeActiveSessionWithShoe()
     override fun observeHistory(shoeId: String) = sessions.observeHistory(shoeId)

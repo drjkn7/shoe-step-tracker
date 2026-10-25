@@ -14,13 +14,12 @@ length, background Health Connect reads, WorkManager.
 - [x] Phase 3: Restyle every screen + "Discard changes?" + Appearance card (PR #25, merged; night mockups still to compare)
 - [x] Phase 4: Distance data (READ_DISTANCE, schema v1 → v2, reconciler reads distance, backfill) (PR #27, merged)
 - [x] Phase 5: Distance in the UI, units setting, cost per km/mile, CSV distance columns (PR #31, merged)
-- [ ] Phase 6: Add past session (and deleting "Added later" sessions)
+- [ ] Phase 6: Add past session (and deleting "Added later" sessions) — built on branch `m2-phase-6`, waiting for the phone check
 - [ ] Phase 7: Session notification (POST_NOTIFICATIONS)
 - [ ] Phase 8: Hardening and release 0.2.0
 
-Next: Phase 6 (Add past session, and deleting "Added later" sessions). Give the plain-English Phase 6 plan first
-and wait for "approved"; it needs the Add past session mockups and its draft copy confirmed first. CI ran 104/104
-on-device tests for debug and staging on PR #31. Still open: the 30-day check (test app → Settings → Test build → "How far back can it read?" after allowing distance
+Next: Phase 6 is built on branch `m2-phase-6` (schema v3) and waiting for the product owner's phone check and
+"go", then PR and CI; after that the Phase 7 plan. 111/111 on-device tests passed on the Pixel. Still open: the 30-day check (test app → Settings → Test build → "How far back can it read?" after allowing distance
 in Health Connect); the "Allow" buttons for distance open Health Connect's own screen, checked by hand on the phone;
 tablet layout (content stretches the full width in landscape, left for later). Night mode uses the Balanced palette
 (PR #29). On-device tests can also run on the Galaxy Tab S7+ while the Pixel is away.
@@ -153,6 +152,11 @@ What Phase 8 added:
 | 2026-10-24 | Units: Settings → Units → Distance (Kilometres / Miles). Until chosen the phone's region decides, like the currency: miles in the US, UK, Liberia and Myanmar, kilometres elsewhere. Only the display changes; distances stay stored in metres. TalkBack reads "kilometres" / "miles" in full. |
 | 2026-10-24 | "Show distance" card on Home (PNG 03) when steps are allowed but distance isn't. Allow asks Health Connect for distance only; Not now hides the card for good (stored in settings); Settings → Step counting keeps an "Allow distance" button. |
 | 2026-10-24 | CSV: "Total distance in metres" (pairs) and "Distance in metres" (sessions) in whole metres, always metric whatever the app shows, empty when unknown; each with a "Distance status" column (final / provisional / counted later) like steps. Header names stay plain words (the CSV header check allows only letters, digits and spaces, so not "distance_m"). |
+| 2026-10-25 | Phase 6 plan and wording approved (mockup frames 12, 13, 29, read from the mockups artifact since their PNGs are not in docs/design). "+ Add past session" in the History card header opens a full-screen form: the pair (fixed), Date (last 30 days), Start and End (Material's time input), a preview of what Health Connect has for that time, and the help text. Not offered for archived pairs (they can't start sessions either). |
+| 2026-10-25 | Schema v3: `sessions.added_later` (INTEGER NOT NULL DEFAULT 0); migration 2 → 3 only adds the column, so every existing session counts as recorded live. A past session is saved by `SessionManager.addPast` in one transaction: ENDED, end reason USER, one closed segment left PENDING for StepReconciler (steps and distance follow the normal rules: "About" for a day, then final). The form reconciles once right after saving so the pair's page shows the steps on return. |
+| 2026-10-25 | Past session rules (checked live in the form and again in `addPast`): end after start (no sessions across midnight), not in the future, start no more than 30 days ago (`SessionManager.PAST_LIMIT_MILLIS` = the reconciler's history limit), and no shared time with any session of any pair; touching ends are allowed, and a running or paused session counts as reaching into the future. Repeating a save finds the first one as an overlap, so it is never stored twice. |
+| 2026-10-25 | Deleting: only ended "added later" sessions, through `SessionManager.deleteAddedLater` (the SQL itself also requires `added_later = 1`). Their History row has a Delete button (TalkBack: "Delete the session from …") that asks "Delete this session?" first. CSV session status reads "ended (added later)"; no new column. |
+| 2026-10-25 | Draft wording added beyond the approved list, to confirm on the phone: "Pair", "Date", "Start", "End", picker titles "Date of the session" / "Start time" / "End time", preview "Checking Health Connect…", "Health Connect has no steps for this time.", "Steps are counted once Health Connect can be read.", and for a running session "This overlaps the session for … that is still going. Choose another time." |
 
 ## Open items carried to later phases
 - SessionDao/ActiveSessionDao write methods must be called only via SessionManager/RoomSessionStore (convention; not enforced by visibility).

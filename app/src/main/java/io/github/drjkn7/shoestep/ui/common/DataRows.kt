@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
@@ -17,8 +18,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.text
 import androidx.compose.ui.text.AnnotatedString
@@ -105,7 +108,9 @@ fun LinkRow(title: String, onClick: () -> Unit, modifier: Modifier = Modifier, v
 
 /**
  * One session in a pair's history (PNG 08): "date, time · duration" with an optional note below on
- * the left; steps in accent ink with the distance below on the right. Read out as one item.
+ * the left; steps in accent ink with the distance below on the right. Read out as one item. With
+ * [onDelete] ("Added later" sessions only) a Delete button sits under the note; TalkBack reads it as
+ * [deleteDescription].
  */
 @Composable
 fun HistoryRow(
@@ -115,6 +120,8 @@ fun HistoryRow(
     distance: String?,
     modifier: Modifier = Modifier,
     distanceSpoken: String? = null,
+    onDelete: (() -> Unit)? = null,
+    deleteDescription: String? = null,
 ) {
     val c = SilverTheme.colors
     Column(modifier.fillMaxWidth()) {
@@ -126,6 +133,15 @@ fun HistoryRow(
             Column(Modifier.weight(1f)) {
                 Text(title, style = SilverTheme.type.body.copy(fontSize = 15.sp, lineHeight = 22.sp), color = c.textPrimary)
                 note?.let { Text(it, style = SilverTheme.type.note, color = c.textMuted) }
+                onDelete?.let {
+                    // Lined up with the text above: the button's own side padding is 20 dp.
+                    TextActionButton(
+                        stringResource(R.string.action_delete),
+                        onClick = it,
+                        danger = true,
+                        modifier = Modifier.offset(x = (-20).dp).semantics { deleteDescription?.let { d -> contentDescription = d } },
+                    )
+                }
             }
             Column(Modifier.widthIn(max = 160.dp), horizontalAlignment = Alignment.End) {
                 Text(steps, style = SilverTheme.type.button, color = c.accentInk, textAlign = TextAlign.End)

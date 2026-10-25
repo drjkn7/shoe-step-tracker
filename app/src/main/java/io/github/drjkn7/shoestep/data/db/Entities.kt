@@ -53,6 +53,8 @@ data class SessionEntity(
     @ColumnInfo(name = "zone_id") val zoneId: String,
     val state: SessionState,
     @ColumnInfo(name = "end_reason") val endReason: EndReason?,
+    // Schema v3: typed in afterwards for a forgotten tap ("Added later"). Only these can be deleted.
+    @ColumnInfo(name = "added_later", defaultValue = "0") val addedLater: Boolean = false,
 )
 
 @Entity(

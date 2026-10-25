@@ -13,10 +13,13 @@ object Routes {
     const val ADD_SHOE = "shoe/new"
     const val SHOE_DETAIL = "shoe/{$ARG_SHOE_ID}"
     const val EDIT_SHOE = "shoe/{$ARG_SHOE_ID}/edit"
+    const val ADD_PAST_SESSION = "shoe/{$ARG_SHOE_ID}/add-session"
 
     fun shoeDetail(shoeId: String): String = "shoe/${requireSafeId(shoeId)}"
 
     fun editShoe(shoeId: String): String = "shoe/${requireSafeId(shoeId)}/edit"
+
+    fun addPastSession(shoeId: String): String = "shoe/${requireSafeId(shoeId)}/add-session"
 
     private val SAFE_ID = Regex("^[A-Za-z0-9-]{1,64}$")
 
