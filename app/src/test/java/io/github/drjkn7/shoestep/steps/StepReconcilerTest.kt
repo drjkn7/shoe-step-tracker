@@ -242,4 +242,29 @@ class StepReconcilerTest {
         assertEquals(0L, reconciler.stepsSoFar("s1"))
         assertTrue(source.reads.isEmpty())
     }
+
+    // --- Code review 25 Oct 2026: don't rewrite what hasn't changed ------------------------------
+
+    @Test fun anUnchangedProvisionalValueIsReadButNotWrittenAgain() = runTest {
+        store.add("g1", now - hour, now - minute, steps = 1_500, status = PROVISIONAL, meters = 1_200.0, distanceStatus = PROVISIONAL)
+        source.answer = { _, _ -> StepsRead.Count(1_500) }
+        source.distanceAllowed = true
+        source.distanceAnswer = { _, _ -> DistanceRead.Meters(1_200.0) }
+        var writes = 0
+        store.beforeSave = { writes++ }
+
+        assertEquals(0, reconciler.reconcile())
+
+        // Health Connect was still asked (a watch may sync late), but nothing was written, so the
+        // screens' totals queries are not set off for nothing.
+        assertEquals(1, source.reads.size)
+        assertEquals(1, source.distanceReads.size)
+        assertEquals(0, writes)
+        assertEquals(PROVISIONAL, store["g1"].stepsStatus)
+
+        // A new answer is still saved.
+        source.answer = { _, _ -> StepsRead.Count(1_600) }
+        assertEquals(1, reconciler.reconcile())
+        assertEquals(1_600L, store["g1"].steps)
+    }
 }

@@ -88,10 +88,10 @@ class CsvExporterTest {
         assertEquals(0L, CsvExporter.meters(Double.NaN))
     }
 
-    @Test fun stepsStatusWordsMatchTheApp() {
-        assertEquals("counted later", CsvExporter.stepsStatus(hasPending = true, hasUnfinal = true))
-        assertEquals("provisional", CsvExporter.stepsStatus(hasPending = false, hasUnfinal = true))
-        assertEquals("final", CsvExporter.stepsStatus(hasPending = false, hasUnfinal = false))
+    @Test fun readStatusWordsMatchTheApp() {
+        assertEquals("counted later", CsvExporter.readStatus(hasPending = true, hasUnfinal = true))
+        assertEquals("provisional", CsvExporter.readStatus(hasPending = false, hasUnfinal = true))
+        assertEquals("final", CsvExporter.readStatus(hasPending = false, hasUnfinal = false))
     }
 
     @Test fun formulaInAPairNameIsNeutralisedInTheFile() {

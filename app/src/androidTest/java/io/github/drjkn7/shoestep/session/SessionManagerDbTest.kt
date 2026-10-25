@@ -106,13 +106,24 @@ class SessionManagerDbTest {
         assertNull(store.activeSessionId())
     }
 
-    @Test fun endingBeforeDeleteLeavesNoActiveSession() = runTest {
+    @Test fun deletingAPairEndsItsSessionAndRemovesItInOneGo() = runTest {
         addShoe("A")
         val sessions = manager()
         sessions.start("A")
-        sessions.endForShoe("A")
-        db.shoeDao().delete("A")
+        assertEquals(SessionResult.Done, sessions.deleteShoe("A"))
         assertNull(sessions.activeSession.first())
+        assertNull(db.shoeDao().getById("A"))
+        assertTrue(db.sessionDao().getUnendedSessions().isEmpty())
+    }
+
+    @Test fun archivingAPairEndsItsSession() = runTest {
+        addShoe("A")
+        val sessions = manager()
+        sessions.start("A")
+        assertEquals(SessionResult.Done, sessions.setArchived("A", true))
+        assertNull(sessions.activeSession.first())
+        assertEquals(true, db.shoeDao().getById("A")!!.archived)
+        assertEquals(SessionState.ENDED, db.sessionDao().observeHistory("A").first().single().session.state)
     }
 
     /** T50, T51, T53, T54 against real SQL: overlap rules, the history row, totals and deleting. */
