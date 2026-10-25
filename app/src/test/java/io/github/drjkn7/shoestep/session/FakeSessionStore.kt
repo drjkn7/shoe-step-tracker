@@ -37,9 +37,11 @@ class FakeSessionStore : SessionStore {
     override suspend fun <R> transaction(block: suspend () -> R): R {
         transactionCount++
         val saved = Triple(LinkedHashMap(sessions), LinkedHashMap(segments), activeId)
+        val savedShoes = LinkedHashMap(shoes)
         try {
             return block().also { version.value++ }
         } catch (e: Throwable) {
+            shoes.clear(); shoes.putAll(savedShoes)
             sessions.clear(); sessions.putAll(saved.first)
             segments.clear(); segments.putAll(saved.second)
             activeId = saved.third
@@ -96,6 +98,24 @@ class FakeSessionStore : SessionStore {
         val session = sessions[sessionId]?.takeIf { it.addedLater && it.state == SessionState.ENDED } ?: return false
         sessions.remove(session.id)
         segments.values.removeAll { it.sessionId == session.id }
+        return true
+    }
+
+    override suspend fun setShoeArchived(shoeId: String, archived: Boolean): Boolean {
+        check("setShoeArchived")
+        val shoe = shoes[shoeId] ?: return false
+        shoes[shoeId] = shoe.copy(archived = archived)
+        return true
+    }
+
+    override suspend fun deleteShoe(shoeId: String): Boolean {
+        check("deleteShoe")
+        shoes.remove(shoeId) ?: return false
+        // Like the database's cascade: the pair's sessions and their segments go too.
+        val gone = sessions.values.filter { it.shoeId == shoeId }.map { it.id }.toSet()
+        sessions.keys.removeAll(gone)
+        segments.values.removeAll { it.sessionId in gone }
+        if (activeId in gone) activeId = null
         return true
     }
 

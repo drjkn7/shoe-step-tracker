@@ -121,6 +121,21 @@ class DatabaseTest {
         assertNull(s.averageStepsPerSession) // no ended sessions yet
     }
 
+    /** Code review 25 Oct 2026: a paused session's steps count in the total, not in the average. */
+    @Test fun averageUsesOnlyEndedSessions() = runTest {
+        shoes.insert(shoe("a"))
+        addSession("s1", "a", start = 1_000)
+        sessions.insertSegment(SegmentEntity("g1", "s1", 1_000, 61_000, 1_000, StepsStatus.FINAL, null, 800.0, StepsStatus.FINAL))
+        addSession("s2", "a", state = SessionState.PAUSED, start = 100_000)
+        sessions.insertSegment(SegmentEntity("g2", "s2", 100_000, 130_000, 500, StepsStatus.PROVISIONAL, null, 400.0, StepsStatus.PROVISIONAL))
+
+        val s = stats("a")
+        assertEquals(1_500L, s.totalSteps) // everything walked so far
+        assertEquals(1_000L, s.endedSteps)
+        assertEquals(1_000L, s.averageStepsPerSession) // not 1,500 / 1
+        assertEquals(800.0, s.averageDistancePerSession!!, 0.0)
+    }
+
     @Test fun negativeDurationFromClockChangeCountsAsZero() = runTest {
         shoes.insert(shoe("a"))
         addSession("s1", "a")
