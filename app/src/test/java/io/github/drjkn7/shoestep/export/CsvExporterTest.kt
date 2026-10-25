@@ -129,4 +129,10 @@ class CsvExporterTest {
         )
         assertEquals("\"'+Trail\",\"2026-10-17 10:00\",,\"Z\",\"running\",0,0,\"counted later\",,\"counted later\"", lines[3])
     }
+
+    @Test fun sessionsAddedLaterSaySo() {
+        val added = SessionEntity("d", "s1", t0, t0 + 1_800_000, "UTC", SessionState.ENDED, EndReason.USER, addedLater = true)
+        val line = CsvExporter.sessions(listOf(SessionExportRow(added, "Daily trainers", 3_000, 1_800_000, false, false))).split("\r\n")[1]
+        assertEquals(true, line.contains(",\"ended (added later)\",30,3000,"))
+    }
 }
