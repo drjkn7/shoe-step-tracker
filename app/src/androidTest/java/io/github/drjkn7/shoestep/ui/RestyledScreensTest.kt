@@ -193,7 +193,7 @@ class RestyledScreensTest {
 
             // Home builds only the rows on screen; on a short screen (CI's Pixel 2) this one starts below it.
             rule.onNode(hasScrollToKeyAction()).performScrollToKey(id)
-            // Tap the left side: at 200% text the middle of the row can be under the floating "Add shoe".
+            // Tap the left side: at 200% text the middle of the row can be under the floating "Add pair".
             rule.onAllNodesWithText("Trail Runner 2").onFirst().performTouchInput { click(Offset(width * 0.2f, height / 2f)) }
             waitForText(str(R.string.detail_stats_title))
             assertTappablesOk("$where pair page")

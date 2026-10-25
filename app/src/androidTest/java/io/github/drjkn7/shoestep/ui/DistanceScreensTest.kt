@@ -116,8 +116,11 @@ class DistanceScreensTest {
         launch()
         openPair("Gift pair")
         // T34: no distance → dash for the total, the average and cost per km; never "0.0 km".
+        // History rows leave the distance line out instead (design review, 25 Oct 2026).
         val dash = str(R.string.dash)
-        rule.waitUntil(5_000) { rule.onAllNodesWithText(dash).fetchSemanticsNodes().size >= 4 }
+        rule.waitUntil(5_000) { rule.onAllNodesWithText(dash).fetchSemanticsNodes().size == 3 }
+        rule.onNodeWithText(str(R.string.history_title)).performScrollTo()
+        assertEquals(3, rule.onAllNodesWithText(dash).fetchSemanticsNodes().size)
         assertTrue(gone(spoken(0.0)))
     }
 
