@@ -1,6 +1,7 @@
 # Privacy statement
 
-_Shoe Step Tracker, effective from version 0.2.0 (distance added; 0.1.0 read step counts only)._
+_Shoe Step Tracker, effective from version 0.2.0 (distance and the session notification added; 0.1.0
+read step counts only)._
 
 ## Short version
 
@@ -31,6 +32,10 @@ third-party tracking libraries. Data is excluded from Android cloud backups and 
 
 The only way data leaves the app is when **you** choose to export a CSV file, to a location you
 pick in the system file picker.
+
+While a session runs, the **session notification** (permission `POST_NOTIFICATIONS` on Android 13+)
+shows the pair's name and times on your phone. The lock screen shows only "Session running". You
+can turn it off in the app's Settings or in Android's notification settings.
 
 ## Deleting your data
 

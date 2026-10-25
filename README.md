@@ -6,7 +6,8 @@ Stick an NFC tag on each pair. Tap the tag with your phone to start a session; t
 your steps from **Health Connect** and keeps lifetime totals, session history and cost per step
 for every pair.
 
-> **Status:** version 0.1.0 (Milestone 1) is released. What's in it: [CHANGELOG.md](CHANGELOG.md).
+> **Status:** version 0.2.0 (Milestone 2) is being prepared; 0.1.0 is the latest release. What's in
+> each: [CHANGELOG.md](CHANGELOG.md).
 
 ## Install
 
@@ -24,8 +25,9 @@ B5:82:C2:A5:E8:EE:D7:5C:5A:A8:CF:A2:11:18:8A:29:D1:D1:FB:D9:88:B6:65:3F:07:1F:70
 ## Privacy in one paragraph
 
 The app has **no internet permission**. It has no accounts, no cloud, no analytics and no ads.
-It reads only your step count from Health Connect (`READ_STEPS`) and stores everything in a
-local database on your phone, which is excluded from backups. Details: [PRIVACY.md](PRIVACY.md).
+It reads only your step count and walking distance from Health Connect (`READ_STEPS`,
+`READ_DISTANCE`), shows a notification while a session runs (`POST_NOTIFICATIONS`, can be turned
+off) and stores everything in a local database on your phone, which is excluded from backups. Details: [PRIVACY.md](PRIVACY.md).
 
 ## Requirements
 

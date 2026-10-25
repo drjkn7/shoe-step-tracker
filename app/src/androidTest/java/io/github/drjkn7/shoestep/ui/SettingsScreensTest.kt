@@ -78,7 +78,8 @@ class SettingsScreensTest {
         openSettings()
         rule.onNodeWithText(str(R.string.settings_export_pairs)).performScrollTo().assertIsDisplayed()
         rule.onNodeWithText(str(R.string.settings_export_sessions)).performScrollTo().assertIsDisplayed()
-        rule.onNodeWithText(str(R.string.settings_version, "0.1.0")).performScrollTo().assertIsDisplayed()
+        // The version Settings shows is the one this build was given in app/build.gradle.kts.
+        rule.onNodeWithText(str(R.string.settings_version, "0.2.0")).performScrollTo().assertIsDisplayed()
     }
 
     @Test fun privacyAndLicencesPagesOpen() {
