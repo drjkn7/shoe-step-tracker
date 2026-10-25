@@ -33,6 +33,8 @@ import io.github.drjkn7.shoestep.ui.settings.LicencesScreen
 import io.github.drjkn7.shoestep.ui.settings.PrivacyScreen
 import io.github.drjkn7.shoestep.ui.settings.SettingsScreen
 import io.github.drjkn7.shoestep.ui.settings.SettingsViewModel
+import io.github.drjkn7.shoestep.ui.shoe.AddPastSessionScreen
+import io.github.drjkn7.shoestep.ui.shoe.AddPastSessionViewModel
 import io.github.drjkn7.shoestep.ui.shoe.ShoeDetailScreen
 import io.github.drjkn7.shoestep.ui.shoe.ShoeDetailViewModel
 import io.github.drjkn7.shoestep.ui.shoe.ShoeFormScreen
@@ -133,6 +135,24 @@ fun AppNavHost(container: AppContainer) {
                     isNfcOn = { container.nfcState() == NfcState.ON },
                     onLinkTag = { scope.launch { tags.startLinking(shoeId) } },
                     onUnlinkTag = { scope.launch { tags.unlink(shoeId) } },
+                    onAddPastSession = { navController.navigate(Routes.addPastSession(shoeId)) },
+                )
+            }
+            composable(Routes.ADD_PAST_SESSION, arguments = shoeIdArg) { entry ->
+                val shoeId = entry.arguments?.getString(Routes.ARG_SHOE_ID).orEmpty()
+                AddPastSessionScreen(
+                    viewModel = viewModel {
+                        AddPastSessionViewModel(
+                            repository = container.shoeRepository,
+                            sessions = container.sessionManager,
+                            stepsSource = container.stepsSource,
+                            reconciler = container.stepReconciler,
+                            clock = container.clock,
+                            savedState = createSavedStateHandle(),
+                            shoeId = shoeId,
+                        )
+                    },
+                    onBack = goBack,
                 )
             }
             composable(Routes.EDIT_SHOE, arguments = shoeIdArg) { entry ->

@@ -96,6 +96,11 @@ class ShoeDetailViewModel(
         viewModelScope.launch { sessions.end(sessionId) }
     }
 
+    /** Only sessions added later can be deleted; SessionManager refuses any other. */
+    fun deleteAddedLater(sessionId: String) {
+        viewModelScope.launch { sessions.deleteAddedLater(sessionId) }
+    }
+
     /** Archiving ends this pair's session first: an archived pair can't have one running. */
     fun setArchived(archived: Boolean) {
         viewModelScope.launch {

@@ -105,6 +105,23 @@ interface SessionDao {
     @Query("SELECT * FROM sessions WHERE state != 'ENDED' ORDER BY start_utc, id")
     suspend fun getUnendedSessions(): List<SessionEntity>
 
+    /**
+     * The earliest session of any pair that shares time with [startUtc]..[endUtc] (touching ends don't
+     * count). A session without an end (running or paused) reaches into the future.
+     */
+    @Query(
+        """
+        SELECT x.*, s.name AS shoe_name FROM sessions x JOIN shoes s ON x.shoe_id = s.id
+        WHERE x.start_utc < :endUtc AND (x.end_utc IS NULL OR x.end_utc > :startUtc)
+        ORDER BY x.start_utc, x.id LIMIT 1
+        """,
+    )
+    suspend fun getFirstOverlapping(startUtc: Long, endUtc: Long): SessionWithShoeName?
+
+    /** Deletes a session added later (its segments go with it). Sessions recorded live are never deleted. */
+    @Query("DELETE FROM sessions WHERE id = :id AND added_later = 1 AND state = 'ENDED'")
+    suspend fun deleteAddedLater(id: String): Int
+
     @Query(
         """
         SELECT x.*,

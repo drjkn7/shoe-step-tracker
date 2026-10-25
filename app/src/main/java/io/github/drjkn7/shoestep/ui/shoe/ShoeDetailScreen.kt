@@ -6,6 +6,7 @@ import android.provider.Settings
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -17,6 +18,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
@@ -78,6 +80,7 @@ fun ShoeDetailScreen(
     isNfcOn: () -> Boolean,
     onLinkTag: () -> Unit,
     onUnlinkTag: () -> Unit,
+    onAddPastSession: () -> Unit,
 ) {
     val context = LocalContext.current
     var confirmUnlink by rememberSaveable { mutableStateOf(false) }
@@ -93,6 +96,7 @@ fun ShoeDetailScreen(
     var confirmDelete by rememberSaveable { mutableStateOf(false) }
     var confirmArchive by rememberSaveable { mutableStateOf(false) }
     var confirmEndId by rememberSaveable { mutableStateOf<String?>(null) }
+    var confirmDeleteSessionId by rememberSaveable { mutableStateOf<String?>(null) }
 
     LaunchedEffect(deleted) { if (deleted) onBack() }
 
@@ -144,6 +148,8 @@ fun ShoeDetailScreen(
                 onPause = viewModel::pause,
                 onResume = viewModel::resume,
                 onEnd = { confirmEndId = it },
+                onAddPast = onAddPastSession,
+                onDeleteAddedLater = { confirmDeleteSessionId = it },
                 tagCard = {
                     TagCard(
                         linked = s.shoe.shoe.tagUuid != null,
@@ -223,6 +229,19 @@ fun ShoeDetailScreen(
         )
     }
 
+    confirmDeleteSessionId?.let { sessionId ->
+        ConfirmDialog(
+            title = stringResource(R.string.past_delete_title),
+            text = stringResource(R.string.past_delete_body),
+            confirmLabel = stringResource(R.string.action_delete),
+            onConfirm = {
+                confirmDeleteSessionId = null
+                viewModel.deleteAddedLater(sessionId)
+            },
+            onDismiss = { confirmDeleteSessionId = null },
+        )
+    }
+
     if (confirmDelete && loaded != null) {
         ConfirmDialog(
             title = stringResource(R.string.delete_title, loaded.shoe.shoe.name),
@@ -247,6 +266,8 @@ private fun DetailContent(
     onPause: (String) -> Unit,
     onResume: (String) -> Unit,
     onEnd: (String) -> Unit,
+    onAddPast: () -> Unit,
+    onDeleteAddedLater: (String) -> Unit,
     tagCard: @Composable () -> Unit,
 ) {
     val locale = LocalConfiguration.current.locales[0]
@@ -333,7 +354,7 @@ private fun DetailContent(
 
         tagCard()
 
-        HistoryCard(history)
+        HistoryCard(history, onAddPast = if (shoe.archived) null else onAddPast, onDeleteAddedLater = onDeleteAddedLater)
     }
 }
 
@@ -407,13 +428,29 @@ private fun TagCard(linked: Boolean, archived: Boolean, hasNfc: Boolean, onLink:
 /** Joins the parts of the header lines: "Trail running · Saucony Peregrine 15". */
 private const val SEPARATOR = " · "
 
+/**
+ * The pair's sessions, newest first. "+ Add past session" sits in the header ([onAddPast] is null for
+ * archived pairs); sessions added later say so and can be deleted ([onDeleteAddedLater]).
+ */
 @Composable
-private fun HistoryCard(history: List<SessionWithSteps>) {
+private fun HistoryCard(history: List<SessionWithSteps>, onAddPast: (() -> Unit)?, onDeleteAddedLater: (String) -> Unit) {
     val locale = LocalConfiguration.current.locales[0]
     // T26: a long-used pair can have thousands of sessions; build only the newest ones, a page at a time.
     var shown by rememberSaveable { mutableIntStateOf(HISTORY_PAGE_SIZE) }
     SilverCard {
-        CardLabel(stringResource(R.string.history_title), Modifier.padding(bottom = SilverSpacing.s))
+        if (onAddPast == null) {
+            CardLabel(stringResource(R.string.history_title), Modifier.padding(bottom = SilverSpacing.s))
+        } else {
+            // At large text the button moves under the heading instead of squeezing it.
+            FlowRow(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                itemVerticalAlignment = Alignment.CenterVertically,
+            ) {
+                CardLabel(stringResource(R.string.history_title))
+                TextActionButton(stringResource(R.string.past_add), onAddPast, accent = true)
+            }
+        }
         if (history.isEmpty()) {
             Text(stringResource(R.string.history_empty), style = SilverTheme.type.body, color = SilverTheme.colors.textMuted)
         }
@@ -427,9 +464,17 @@ private fun HistoryCard(history: List<SessionWithSteps>) {
                 stringResource(R.string.duration_minutes, minutes)
             }
             val distance = distanceText(row.totalDistanceMeters, row.hasUnfinalDistance)
+            val title = stringResource(R.string.history_row, Formatters.dateTime(session.startUtc, session.zoneId, locale), duration)
+            val addedLater = session.addedLater && ended
             HistoryRow(
-                title = stringResource(R.string.history_row, Formatters.dateTime(session.startUtc, session.zoneId, locale), duration),
-                note = if (session.endReason == EndReason.SWITCH) stringResource(R.string.history_switched) else null,
+                title = title,
+                note = when {
+                    addedLater -> stringResource(R.string.history_added_later)
+                    session.endReason == EndReason.SWITCH -> stringResource(R.string.history_switched)
+                    else -> null
+                },
+                onDelete = if (addedLater) ({ onDeleteAddedLater(session.id) }) else null,
+                deleteDescription = stringResource(R.string.history_delete_description, title),
                 steps = if (ended) {
                     labelledSteps(stepsCountText(row.totalSteps), StepsLabel.of(row.hasPendingSteps, row.hasUnfinalSteps))
                 } else {

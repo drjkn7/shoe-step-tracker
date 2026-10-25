@@ -1,6 +1,7 @@
 package io.github.drjkn7.shoestep.export
 
 import io.github.drjkn7.shoestep.core.Money
+import io.github.drjkn7.shoestep.data.db.SessionEntity
 import io.github.drjkn7.shoestep.data.db.SessionExportRow
 import io.github.drjkn7.shoestep.data.db.ShoeWithStats
 import io.github.drjkn7.shoestep.data.model.EndReason
@@ -78,7 +79,7 @@ object CsvExporter {
                     dateTime(session.startUtc, zone),
                     session.endUtc?.let { dateTime(it, zone) },
                     zone.id,
-                    status(session.state, session.endReason),
+                    status(session),
                     row.activeMillis.coerceAtLeast(0) / 60_000,
                     row.totalSteps,
                     stepsStatus(row.hasPendingSteps, row.hasUnfinalSteps),
@@ -106,10 +107,14 @@ object CsvExporter {
         else -> "final"
     }
 
-    private fun status(state: SessionState, reason: EndReason?): String = when (state) {
+    private fun status(session: SessionEntity): String = when (session.state) {
         SessionState.RUNNING -> "running"
         SessionState.PAUSED -> "paused"
-        SessionState.ENDED -> if (reason == EndReason.SWITCH) "ended (switched pairs)" else "ended"
+        SessionState.ENDED -> when {
+            session.addedLater -> "ended (added later)"
+            session.endReason == EndReason.SWITCH -> "ended (switched pairs)"
+            else -> "ended"
+        }
     }
 
     private fun dateTime(epochMillis: Long, zone: ZoneId): String =
