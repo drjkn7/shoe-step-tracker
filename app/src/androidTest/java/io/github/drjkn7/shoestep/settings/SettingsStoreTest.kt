@@ -60,4 +60,21 @@ class SettingsStoreTest {
         assertTrue(after.distanceCardDismissed.first())
         secondRun.cancel()
     }
+
+    /** T43: the Session notification switch is on until turned off; the question is asked only once. */
+    @Test fun notificationChoicesSurviveARestart() = runBlocking {
+        val firstRun = CoroutineScope(Dispatchers.IO + SupervisorJob())
+        val before = DataStoreSettings(context, fileName, firstRun)
+        assertTrue("on by default", before.sessionNotification.first())
+        assertFalse(before.notificationAsked.first())
+        before.setSessionNotification(false)
+        before.markNotificationAsked()
+        firstRun.cancel()
+
+        val secondRun = CoroutineScope(Dispatchers.IO + SupervisorJob())
+        val after = DataStoreSettings(context, fileName, secondRun)
+        assertFalse(after.sessionNotification.first())
+        assertTrue(after.notificationAsked.first())
+        secondRun.cancel()
+    }
 }

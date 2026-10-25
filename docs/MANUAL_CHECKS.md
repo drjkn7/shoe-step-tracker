@@ -8,6 +8,7 @@ Test IDs refer to [TEST_PLAN.md](TEST_PLAN.md).
 | ☐ | Screen reader (T25) | Settings → Accessibility → TalkBack on. Swipe through Home, a pair, Settings. | Every button and row is read out sensibly; nothing says just "button". |
 | ☐ | Right-to-left (T25) | Settings → System → Developer options → "Force RTL layout direction". | Screens mirror (back arrow on the right); no text is cut off. Turn it off afterwards. |
 | ☐ | Restart mid-session (T17) | Start a session, restart the phone, open the app. | The session is still running. |
+| ☐ | Session notification (T40–T44) | Android 13+: start a session, answer Continue, allow. Lock the phone, then unlock; pause and resume from the notification with the app closed; tap End session; restart the phone mid-session and open the app. | Asked once in the app's words before Android's prompt. Lock screen shows only "Session running". Pause/Resume act at once and the timer leaves out paused time; End session opens "End this session?". After the restart the notification is back once the app is opened. |
 | ☐ | Airplane mode (T18) | Airplane mode on; add a pair, start/end a session, export. | Everything works (the app never needs the internet). |
 | ☐ | Time zone change (T20) | During a session, change the phone's time zone; end it. | Times show in the zone they were recorded in; duration is right. |
 | ☐ | ~200 steps (T09) | Start, walk about 200 steps, end, open the app a minute later. | Steps close to Health Connect's own count. |

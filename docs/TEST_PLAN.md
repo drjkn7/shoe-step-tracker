@@ -50,11 +50,11 @@ Status: ☐ not run · ✅ passed · ❌ failed. Phase = when it first becomes t
 | T37 | Database v1 → v2 | All shoes, sessions, segments and tags kept (MigrationTest + install over v0.1.0) | 4 | ◐ MigrationTest (every table and value kept, distance PENDING) and the test app upgraded on the Pixel with its data; install over v0.1.0 with the release key in Phase 8 |
 | T38 | CSV export | Distance columns in metres present; injection protection intact | 5 | ✅ CsvExporterTest, ExportDbTest ("Total distance in metres" / "Distance in metres" in whole metres, always metric, empty when unknown, plus "Distance status"; formula neutralising unchanged) |
 | T39 | Cost per km/mile edge cases | Dash with no price or zero distance; 0 for free shoes | 5 | ✅ CostCalculatorTest (no price, no or zero distance, negative, unknown currency, free shoes, yen, tiny distances), FormattersTest, DistanceScreensTest (€ per km and per mile on screen) |
-| T40 | Notification permission (13+) | In-app ask, then system prompt; refusing leaves the app usable; no prompt below 13 | 7 | ☐ |
-| T41 | Notification lifecycle | Appears on start (button and tag); updates on pause/resume; removed on end, switch, archive, delete | 7 | ☐ |
-| T42 | Notification actions | Pause/Resume act at once; End opens the confirmation; stale or foreign session ids ignored | 7 | ☐ |
-| T43 | Notification setting off | No notification; turning it on shows one for a running session | 7 | ☐ |
-| T44 | Restart mid-session | Notification returns when the app is opened (manual) | 7 | ☐ |
+| T40 | Notification permission (13+) | In-app ask, then system prompt; refusing leaves the app usable; no prompt below 13 | 7 | ✅ NotificationScreensTest (in-app question, Not now, nothing to ask without a session or below 13); Android's own prompt checked by hand (MANUAL_CHECKS) |
+| T41 | Notification lifecycle | Appears on start (button and tag); updates on pause/resume; removed on end, switch, archive, delete | 7 | ✅ SessionNotifierTest (real notification on the tablet: start, pause/resume, end, switch, archive, delete, private on the lock screen), SessionNoticeTest (timer leaves out pauses) |
+| T42 | Notification actions | Pause/Resume act at once; End opens the confirmation; stale or foreign session ids ignored | 7 | ✅ SessionNoticeTest (stale, foreign and repeated ids change nothing), NotificationScreensTest (End asks first; stale request ignored) |
+| T43 | Notification setting off | No notification; turning it on shows one for a running session | 7 | ✅ SessionNotifierTest, NotificationScreensTest (Settings switch, blocked note), SettingsStoreTest |
+| T44 | Restart mid-session | Notification returns when the app is opened (manual) | 7 | ☐ manual (MANUAL_CHECKS: session notification) |
 | T45 | Discard changes | Asked only after an edit; Keep editing keeps the form | 3 | ✅ RestyledScreensTest (Close and Back, add and edit) |
 | T46 | Restyled screens | 200% font, TalkBack, RTL and contrast pass | 3, 8 | ◐ automated: components (ComponentGalleryTest) and every screen (RestyledScreensTest: 48 dp and labels, light/night, 100% and 200%), RTL (HardeningScreensTest); TalkBack pass by hand in Phase 8 |
 | T47 | Upgrade from v0.1.0 | Installs over the top with the same key; nothing lost | 8 | ☐ |

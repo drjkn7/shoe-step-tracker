@@ -9,6 +9,7 @@ import io.github.drjkn7.shoestep.AppContainer
 import io.github.drjkn7.shoestep.core.Clock
 import io.github.drjkn7.shoestep.data.db.ShoeStepDatabase
 import io.github.drjkn7.shoestep.nfc.NfcState
+import io.github.drjkn7.shoestep.notify.NotificationAccess
 import io.github.drjkn7.shoestep.settings.DistanceUnit
 import io.github.drjkn7.shoestep.settings.SettingsStore
 import io.github.drjkn7.shoestep.settings.SystemNightMode
@@ -58,6 +59,7 @@ fun testContainer(
     nfcState: NfcState = NfcState.ON,
     settings: SettingsStore = InMemorySettings(),
     systemNightMode: SystemNightMode = SystemNightMode {},
+    notificationAccess: NotificationAccess = FakeNotificationAccess(),
 ): AppContainer = AppContainer(
     context = ApplicationProvider.getApplicationContext(),
     databaseFactory = ShoeStepDatabase::buildInMemory,
@@ -66,6 +68,7 @@ fun testContainer(
     nfcStateProvider = { nfcState },
     settingsFactory = { settings },
     systemNightModeFactory = { systemNightMode },
+    notificationAccessFactory = { notificationAccess },
 )
 
 /**
@@ -104,6 +107,20 @@ class InMemorySettings(
     override suspend fun setThemeMode(mode: ThemeMode) {
         theme.value = mode
     }
+
+    val notification = MutableStateFlow(true)
+    override val sessionNotification: Flow<Boolean> = notification
+
+    override suspend fun setSessionNotification(on: Boolean) {
+        notification.value = on
+    }
+
+    val asked = MutableStateFlow(false)
+    override val notificationAsked: Flow<Boolean> = asked
+
+    override suspend fun markNotificationAsked() {
+        asked.value = true
+    }
 }
 
 /**
@@ -118,4 +135,17 @@ fun ComposeTestRule.waitForNode(text: String, timeoutMillis: Long = 5_000) =
 fun ComposeTestRule.clickWhenShown(text: String) {
     waitForNode(text)
     onNodeWithText(text).performClick()
+}
+
+/**
+ * Stand-in for Android's notification permission. Not allowed by default, so UI tests never leave a
+ * real notification behind (the app removes it instead), and the "Show sessions in notifications?"
+ * question appears only in tests that set [needsPermission].
+ */
+class FakeNotificationAccess(
+    @Volatile var allowed: Boolean = false,
+    @Volatile var needsPermission: Boolean = false,
+) : NotificationAccess {
+    override fun isAllowed() = allowed
+    override fun needsPermission() = needsPermission
 }
