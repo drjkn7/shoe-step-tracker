@@ -12,7 +12,13 @@ import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.test.click
+import androidx.compose.ui.test.hasScrollToKeyAction
+import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollToKey
+import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -218,7 +224,10 @@ class SessionScreensTest {
             val touch = node.touchBoundsInRoot
             assertTrue("${str(label)} too small: ${touch.width} x ${touch.height}px", touch.width >= minPx && touch.height >= minPx)
         }
-        rule.clickWhenShown("Big text")
+        // At 200% on a short screen (CI's Pixel 2) the row sits below the session card and partly under
+        // the floating "Add pair": scroll to it and tap its left side, or the tap opens Add pair instead.
+        rule.onNode(hasScrollToKeyAction()).performScrollToKey(id)
+        rule.onAllNodesWithText("Big text").onFirst().performTouchInput { click(Offset(width * 0.2f, height / 2f)) }
         // Home's session card has a Pause button too: wait until Home has gone and only the pair
         // page's Pause is left, or the tap can land on the one that is sliding away.
         rule.waitUntil(5_000) {
