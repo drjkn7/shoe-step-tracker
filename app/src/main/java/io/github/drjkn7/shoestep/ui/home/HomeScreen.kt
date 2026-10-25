@@ -68,7 +68,7 @@ import io.github.drjkn7.shoestep.ui.theme.pressedIn
 
 /**
  * Home (PNGs 01–03): "My shoes", the current session, the steps and distance cards, the pairs, the "Show
- * archived" switch, and "Add shoe" at the bottom end. Everything scrolls together under the gear.
+ * archived" switch, and "Add pair" at the bottom end. Everything scrolls together under the gear.
  */
 @Composable
 fun HomeScreen(
@@ -183,7 +183,7 @@ fun HomeScreen(
     }
 }
 
-/** Room under the list so the last card can scroll clear of "Add shoe". */
+/** Room under the list so the last card can scroll clear of "Add pair". */
 private val ADD_BUTTON_SPACE = 96.dp
 
 /** A pair on Home (PNG 01): colour circle, name and type; total steps with distance under; status badge. */
@@ -192,10 +192,10 @@ internal fun ShoeRow(item: ShoeWithStats, paused: Boolean, onClick: () -> Unit) 
     val c = SilverTheme.colors
     val shoe = item.shoe
     // "(counted later)" while any segment has no count yet, "About" while counts may still change.
-    val stepsText = labelledSteps(
-        stepsCountText(item.totalSteps),
-        StepsLabel.of(item.hasPendingSteps, item.hasUnfinalSteps),
-    )
+    val stepsLabel = StepsLabel.of(item.hasPendingSteps, item.hasUnfinalSteps)
+    val stepsText = labelledSteps(stepsCountText(item.totalSteps), stepsLabel)
+    // Settled at zero (a new pair, or sessions with no steps): "No steps yet" instead of "0 steps".
+    val noSteps = item.totalSteps == 0L && stepsLabel == StepsLabel.EXACT
     val distance = distanceText(item.totalDistanceMeters, item.hasUnfinalDistance)
     val nameAndType = @Composable { modifier: Modifier ->
         Column(modifier) {
@@ -214,13 +214,20 @@ internal fun ShoeRow(item: ShoeWithStats, paused: Boolean, onClick: () -> Unit) 
                     running = !paused,
                 )
             }
-            Text(stepsText, style = SilverTheme.type.button.copy(fontSize = 16.sp), color = c.accentInk)
-            Text(
-                distance.shown,
-                style = SilverTheme.type.body.copy(fontWeight = FontWeight.SemiBold),
-                color = c.textMuted,
-                modifier = Modifier.clearAndSetSemantics { text = AnnotatedString(distance.spoken) },
-            )
+            if (noSteps) {
+                // Nothing to read yet: said quietly, so the eye goes to the pairs with real totals.
+                Text(stringResource(R.string.steps_none_yet), style = SilverTheme.type.body, color = c.textMuted)
+            } else {
+                Text(stepsText, style = SilverTheme.type.button.copy(fontSize = 16.sp), color = c.accentInk)
+            }
+            if (!noSteps || item.totalDistanceMeters != null) {
+                Text(
+                    distance.shown,
+                    style = SilverTheme.type.body.copy(fontWeight = FontWeight.SemiBold),
+                    color = c.textMuted,
+                    modifier = Modifier.clearAndSetSemantics { text = AnnotatedString(distance.spoken) },
+                )
+            }
         }
     }
     SilverCard(onClick = onClick) {

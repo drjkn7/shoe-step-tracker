@@ -30,7 +30,7 @@ Matte silver metal over a pale-sky-to-steel-blue backdrop. Surfaces are lightly 
 | Section | 17 / 24 | Bold | 0 | Shoe name, sheet title |
 | Button | 15 / 20 | SemiBold | 0 | Button text, row values |
 | Body | 14 / 21 | Regular | 0 | Subtitles, inputs |
-| Label | 12 / 16 | SemiBold | +0.2 px | Small caps-style labels, chips, tabs |
+| Label | 12 / 16 | SemiBold | +0.2 px | Chips, tabs. Card headings use it at 14 / 20 and field labels at 13 / 18, both in sentence case with no tracking (design review, 25 Oct 2026) |
 | Note | 12 / 16 | Regular | 0 | Helper text. **Minimum text size is 12.** |
 
 Text must scale with the system font size (use `sp`). Test at 200%.
@@ -107,13 +107,13 @@ Panel radius 26 (sheet 32). Pills 100. Inputs 16. Screen padding 20; top inset 6
 - **Destructive text button:** `danger` text, no fill (for example "Unlink tag"), still 48 dp tall. Permanent deletes use a filled `danger` button ("Delete").
 - **Chip:** selected = accent gradient + white label; unselected = pressed on `inset`.
 - **Input:** pressed on `inset`, radius 16, min height 48, label above in Label style.
-- **Shoe row card:** raised card, 24 px colour circle, name (Section), type (Note), total steps right-aligned (Button style, `accent-ink`), status badge above the steps when Running or Paused.
+- **Shoe row card:** raised card, 24 px colour circle, name (Section), type (Note), total steps right-aligned (Button style, `accent-ink`), status badge above the steps when Running or Paused. A total settled at zero reads "No steps yet" in `text-muted` Body, with no distance line unless one is known.
 - **Icon button (top bar):** 48 dp circle with the tab-bar sheen and Raised shadow (Settings gear, Back, Close, More).
-- **Add shoe button:** gradient pill with a plus icon, bottom right of Home, Accent glow.
+- **Add pair button:** gradient pill with a plus icon ("Add pair"), bottom right of Home, Accent glow.
 - **Status badge:** small pill on a Home row. Running = accent gradient, Paused = pressed on `inset`.
-- **Current session card:** label, colour dot + "Pair · running since 07:42" or "· paused", "About N so far", then Pause + End session (or Resume + End session).
-- **Stats grid:** two columns: Total steps, Total distance, Sessions, Walking time, Average per session (steps, with distance underneath), Last worn, Cost per 1,000 steps, Cost per km (or per mile, following the unit setting).
-- **History row:** "date, time · duration" on the left, steps on the right in `accent-ink`. States: In progress, About N (provisional for one day), N steps, "— (counted later)", "Ended by switching pairs". Pages of 50 with "Show N older sessions".
+- **Current session card:** label, colour dot + "Pair · running since 07:42" or "· paused", "About N so far" (or "No steps yet" with a short note while the count is 0), then Pause + End session (or Resume + End session).
+- **Stats grid:** two columns: Total steps, Total distance, Sessions, Walking time, Average per session (steps, with distance underneath), Last worn, Cost per 1,000 steps, Cost per km (or per mile, following the unit setting). While some sessions have no count yet, "Some counted later" sits on a Note line under the number instead of after it. Costs use the currency's own decimals ("£190.55"); only below one whole unit up to two more ("£0.0333").
+- **History row:** "date, time · duration" on the left, steps on the right in `accent-ink`. States: In progress, About N (provisional for one day), N steps, "— (counted later)", "No steps" (settled at zero, in `text-muted`), "Ended by switching pairs", "Added later". The distance line is left out while no distance is known (no lone dash). Pages of 50 with "Show N older sessions".
 - **Dialog (all pop-ups):** centred, radius 28, Floating shadow, sheet gradient `#E5E8ED → #D1D6DE`, scrim `#1E2230` at 42%. Two choices sit side by side (text button + primary); three or more stack full width.
 - **Overflow menu:** Floating panel under the More button: Edit, Archive, Delete (`danger`).
 - **Colour swatches:** eight 30 px circles in one row; the selected one gets a white tick and ring, so colour is not the only cue.
@@ -123,7 +123,7 @@ Panel radius 26 (sheet 32). Pills 100. Inputs 16. Screen padding 20; top inset 6
 - **Segmented control (M2):** Settings → Units → Distance: Kilometres / Miles. Pressed track; selected segment uses the accent gradient. Each segment ≥ 48 dp tall including the track.
 - **Permission cards (M2):** "Show distance" card on Home (Not now / Allow) when distance isn't allowed; "Show sessions in notifications?" dialog before the Android 13+ system prompt.
 - **Theme switch (M2):** Settings → Appearance → Theme, a three-way segmented control: Light / Dark / System. Applies at once, no restart.
-- **Add past session (M2):** "+ Add past session" text button in the History card header. Full-screen form: the pair (fixed), Date (picker, default today), Start and End times, then a preview card ("About 6,120 steps · 4.6 km", read from Health Connect for that time) on a light accent tint. Errors appear under the times (`danger`) and block Save: end before start, in the future, overlapping another session (name the pair and its times), older than Health Connect allows. Added sessions show "Added later" in History.
+- **Add past session (M2):** "+ Add past session" text button in the History card header. Full-screen form: the pair (fixed), the help text (on the card, not the backdrop), Date (picker, default today), Start and End times, then a preview card ("About 6,120 steps · 4.6 km", read from Health Connect for that time) on a light accent tint. Errors appear under the times (`danger`) and block Save: end before start, in the future, overlapping another session (name the pair and its times), older than Health Connect allows. Added sessions show "Added later" in History.
 - **Session notification (M2):** drawn by Android, not by the app. The app sets: monochrome walking icon, accent colour `#7942DE`, title "Pair · running" or "· paused", running timer (paused shows "Paused"), body text, buttons Pause/Resume and End session. Private on the lock screen with a public version reading only "Session running".
 
 There is **no tab bar** and **no step ring** in the app. They were in earlier Figma frames and have been removed.
@@ -146,7 +146,8 @@ Mockups: the "Shoe Step Mockups" artifact, with 30 frames and the PNGs in `docs/
 **Layout rules confirmed by the product owner (19 Oct):**
 - Home's Current session card has Pause and End session buttons.
 - Home rows show the colour dot, name, type and total steps, plus a status badge.
-- On a pair's page: header (dot, name, type · brand model, price · purchase date), then **Stats**, then the **session controls** (Start session, or the running/paused card), then **NFC tag**, then **History**.
+- On a pair's page: header (dot, name, type · brand model, price · purchase date), then **Stats**, then the **session controls** (Start session), then **NFC tag**, then **History**. While this pair's session is running or paused, its card comes first, above Stats (design review, 25 Oct 2026).
+- Wording: the app says "pair" ("Add pair", "Edit pair", page title "Pair"); only the Home heading stays "My shoes" (25 Oct 2026).
 - Settings is a gear at the top of Home; "Add shoe" is the gradient button at the bottom right.
 - **Cancel on the tag-tap pop-up only closes it.** It never discards a session.
 

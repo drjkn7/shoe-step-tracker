@@ -27,17 +27,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.semantics.text
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import io.github.drjkn7.shoestep.ui.theme.SilverShapes
 import io.github.drjkn7.shoestep.ui.theme.SilverSpacing
 import io.github.drjkn7.shoestep.ui.theme.SilverTheme
@@ -74,20 +71,20 @@ fun SilverCard(
 }
 
 /**
- * Small capitals label at the top of a card ("STATS", "HISTORY") and above form fields. Drawn in
- * capitals but read out and found by its normal wording, and marked as a heading for TalkBack.
+ * Label at the top of a card ("Stats", "History", marked as a heading for TalkBack) and above form
+ * fields ([heading] false, a step smaller). Sentence case, semibold, muted (design review 25 Oct 2026).
  */
 @Composable
 fun CardLabel(text: String, modifier: Modifier = Modifier, heading: Boolean = true) {
-    val locale = LocalConfiguration.current.locales[0]
     Text(
-        text.uppercase(locale),
-        style = SilverTheme.type.label,
+        text,
+        style = SilverTheme.type.label.copy(
+            fontSize = if (heading) 14.sp else 13.sp,
+            lineHeight = if (heading) 20.sp else 18.sp,
+            letterSpacing = 0.sp,
+        ),
         color = SilverTheme.colors.textMuted,
-        modifier = modifier.clearAndSetSemantics {
-            this.text = AnnotatedString(text)
-            if (heading) heading()
-        },
+        modifier = modifier.semantics { if (heading) heading() },
     )
 }
 

@@ -18,6 +18,7 @@ import androidx.compose.ui.semantics.text
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import io.github.drjkn7.shoestep.R
 import io.github.drjkn7.shoestep.data.db.ActiveSessionWithShoe
 import io.github.drjkn7.shoestep.data.model.SessionState
@@ -69,6 +70,11 @@ fun SessionButtons(
 fun SoFarCount(stepsSoFar: SoFarSteps?) {
     val c = SilverTheme.colors
     when (stepsSoFar) {
+        // Just started, or nothing recorded yet: a big "About 0" would look broken.
+        is SoFarSteps.Count if stepsSoFar.steps == 0L -> {
+            Text(stringResource(R.string.steps_none_yet), style = SilverTheme.type.section.copy(fontSize = 22.sp, lineHeight = 28.sp), color = c.textPrimary)
+            Text(stringResource(R.string.session_card_no_steps_note), style = SilverTheme.type.body, color = c.textMuted)
+        }
         is SoFarSteps.Count -> {
             val sentence = stringResource(R.string.session_card_steps_so_far, stepsCountText(stepsSoFar.steps))
             val number = Formatters.count(stepsSoFar.steps, LocalConfiguration.current.locales[0])

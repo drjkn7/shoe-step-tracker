@@ -276,48 +276,58 @@ private fun DetailContent(
     ScreenColumn {
         PairHeader(item)
 
-        SilverCard {
-            CardLabel(stringResource(R.string.detail_stats_title))
-            val stepsLabel = StepsLabel.of(item.hasPendingSteps, item.hasUnfinalSteps)
-            val (hours, minutes) = Formatters.hoursAndMinutes(item.activeMillis)
-            val cost = CostCalculator.cost(shoe.priceMinor, shoe.currencyCode, item.totalSteps)
-            val unit = LocalDistanceUnit.current
-            val totalDistance = distanceText(item.totalDistanceMeters, item.hasUnfinalDistance)
-            val averageDistance = distanceText(item.averageDistancePerSession, item.hasUnfinalDistance)
-            val costPerDistance = CostCalculator.costPerDistance(shoe.priceMinor, shoe.currencyCode, item.totalDistanceMeters, unit.metres)
-            StatsGrid(
-                listOf(
-                    StatItem(stringResource(R.string.detail_total_steps), labelledSteps(Formatters.count(item.totalSteps, locale), stepsLabel)),
-                    StatItem(stringResource(R.string.detail_total_distance), totalDistance.shown, valueSpoken = totalDistance.spoken),
-                    StatItem(stringResource(R.string.detail_sessions), Formatters.count(item.sessionCount.toLong(), locale)),
-                    StatItem(
-                        stringResource(R.string.detail_walking_time),
-                        if (hours > 0) stringResource(R.string.duration_hours_minutes, hours, minutes)
-                        else stringResource(R.string.duration_minutes, minutes),
+        // While this pair's session runs or is paused, its card (Pause, End session) comes first:
+        // that is what the page is opened for then. Otherwise Stats lead, as in PNG 08.
+        val mine = active?.session?.takeIf { it.shoeId == shoe.id && !shoe.archived }
+        val statsCard = @Composable {
+            SilverCard {
+                CardLabel(stringResource(R.string.detail_stats_title))
+                val stepsLabel = StepsLabel.of(item.hasPendingSteps, item.hasUnfinalSteps)
+                // "Some counted later" goes on a small line of its own; "About" stays with the number.
+                val numberLabel = if (stepsLabel == StepsLabel.COUNTED_LATER) StepsLabel.EXACT else stepsLabel
+                val laterNote = if (stepsLabel == StepsLabel.COUNTED_LATER) stringResource(R.string.stats_counted_later_note) else null
+                val (hours, minutes) = Formatters.hoursAndMinutes(item.activeMillis)
+                val cost = CostCalculator.cost(shoe.priceMinor, shoe.currencyCode, item.totalSteps)
+                val unit = LocalDistanceUnit.current
+                val totalDistance = distanceText(item.totalDistanceMeters, item.hasUnfinalDistance)
+                val averageDistance = distanceText(item.averageDistancePerSession, item.hasUnfinalDistance)
+                val costPerDistance = CostCalculator.costPerDistance(shoe.priceMinor, shoe.currencyCode, item.totalDistanceMeters, unit.metres)
+                StatsGrid(
+                    listOf(
+                        StatItem(
+                            stringResource(R.string.detail_total_steps),
+                            labelledSteps(Formatters.count(item.totalSteps, locale), numberLabel),
+                            note = laterNote,
+                        ),
+                        StatItem(stringResource(R.string.detail_total_distance), totalDistance.shown, valueSpoken = totalDistance.spoken),
+                        StatItem(stringResource(R.string.detail_sessions), Formatters.count(item.sessionCount.toLong(), locale)),
+                        StatItem(
+                            stringResource(R.string.detail_walking_time),
+                            if (hours > 0) stringResource(R.string.duration_hours_minutes, hours, minutes)
+                            else stringResource(R.string.duration_minutes, minutes),
+                        ),
+                        StatItem(
+                            stringResource(R.string.detail_average_steps),
+                            item.averageStepsPerSession?.let { labelledSteps(Formatters.count(it, locale), numberLabel) } ?: dash,
+                            extra = averageDistance.shown,
+                            extraSpoken = averageDistance.spoken,
+                            note = laterNote.takeIf { item.averageStepsPerSession != null },
+                        ),
+                        StatItem(
+                            stringResource(R.string.detail_last_worn),
+                            item.lastUsedUtc?.let { Formatters.date(Formatters.localEpochDay(it), locale) } ?: dash,
+                        ),
+                        StatItem(stringResource(R.string.detail_cost_per_1000), Formatters.costPerThousand(cost, shoe.currencyCode, locale) ?: dash),
+                        StatItem(
+                            stringResource(if (unit == DistanceUnit.MILES) R.string.detail_cost_per_mile else R.string.detail_cost_per_km),
+                            Formatters.costPerDistance(costPerDistance, shoe.currencyCode, locale) ?: dash,
+                        ),
                     ),
-                    StatItem(
-                        stringResource(R.string.detail_average_steps),
-                        item.averageStepsPerSession?.let { labelledSteps(Formatters.count(it, locale), stepsLabel) } ?: dash,
-                        extra = averageDistance.shown,
-                        extraSpoken = averageDistance.spoken,
-                    ),
-                    StatItem(
-                        stringResource(R.string.detail_last_worn),
-                        item.lastUsedUtc?.let { Formatters.date(Formatters.localEpochDay(it), locale) } ?: dash,
-                    ),
-                    StatItem(stringResource(R.string.detail_cost_per_1000), Formatters.costPerThousand(cost, shoe.currencyCode, locale) ?: dash),
-                    StatItem(
-                        stringResource(if (unit == DistanceUnit.MILES) R.string.detail_cost_per_mile else R.string.detail_cost_per_km),
-                        Formatters.costPerDistance(costPerDistance, shoe.currencyCode, locale) ?: dash,
-                    ),
-                ),
-                modifier = Modifier.padding(top = SilverSpacing.s),
-            )
+                    modifier = Modifier.padding(top = SilverSpacing.s),
+                )
+            }
         }
-
-        // Archived pairs can't start a session (archiving ends any running one).
-        if (!shoe.archived) {
-            val mine = active?.session?.takeIf { it.shoeId == shoe.id }
+        val sessionControls = @Composable {
             val buttons = @Composable { modifier: Modifier ->
                 SessionButtons(
                     state = mine?.state,
@@ -329,6 +339,8 @@ private fun DetailContent(
                 )
             }
             when {
+                // Archived pairs can't start a session (archiving ends any running one).
+                shoe.archived -> Unit
                 // PNGs 09 and 10: this pair's session, with its live count.
                 mine != null -> SilverCard {
                     CardLabel(
@@ -350,6 +362,13 @@ private fun DetailContent(
                 // PNG 08: just the Start button.
                 else -> buttons(Modifier)
             }
+        }
+        if (mine != null) {
+            sessionControls()
+            statsCard()
+        } else {
+            statsCard()
+            sessionControls()
         }
 
         tagCard()
@@ -466,6 +485,8 @@ private fun HistoryCard(history: List<SessionWithSteps>, onAddPast: (() -> Unit)
             val distance = distanceText(row.totalDistanceMeters, row.hasUnfinalDistance)
             val title = stringResource(R.string.history_row, Formatters.dateTime(session.startUtc, session.zoneId, locale), duration)
             val addedLater = session.addedLater && ended
+            val stepsLabel = StepsLabel.of(row.hasPendingSteps, row.hasUnfinalSteps)
+            val noSteps = ended && row.totalSteps == 0L && stepsLabel == StepsLabel.EXACT
             HistoryRow(
                 title = title,
                 note = when {
@@ -475,13 +496,15 @@ private fun HistoryCard(history: List<SessionWithSteps>, onAddPast: (() -> Unit)
                 },
                 onDelete = if (addedLater) ({ onDeleteAddedLater(session.id) }) else null,
                 deleteDescription = stringResource(R.string.history_delete_description, title),
-                steps = if (ended) {
-                    labelledSteps(stepsCountText(row.totalSteps), StepsLabel.of(row.hasPendingSteps, row.hasUnfinalSteps))
-                } else {
-                    stringResource(R.string.history_in_progress)
+                steps = when {
+                    !ended -> stringResource(R.string.history_in_progress)
+                    noSteps -> stringResource(R.string.history_no_steps)
+                    else -> labelledSteps(stepsCountText(row.totalSteps), stepsLabel)
                 },
-                distance = if (ended) distance.shown else null,
-                distanceSpoken = if (ended) distance.spoken else null,
+                stepsMuted = noSteps,
+                // No distance line at all while none is known, instead of a lone dash under every row.
+                distance = if (ended && row.totalDistanceMeters != null) distance.shown else null,
+                distanceSpoken = if (ended && row.totalDistanceMeters != null) distance.spoken else null,
             )
         }
         val remaining = history.size - shown

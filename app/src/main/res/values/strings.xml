@@ -5,7 +5,7 @@
     <string name="nav_back">Back</string>
     <string name="nav_close">Close</string>
     <string name="nav_settings">Settings</string>
-    <string name="nav_add_shoe">Add shoe</string>
+    <string name="nav_add_shoe">Add pair</string>
     <string name="action_save">Save</string>
     <string name="action_cancel">Cancel</string>
     <string name="action_delete">Delete</string>
@@ -19,9 +19,9 @@
     <!-- Home -->
     <string name="title_home">My shoes</string>
     <string name="home_show_archived">Show archived</string>
-    <string name="home_empty_title">No shoes yet</string>
+    <string name="home_empty_title">No pairs yet</string>
     <string name="home_empty_body">Tap + to add your first pair. Later you can stick an NFC tag on each pair and tap your phone against it to start counting steps.</string>
-    <string name="home_empty_archived">No archived shoes.</string>
+    <string name="home_empty_archived">No archived pairs.</string>
     <string name="home_running_badge">Running</string>
     <string name="home_archived_badge">Archived</string>
     <plurals name="steps_count">
@@ -30,8 +30,8 @@
     </plurals>
 
     <!-- Add / edit form -->
-    <string name="title_add_shoe">Add shoe</string>
-    <string name="title_edit_shoe">Edit shoe</string>
+    <string name="title_add_shoe">Add pair</string>
+    <string name="title_edit_shoe">Edit pair</string>
     <string name="discard_title">Discard changes?</string>
     <string name="discard_body_edit">Your changes to %1$s won\'t be saved.</string>
     <string name="discard_body_add">This pair won\'t be saved.</string>
@@ -54,7 +54,7 @@
     <string name="currency_choose">Choose currency</string>
     <string name="currency_button_description">%1$s: %2$s, %3$s</string>
     <string name="currency_item">%1$s – %2$s</string>
-    <string name="form_not_found">This shoe no longer exists.</string>
+    <string name="form_not_found">This pair no longer exists.</string>
 
     <!-- Validation messages -->
     <string name="error_name_required">Enter a name</string>
@@ -103,7 +103,7 @@
     <string name="colour_pink">Pink</string>
 
     <!-- Shoe detail -->
-    <string name="title_shoe_detail">Shoe</string>
+    <string name="title_shoe_detail">Pair</string>
     <string name="detail_no_price">No price</string>
     <string name="detail_purchased">Purchased %1$s</string>
     <string name="detail_stats_title">Stats</string>
@@ -116,7 +116,7 @@
     <string name="detail_total_distance">Total distance</string>
     <string name="detail_cost_per_km">Cost per km</string>
     <string name="detail_cost_per_mile">Cost per mile</string>
-    <string name="detail_archived_note">This shoe is archived. Its history is kept.</string>
+    <string name="detail_archived_note">This pair is archived. Its history is kept.</string>
     <string name="detail_session_running">Session running since %1$s</string>
     <string name="detail_session_paused">Session paused</string>
     <string name="detail_other_active">%1$s has a session in progress.</string>
@@ -179,6 +179,14 @@
     <string name="past_delete_body">It was added later. Its steps and distance come off this pair\'s totals.</string>
     <!-- Provisional counts: may still change for one day while wearables sync. -->
     <string name="steps_about">About %1$s</string>
+    <!-- Instead of "0 steps" once a total has settled at zero (Home rows). -->
+    <string name="steps_none_yet">No steps yet</string>
+    <!-- Instead of "0 steps" on a History row that has settled at zero. -->
+    <string name="history_no_steps">No steps</string>
+    <!-- Small line under a Stats number while some sessions have no count yet. -->
+    <string name="stats_counted_later_note">Some counted later</string>
+    <!-- Session card before any steps arrive, instead of "About 0". -->
+    <string name="session_card_no_steps_note">Steps appear once your phone or watch records them.</string>
 
     <!-- Distance (M2). The number already has one decimal and the locale's separators. -->
     <string name="distance_km">%1$s km</string>
@@ -255,11 +263,11 @@
 
     <!-- Archive confirmation when a session is running -->
     <string name="archive_title">Archive %1$s?</string>
-    <string name="archive_running_body">This ends the session in progress. The shoe and its history are kept.</string>
+    <string name="archive_running_body">This ends the session in progress. The pair and its history are kept.</string>
 
     <!-- Delete confirmation (SEC-11) -->
     <string name="delete_title">Delete %1$s?</string>
-    <string name="delete_body">This permanently removes the shoe and all its sessions. This can\'t be undone.</string>
+    <string name="delete_body">This permanently removes the pair and all its sessions. This can\'t be undone.</string>
 
     <!-- Settings (Phase 7) -->
     <string name="title_settings">Settings</string>
