@@ -131,6 +131,9 @@ fun manifestPermissionAllowlist(appId: String) = setOf(
     "android.permission.health.READ_STEPS",
     // M2 Phase 4, approved by the product owner on 2026-10-22.
     "android.permission.health.READ_DISTANCE",
+    // M2 Phase 7, the session notification (Android 13+). Approved by the product owner on 2026-10-22
+    // and again with the Phase 7 plan on 2026-10-25.
+    "android.permission.POST_NOTIFICATIONS",
     // Signature-level permission AndroidX Core declares for the app's own receivers (named after the
     // application id, so the debug build's carries ".debug").
     "$appId.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION",

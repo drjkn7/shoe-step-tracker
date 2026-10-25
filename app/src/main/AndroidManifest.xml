@@ -1,12 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <!-- SEC-01/SEC-04: no INTERNET or other permissions. NFC (Phase 6) and Health Connect
-         READ_STEPS (M1) and READ_DISTANCE (M2) are the only ones allowed; verifyNoInternetPermission
-         enforces it. -->
+    <!-- SEC-01/SEC-04: no INTERNET or other permissions. NFC (Phase 6), Health Connect READ_STEPS (M1)
+         and READ_DISTANCE (M2), and POST_NOTIFICATIONS (M2, the session notification on Android 13+)
+         are the only ones allowed; verifyNoInternetPermission enforces it. -->
     <uses-permission android:name="android.permission.health.READ_STEPS" />
     <uses-permission android:name="android.permission.health.READ_DISTANCE" />
     <uses-permission android:name="android.permission.NFC" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <!-- Tags are a shortcut; the app works without NFC (manual buttons), so it isn't required. -->
     <uses-feature android:name="android.hardware.nfc" android:required="false" />
 
@@ -73,6 +74,19 @@
                 <data android:mimeType="application/vnd.io.github.drjkn7.shoestep" />
             </intent-filter>
         </activity-alias>
+
+        <!-- The session notification opens the app through this alias (End session asks there). Not
+             exported, so only the app's own notification can open it with an End session request. -->
+        <activity-alias
+            android:name=".NotificationEntry"
+            android:exported="false"
+            android:targetActivity=".MainActivity" />
+
+        <!-- The notification's Pause and Resume buttons. Not exported: only the app's own
+             notification can reach it. -->
+        <receiver
+            android:name=".notify.SessionActionReceiver"
+            android:exported="false" />
 
         <!-- Health Connect privacy rationale, Android 13 and lower. -->
         <activity

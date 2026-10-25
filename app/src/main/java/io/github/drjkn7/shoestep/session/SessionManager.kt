@@ -71,6 +71,9 @@ class SessionManager(
 
     fun observeHistory(shoeId: String): Flow<List<SessionWithSteps>> = store.observeHistory(shoeId)
 
+    /** A session's segments, oldest first (read only; for the session notification's timer). */
+    suspend fun segments(sessionId: String): List<SegmentEntity> = store.segments(sessionId)
+
     /** For the Add past session form, to warn while the times are chosen. [addPast] checks again. */
     suspend fun firstOverlapping(startUtc: Long, endUtc: Long): SessionWithShoeName? = store.firstOverlapping(startUtc, endUtc)
 

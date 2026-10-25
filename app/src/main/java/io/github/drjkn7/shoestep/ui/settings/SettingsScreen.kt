@@ -27,6 +27,7 @@ import io.github.drjkn7.shoestep.DebugTools
 import io.github.drjkn7.shoestep.R
 import io.github.drjkn7.shoestep.core.Money
 import io.github.drjkn7.shoestep.export.ExportKind
+import io.github.drjkn7.shoestep.notify.AndroidNotificationAccess
 import io.github.drjkn7.shoestep.settings.DistanceUnit
 import io.github.drjkn7.shoestep.settings.ThemeMode
 import io.github.drjkn7.shoestep.steps.HealthConnectStepsSource
@@ -42,6 +43,7 @@ import io.github.drjkn7.shoestep.ui.common.SecondaryButton
 import io.github.drjkn7.shoestep.ui.common.SegmentedControl
 import io.github.drjkn7.shoestep.ui.common.SilverCard
 import io.github.drjkn7.shoestep.ui.common.SilverScreen
+import io.github.drjkn7.shoestep.ui.common.SwitchRow
 import io.github.drjkn7.shoestep.ui.home.StepsAccessContent
 import io.github.drjkn7.shoestep.ui.shoe.CurrencyPicker
 import io.github.drjkn7.shoestep.ui.shoe.currencyName
@@ -65,7 +67,16 @@ fun SettingsScreen(
     val distanceAllowed by viewModel.distanceAllowed.collectAsStateWithLifecycle()
     var showCurrencyPicker by rememberSaveable { mutableStateOf(false) }
 
-    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { viewModel.refreshSteps() }
+    val sessionNotification by viewModel.sessionNotification.collectAsStateWithLifecycle()
+    val notificationsAllowed by viewModel.notificationsAllowed.collectAsStateWithLifecycle()
+
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
+        viewModel.refreshSteps()
+        viewModel.refreshNotifications()
+    }
+    val notificationPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {
+        viewModel.refreshNotifications()
+    }
     val permissionLauncher = rememberLauncherForActivityResult(HealthConnectStepsSource.permissionContract()) {
         viewModel.onPermissionResult()
     }
@@ -147,6 +158,32 @@ fun SettingsScreen(
                         onAllow = { permissionLauncher.launch(HealthConnectStepsSource.PERMISSIONS) },
                         onInstall = { HealthConnectStepsSource.openInstallPage(context) },
                     )
+                }
+            }
+
+            // PNG 21: Notifications → Session notification.
+            sessionNotification?.let { on ->
+                Section(stringResource(R.string.settings_notifications)) {
+                    SwitchRow(
+                        label = stringResource(R.string.settings_session_notification),
+                        checked = on,
+                        onCheckedChange = { turnOn ->
+                            viewModel.setSessionNotification(turnOn)
+                            if (turnOn && viewModel.needsNotificationPermission()) {
+                                notificationPermission.launch(AndroidNotificationAccess.PERMISSION)
+                            }
+                        },
+                        note = stringResource(R.string.settings_session_notification_note),
+                    )
+                    // On, but refused in Android (or its prompt can't be shown any more): say so and link there.
+                    if (on && !notificationsAllowed) {
+                        BodyText(stringResource(R.string.settings_notifications_blocked))
+                        SecondaryButton(
+                            stringResource(R.string.settings_open_android_settings),
+                            onClick = { AndroidNotificationAccess.openSystemSettings(context) },
+                            modifier = Modifier.fillMaxWidth().padding(top = SilverSpacing.s),
+                        )
+                    }
                 }
             }
 

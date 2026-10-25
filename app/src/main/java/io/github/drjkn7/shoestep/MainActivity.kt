@@ -19,6 +19,8 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import io.github.drjkn7.shoestep.nfc.AndroidTags
+import io.github.drjkn7.shoestep.notify.SessionActions
+import io.github.drjkn7.shoestep.notify.SessionNotifier
 import io.github.drjkn7.shoestep.ui.navigation.AppNavHost
 import io.github.drjkn7.shoestep.ui.theme.ShoeStepTheme
 import io.github.drjkn7.shoestep.ui.theme.SilverTheme
@@ -51,14 +53,38 @@ class MainActivity : ComponentActivity() {
                     .collect { container.stepReconciler.reconcile() }
             }
         }
-        // A tag tap that launched the app; not again when the activity is recreated (e.g. rotation).
-        if (savedInstanceState == null) handleTagIntent(intent)
+        // The session notification follows the session while the app is open; opening the app also
+        // brings back one that was swiped away (Android 14+) or lost in a restart.
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                container.sessionNotifier.notices().collect(container.sessionNotifier::show)
+            }
+        }
+        // A tag tap or notification button that launched the app; not again when the activity is
+        // recreated (e.g. rotation).
+        if (savedInstanceState == null) handleIntent(intent)
     }
 
     /** Tag taps while the app is open (foreground dispatch below), or that reopened it. */
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
+        handleIntent(intent)
+    }
+
+    private fun handleIntent(intent: Intent?) {
+        // Reopened from recent apps: Android hands back the old intent; that tap was already handled.
+        if (intent == null || intent.flags and Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY != 0) return
         handleTagIntent(intent)
+        handleNotificationIntent(intent)
+    }
+
+    /**
+     * The notification's End session button. Only through the notification entry alias, which is not
+     * exported, so other apps can't send it. The pop-up checks the session is still the active one.
+     */
+    private fun handleNotificationIntent(intent: Intent) {
+        if (intent.component?.className != SessionNotifier.notificationEntry()) return
+        intent.getStringExtra(SessionActions.EXTRA_END_SESSION_ID)?.let { container.endRequests.value = it }
     }
 
     override fun onResume() {
@@ -90,10 +116,8 @@ class MainActivity : ComponentActivity() {
      * guarded by DISPATCH_NFC_MESSAGE, so another app can't fake a tap by sending MainActivity an
      * NFC intent (it would arrive without the alias as its component and be ignored).
      */
-    private fun handleTagIntent(intent: Intent?) {
-        if (intent?.component?.className != tagEntry()) return
-        // Reopened from recent apps: Android hands back the old tag intent; that tap was already handled.
-        if (intent.flags and Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY != 0) return
+    private fun handleTagIntent(intent: Intent) {
+        if (intent.component?.className != tagEntry()) return
         val tapped = AndroidTags.fromIntent(intent) ?: return
         lifecycleScope.launch { container.tagCoordinator.onTag(tapped) }
     }

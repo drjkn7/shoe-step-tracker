@@ -269,6 +269,22 @@
     <string name="delete_title">Delete %1$s?</string>
     <string name="delete_body">This permanently removes the pair and all its sessions. This can\'t be undone.</string>
 
+    <!-- Session notification (M2 Phase 7, PNGs 12–14). The notification itself is drawn by Android. -->
+    <string name="notify_ask_title">Show sessions in notifications?</string>
+    <string name="notify_ask_body">While a session runs, a notification shows a timer with Pause and End buttons, so you never forget it is running. Android will ask you to allow notifications next.</string>
+    <string name="notify_ask_not_now">Not now</string>
+    <string name="notify_ask_continue">Continue</string>
+    <string name="notification_running_title">%1$s · running</string>
+    <string name="notification_running_text">Started %1$s. Steps and distance are added when you open the app.</string>
+    <string name="notification_paused_title">%1$s · paused</string>
+    <!-- "Paused at 08:29 after 47 min." The second value is the walking time so far. -->
+    <string name="notification_paused_text">Paused at %1$s after %2$s.</string>
+    <!-- All the lock screen shows: no pair name or times. -->
+    <string name="notification_public">Session running</string>
+    <!-- Android's name for this kind of notification (in the phone's notification settings). -->
+    <string name="notification_channel">Current session</string>
+    <string name="notification_channel_description">A timer while a session runs, with Pause and End session buttons.</string>
+
     <!-- Settings (Phase 7) -->
     <string name="title_settings">Settings</string>
     <string name="settings_new_pairs">New pairs</string>
@@ -289,6 +305,11 @@
     <string name="settings_distance">Distance</string>
     <string name="units_kilometres">Kilometres</string>
     <string name="units_miles">Miles</string>
+    <string name="settings_notifications">Notifications</string>
+    <string name="settings_session_notification">Session notification</string>
+    <string name="settings_session_notification_note">Show a notification with a timer while a session runs</string>
+    <string name="settings_notifications_blocked">Notifications are off for this app in Android settings.</string>
+    <string name="settings_open_android_settings">Open Android settings</string>
     <string name="settings_your_data">Your data</string>
     <string name="settings_export_body">Save your pairs or your sessions as a spreadsheet (CSV) file, in a place you choose. This is the only way data leaves the app.</string>
     <string name="settings_export_pairs">Export pairs</string>
