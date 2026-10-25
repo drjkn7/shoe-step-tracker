@@ -47,7 +47,7 @@ enum class NavIcon { BACK, CLOSE }
 /**
  * Every screen's frame (PNGs 01, 05, 08, 21): the sky-to-steel backdrop edge to edge, then a top bar
  * with an optional round Back or Close button, a small title and round action buttons at the end.
- * [floatingButton] sits at the bottom end above the navigation bar (Home's "Add shoe").
+ * [floatingButton] sits at the bottom end above the navigation bar (Home's "Add pair").
  * [content] fills the rest; use [ScreenColumn] for a scrolling page of cards.
  */
 @Composable

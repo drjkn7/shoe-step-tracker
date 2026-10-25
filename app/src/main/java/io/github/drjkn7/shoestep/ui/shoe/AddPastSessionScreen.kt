@@ -124,6 +124,8 @@ private fun PastContent(
                     CardLabel(stringResource(R.string.past_pair), heading = false)
                     Text(shoeName, style = SilverTheme.type.section.copy(fontSize = 18.sp), color = c.textPrimary)
                 }
+                // On the card, not the backdrop: small grey text fails contrast low on the backdrop (DESIGN.md §8).
+                Text(stringResource(R.string.past_help), style = noteStyle, color = c.textMuted)
                 PickerField(
                     label = stringResource(R.string.past_date),
                     value = dayText(times.epochDay, locale),
@@ -159,8 +161,6 @@ private fun PastContent(
                 if (problem == null) PreviewBox(preview)
             }
         }
-
-        Text(stringResource(R.string.past_help), style = noteStyle, color = c.textMuted, modifier = Modifier.padding(horizontal = SilverSpacing.xs))
 
         PrimaryButton(stringResource(R.string.action_save), onSave, Modifier.fillMaxWidth(), enabled = canSave)
     }

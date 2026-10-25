@@ -150,7 +150,7 @@ private fun Panel(title: String, content: @Composable () -> Unit) {
         Modifier.fillMaxWidth().raised(c, SilverShapes.panel).padding(SilverSpacing.l),
         verticalArrangement = Arrangement.spacedBy(SilverSpacing.s),
     ) {
-        Text(title.uppercase(), style = SilverTheme.type.label, color = c.textMuted)
+        Text(title, style = SilverTheme.type.label, color = c.textMuted)
         content()
     }
 }

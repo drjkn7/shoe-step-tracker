@@ -61,7 +61,7 @@ sealed interface TagEvent {
     /** Go back to Home (an unlinked tag's pop-up is always shown there). */
     data object OpenHome : TagEvent
 
-    /** Open the "Add shoe" form; the tag is linked to the new pair once it is saved. */
+    /** Open the "Add pair" form; the tag is linked to the new pair once it is saved. */
     data object AddShoe : TagEvent
 }
 
@@ -119,13 +119,13 @@ class TagCoordinator(
     }
 
     private suspend fun newTag() {
-        linkAfterAdd = false // any open "Add shoe" form is left
+        linkAfterAdd = false // any open "Add pair" form is left
         _events.send(TagEvent.OpenHome)
         _prompt.value = TagPrompt.NewTag
     }
 
     private suspend fun tapShoe(shoe: ShoeEntity) {
-        linkAfterAdd = false // any open "Add shoe" form is left
+        linkAfterAdd = false // any open "Add pair" form is left
         if (shoe.archived) return ask(shoe.id, TagPrompt.Archived(shoe.name))
         val active = sessions.activeSession.first()
         when {
@@ -204,7 +204,7 @@ class TagCoordinator(
      */
     fun consumeLinkAfterAdd(): Boolean = linkAfterAdd.also { linkAfterAdd = false }
 
-    /** The "Add shoe" form was left without saving. */
+    /** The "Add pair" form was left without saving. */
     fun onAddCancelled() {
         linkAfterAdd = false
     }

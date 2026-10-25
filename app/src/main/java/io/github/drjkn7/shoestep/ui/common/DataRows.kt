@@ -35,8 +35,9 @@ import io.github.drjkn7.shoestep.ui.theme.SilverSpacing
 import io.github.drjkn7.shoestep.ui.theme.SilverTheme
 
 /**
- * One figure in the stats grid: label, value, and an optional second line (e.g. distance under steps).
- * The spoken versions, when given, are what TalkBack reads instead ("2.4 kilometres" for "2.4 km").
+ * One figure in the stats grid: label, value, an optional small [note] right under the value ("Some
+ * counted later"), and an optional second line (e.g. distance under steps). The spoken versions, when
+ * given, are what TalkBack reads instead ("2.4 kilometres" for "2.4 km").
  */
 data class StatItem(
     val label: String,
@@ -44,6 +45,7 @@ data class StatItem(
     val extra: String? = null,
     val valueSpoken: String? = null,
     val extraSpoken: String? = null,
+    val note: String? = null,
 )
 
 /** Shows one text but has TalkBack read [spoken] instead (inside a merged row or cell). */
@@ -74,6 +76,7 @@ private fun StatCell(item: StatItem, modifier: Modifier) {
             color = c.textPrimary,
             modifier = Modifier.spokenAs(item.valueSpoken),
         )
+        item.note?.let { Text(it, style = SilverTheme.type.note, color = c.textMuted) }
         item.extra?.let {
             Text(it, style = SilverTheme.type.body.copy(fontSize = 16.sp), color = c.textPrimary, modifier = Modifier.spokenAs(item.extraSpoken))
         }
@@ -122,6 +125,8 @@ fun HistoryRow(
     distanceSpoken: String? = null,
     onDelete: (() -> Unit)? = null,
     deleteDescription: String? = null,
+    /** "No steps": shown quietly instead of in accent ink. */
+    stepsMuted: Boolean = false,
 ) {
     val c = SilverTheme.colors
     Column(modifier.fillMaxWidth()) {
@@ -144,7 +149,11 @@ fun HistoryRow(
                 }
             }
             Column(Modifier.widthIn(max = 160.dp), horizontalAlignment = Alignment.End) {
-                Text(steps, style = SilverTheme.type.button, color = c.accentInk, textAlign = TextAlign.End)
+                if (stepsMuted) {
+                    Text(steps, style = SilverTheme.type.body.copy(fontSize = 15.sp, lineHeight = 22.sp), color = c.textMuted, textAlign = TextAlign.End)
+                } else {
+                    Text(steps, style = SilverTheme.type.button, color = c.accentInk, textAlign = TextAlign.End)
+                }
                 distance?.let {
                     Text(it, style = SilverTheme.type.body, color = c.textMuted, textAlign = TextAlign.End, modifier = Modifier.spokenAs(distanceSpoken))
                 }

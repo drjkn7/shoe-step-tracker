@@ -55,30 +55,33 @@ object Formatters {
         Money(priceMinor, currencyCode).format(locale)
 
     /**
-     * Cost per 1,000 steps, e.g. "€0.40" or "€0.0333". Shows up to two extra decimals so small
-     * costs don't round to zero. Returns null when not available (caller shows a dash).
+     * Cost per 1,000 steps, e.g. "€0.40", "€190.55" or "€0.0333". Returns null when not available
+     * (caller shows a dash).
      */
     fun costPerThousand(cost: CostCalculator.Cost, currencyCode: String, locale: Locale): String? {
         if (cost !is CostCalculator.Cost.Amount) return null
-        val digits = Money.fractionDigits(currencyCode)
-        val formatter = NumberFormat.getCurrencyInstance(locale).apply {
-            currency = Currency.getInstance(currencyCode)
-            minimumFractionDigits = digits
-            maximumFractionDigits = digits + 2
-        }
-        return formatter.format(cost.perThousandSteps)
+        return smallCost(cost.perThousandSteps, currencyCode, locale)
     }
 
     /** Cost per km or mile (see [CostCalculator.costPerDistance]); null when not available (a dash). */
     fun costPerDistance(cost: BigDecimal?, currencyCode: String, locale: Locale): String? {
         if (cost == null) return null
-        val digits = Money.fractionDigits(currencyCode)
+        return smallCost(cost, currencyCode, locale)
+    }
+
+    /**
+     * The currency's own decimals; below one whole unit (e.g. under £1) up to two more, so small
+     * costs don't round to zero ("£0.0333") while larger ones stay plain ("£190.55").
+     */
+    private fun smallCost(amount: BigDecimal, currencyCode: String, locale: Locale): String {
+        val digits = Money.fractionDigits(currencyCode).coerceAtLeast(0)
         val formatter = NumberFormat.getCurrencyInstance(locale).apply {
             currency = Currency.getInstance(currencyCode)
             minimumFractionDigits = digits
-            maximumFractionDigits = digits + 2
+            maximumFractionDigits = if (amount.abs() < BigDecimal.ONE) digits + 2 else digits
+            roundingMode = RoundingMode.HALF_UP
         }
-        return formatter.format(cost)
+        return formatter.format(amount)
     }
 
     /**
