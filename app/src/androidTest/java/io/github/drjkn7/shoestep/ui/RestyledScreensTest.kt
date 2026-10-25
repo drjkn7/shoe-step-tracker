@@ -17,12 +17,14 @@ import androidx.compose.ui.test.hasScrollToKeyAction
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performScrollToIndex
 import androidx.compose.ui.test.performScrollToKey
 import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.test.performTouchInput
@@ -183,6 +185,9 @@ class RestyledScreensTest {
         for (night in listOf(false, true)) for (scale in listOf(1f, 2f)) {
             config = night to scale
             val where = "${if (night) "night" else "light"} ${scale}x"
+            // Home keeps last round's scroll position, which can leave "My shoes" above the screen (and unbuilt).
+            rule.waitUntil(5_000) { rule.onAllNodesWithContentDescription(str(R.string.nav_settings)).fetchSemanticsNodes().isNotEmpty() }
+            rule.onNode(hasScrollToKeyAction()).performScrollToIndex(0)
             waitForText(str(R.string.title_home))
             assertTappablesOk("$where Home")
 
