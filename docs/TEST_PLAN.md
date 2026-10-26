@@ -57,7 +57,7 @@ Status: ☐ not run · ✅ passed · ❌ failed. Phase = when it first becomes t
 | T44 | Restart mid-session | Notification returns when the app is opened (manual) | 7 | ☐ manual (MANUAL_CHECKS: session notification) |
 | T45 | Discard changes | Asked only after an edit; Keep editing keeps the form | 3 | ✅ RestyledScreensTest (Close and Back, add and edit) |
 | T46 | Restyled screens | 200% font, TalkBack, RTL and contrast pass | 3, 8 | ◐ automated: components (ComponentGalleryTest) and every screen (RestyledScreensTest: 48 dp and labels, light/night, 100% and 200%), RTL (HardeningScreensTest); TalkBack pass by hand in Phase 8 |
-| T47 | Upgrade from v0.1.0 | Installs over the top with the same key; nothing lost | 8 | ☐ |
+| T47 | Upgrade from v0.1.0 | Installs over the top with the same key; nothing lost | 8 | ✅ signed 0.2.0 installed over v0.1.0 on the Pixel, all pairs and steps kept (2026-10-26) |
 | T48 | Theme setting | Light, Dark and System apply at once; System follows the phone; choice survives a restart | 1, 3 | ✅ ThemeScreensTest, ThemeModeTest, RestyledScreensTest (Settings control), SettingsStoreTest (restart) |
 | T49 | Night mode legibility | Every screen readable in night; contrast per DESIGN.md section 8; no light-only colours left | 3 | ◐ token contrast (ContrastTest) and every screen in night (RestyledScreensTest); compare with the night mockups once they are in docs/design |
 | T50 | Add past session | Saved for the chosen pair; "Added later" in History; steps and distance filled by the reconciler | 6 | ✅ PastSessionTest (ended, added later, one PENDING segment, nothing becomes active), PastSessionScreensTest (preview from Health Connect, Save, "Added later" row, steps counted), SessionManagerDbTest (real queries) |

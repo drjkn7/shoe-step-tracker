@@ -6,8 +6,7 @@ Stick an NFC tag on each pair. Tap the tag with your phone to start a session; t
 your steps from **Health Connect** and keeps lifetime totals, session history and cost per step
 for every pair.
 
-> **Status:** version 0.2.0 (Milestone 2) is being prepared; 0.1.0 is the latest release. What's in
-> each: [CHANGELOG.md](CHANGELOG.md).
+> **Status:** version 0.2.0 (Milestone 2) is released. What's in it: [CHANGELOG.md](CHANGELOG.md).
 
 ## Install
 
