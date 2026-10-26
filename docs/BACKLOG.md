@@ -6,6 +6,8 @@ list; see [PROGRESS.md](PROGRESS.md).
 
 ## Planned for Milestone 3
 
+Fixes and improvements from the v0.2.0 team review are in [MILESTONE3_PLAN.md](MILESTONE3_PLAN.md).
+
 | Idea | Notes |
 |---|---|
 | Homescreen widget | Show the active session / quick start. |
