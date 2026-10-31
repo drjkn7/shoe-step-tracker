@@ -13,7 +13,7 @@ coroutines = "1.11.0"
 # Android tests must use the app's runtime versions.
 kotlinxSerialization = "1.11.0"
 room3 = "3.0.3"
-datastore = "1.2.1"
+datastore = "1.3.0"
 healthConnect = "1.1.0"
 junit = "4.13.2"
 androidxTestExtJunit = "1.3.0"
