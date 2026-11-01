@@ -1,0 +1,18 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Icon size comparison</title>
+<style>body{font:15px system-ui,sans-serif;margin:0;padding:16px;background:#F2F4F8;color:#1E2230}h1{font-size:20px;margin:0 0 12px}
+.g{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
+.c{background:#fff;border-radius:12px;padding:12px}.c h2{font-size:15px;margin:0}.c p{font-size:13px;margin:2px 0 10px;opacity:.75}
+.r{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:8px}
+.d{background:#0D1322;border-radius:10px;padding:8px}
+.i{overflow:hidden;flex:none}.i svg{display:block;width:100%;height:100%}</style>
+<h1>Shoe Step icon: thinner and smaller options</h1><div class="g" id="o"></div>
+<script>
+const SHOE="M31.2,66.8 L31.2,46 C31.2,42.6 34.4,41.2 36.8,42.6 C39.4,44.2 42.4,44.2 44.4,42 C45.8,40.4 48.2,40.6 49.2,42.4 C51.4,47 55,51 60,53.4 C65,55.6 76.8,56.6 76.8,66.8";
+const ARCS=["M60,37.2 A5.6,5.6 0 0 1 65.6,42.8","M60,31.6 A11.2,11.2 0 0 1 71.2,42.8","M60,26 A16.8,16.8 0 0 1 76.8,42.8"];
+const DOTS=[[31.2,5.6],[42.6,3],[54,3],[65.4,3],[76.8,5.6]];
+// o.s = overall size; o.w = line thickness relative to the current icon (both 1 = current).
+const art=o=>{const w=o.w;return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="18 18 72 72"><rect width="108" height="108" fill="#1A253D"/><g transform="translate(54 54) scale('+o.s+') translate(-54 -54)"><path d="'+SHOE+'" fill="none" stroke="#E8EDF6" stroke-width="'+6*w+'" stroke-linecap="round" stroke-linejoin="round"/>'+DOTS.map(([x,r])=>'<circle cx="'+x+'" cy="66.8" r="'+r*w+'" fill="#7942DE"/>').join('')+ARCS.map(d=>'<path d="'+d+'" fill="none" stroke="#C4A6FF" stroke-width="'+4.4*w+'" stroke-linecap="round"/>').join('')+'</g></svg>'};
+const tile=(s,m,a)=>'<div class="i" style="width:'+s+'px;height:'+s+'px;border-radius:'+m+'">'+a+'</div>';
+const opts=[{n:'Current',t:'Installed now',s:1,w:1},{n:'A',t:'5% smaller, lines about 15% thinner',s:.95,w:.9},{n:'B',t:'10% smaller, lines about 25% thinner',s:.9,w:.85},{n:'C',t:'15% smaller, lines about 30% thinner',s:.85,w:.8}];
+document.getElementById('o').innerHTML=opts.map(o=>{const a=art(o);return '<div class="c"><h2>'+o.n+'</h2><p>'+o.t+'</p>'+tile(144,'50%',a)+'<div class="r">'+tile(72,'50%',a)+tile(48,'50%',a)+tile(36,'50%',a)+'</div><div class="r">'+tile(72,'32%',a)+tile(48,'18%',a)+'</div><div class="r d">'+tile(72,'50%',a)+tile(48,'50%',a)+'</div></div>'}).join('');
+</script>
