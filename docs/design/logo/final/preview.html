@@ -1,0 +1,15 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Shoe Step icon</title>
+<style>body{font:15px system-ui,sans-serif;margin:0;padding:16px;background:#F2F4F8;color:#1E2230}h1{font-size:20px}h2{font-size:14px;margin:12px 0 6px}
+section{padding:8px 16px 16px;border-radius:12px;margin-bottom:16px;background:#fff}.d{background:#0D1322;color:#E8EDF6}.r{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+.i{overflow:hidden;flex:none}.i svg{display:block;width:100%;height:100%}</style>
+<h1>Shoe Step icon: launcher shapes and sizes</h1><div id="o"></div>
+<script>
+const fg='<g transform="translate(54 54) scale(.9) translate(-54 -54)"><path d="M31.2,66.8 L31.2,46 C31.2,42.6 34.4,41.2 36.8,42.6 C39.4,44.2 42.4,44.2 44.4,42 C45.8,40.4 48.2,40.6 49.2,42.4 C51.4,47 55,51 60,53.4 C65,55.6 76.8,56.6 76.8,66.8" fill="none" stroke="#E8EDF6" stroke-width="5.1" stroke-linecap="round" stroke-linejoin="round"/><circle cx="31.2" cy="66.8" r="4.76" fill="#7942DE"/><circle cx="42.6" cy="66.8" r="2.55" fill="#7942DE"/><circle cx="54" cy="66.8" r="2.55" fill="#7942DE"/><circle cx="65.4" cy="66.8" r="2.55" fill="#7942DE"/><circle cx="76.8" cy="66.8" r="4.76" fill="#7942DE"/><g fill="none" stroke="#C4A6FF" stroke-width="3.74" stroke-linecap="round"><path d="M60,37.2 A5.6,5.6 0 0 1 65.6,42.8"/><path d="M60,31.6 A11.2,11.2 0 0 1 71.2,42.8"/><path d="M60,26 A16.8,16.8 0 0 1 76.8,42.8"/></g></g>';
+const art=(bg,f)=>'<svg xmlns="http://www.w3.org/2000/svg" viewBox="18 18 72 72"><rect x="0" y="0" width="108" height="108" fill="'+bg+'"/>'+f+'</svg>';
+const tile=(s,m,a)=>'<div class="i" style="width:'+s+'px;height:'+s+'px;border-radius:'+m+'">'+a+'</div>';
+const sizes=[192,96,72,48,36],masks={Circle:'50%',Squircle:'32%','Rounded square':'18%',Square:'4%',Teardrop:'50% 50% 12% 50%'};
+const rows=Object.entries(masks).map(([n,m])=>'<h2>'+n+'</h2><div class="r">'+sizes.map(s=>tile(s,m,art('#1A253D',fg))).join('')+'</div>').join('');
+const mono=(ink,bg)=>art(bg,fg.replace(/#E8EDF6|#7942DE|#C4A6FF/g,ink));
+const guide=art('#1A253D',fg+'<circle cx="54" cy="54" r="33" fill="none" stroke="#F7C548" stroke-width=".6"/>');
+document.getElementById('o').innerHTML='<section>'+rows+'</section><section class="d">'+rows+'</section><section><h2>Safe zone (yellow circle = never cut by any launcher shape)</h2>'+tile(192,'0',guide)+'<h2>Themed one-colour icon</h2><div class="r">'+sizes.map(s=>tile(s,'50%',mono('#3B2A6B','#E4DAFB'))).join('')+sizes.map(s=>tile(s,'50%',mono('#E4DAFB','#2A2340'))).join('')+'</div></section>';
+</script>
