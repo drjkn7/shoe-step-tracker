@@ -11,7 +11,7 @@ navigationCompose = "2.10.2"
 coroutines = "1.11.0"
 # Pinned above the 1.7.3 that navigation/lifecycle bring in: room3-testing needs >= 1.8.1, and
 # Android tests must use the app's runtime versions.
-kotlinxSerialization = "1.11.0"
+kotlinxSerialization = "1.12.0"
 room3 = "3.0.3"
 datastore = "1.2.1"
 healthConnect = "1.1.0"
